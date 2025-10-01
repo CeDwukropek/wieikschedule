@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
@@ -10,17 +10,75 @@ import { timeToMinutes } from "./utils";
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
-  const [viewMode, setViewMode] = useState("week");
-  const [weekParity, setWeekParity] = useState("all");
-  const [hideLectures, setHideLectures] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  // per-browser user id (created once) -> used to namespace storage so it's unique user
+  const USER_KEY = "wieikschedule.userId";
+  function getUserId() {
+    try {
+      let id = localStorage.getItem(USER_KEY);
+      if (!id) {
+        id =
+          (typeof crypto !== "undefined" &&
+            crypto.randomUUID &&
+            crypto.randomUUID()) ||
+          `u${Date.now().toString(36)}${Math.random()
+            .toString(36)
+            .slice(2, 8)}`;
+        localStorage.setItem(USER_KEY, id);
+      }
+      return id;
+    } catch (e) {
+      return "default";
+    }
+  }
 
-  const [studentGroups, setStudentGroups] = useState({
-    C: "Ć1",
-    L: "L1",
-    Lek: "Lek1",
-    Lk: "Lk1",
-  });
+  // single settings key (namespaced per user) to persist all inputs/settings
+  const SETTINGS_KEY = `wieikschedule.${getUserId()}.settings`;
+
+  // load saved settings (if any) on first render
+  const saved = (() => {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return null;
+  })();
+
+  const [viewMode, setViewMode] = useState(saved?.viewMode ?? "week");
+  const [weekParity, setWeekParity] = useState(saved?.weekParity ?? "all");
+  const [hideLectures, setHideLectures] = useState(
+    saved?.hideLectures ?? false
+  );
+  const [showAll, setShowAll] = useState(saved?.showAll ?? false);
+
+  const [studentGroups, setStudentGroups] = useState(
+    saved?.studentGroups ?? {
+      C: "Ć1",
+      L: "L1",
+      Lek: "Lek1",
+      Lk: "Lk1",
+    }
+  );
+
+  // persist all inputs/settings for this user
+  useEffect(() => {
+    try {
+      const payload = {
+        viewMode,
+        weekParity,
+        hideLectures,
+        showAll,
+        studentGroups,
+      };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
+    } catch (e) {}
+  }, [
+    viewMode,
+    weekParity,
+    hideLectures,
+    showAll,
+    studentGroups,
+    SETTINGS_KEY,
+  ]);
 
   function handleGroupChange(type, number) {
     if (!number) return;
