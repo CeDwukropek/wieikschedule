@@ -4,6 +4,7 @@ import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
 import WeekView from "./WeekView";
 import DayView from "./DayView";
+import FloatingMenu from "./FloatingMenu";
 import { timeToMinutes } from "./utils";
 
 const { SCHEDULE } = timetableData;
@@ -63,7 +64,8 @@ export default function Timetable() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      {/* hidden on mobile, visible on sm and up */}
+      <div className="hidden sm:flex flex-wrap items-center gap-3 mb-6">
         <button
           onClick={() => setViewMode("week")}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
@@ -115,8 +117,8 @@ export default function Timetable() {
         </button>
       </div>
 
-      {/* --- Wybór grup --- */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* --- Wybór grup --- hidden on mobile, visible on sm+ */}
+      <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <GroupInput
           label="Ćwiczenia"
           type="C"
@@ -142,6 +144,21 @@ export default function Timetable() {
           onChange={handleGroupChange}
         />
       </div>
+
+      {/* Floating menu / settings (bottom-right) */}
+      <FloatingMenu
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        weekParity={weekParity}
+        setWeekParity={setWeekParity}
+        hideLectures={hideLectures}
+        setHideLectures={setHideLectures}
+        showAll={showAll}
+        setShowAll={setShowAll}
+        studentGroups={studentGroups}
+        setStudentGroups={setStudentGroups}
+        handleGroupChange={handleGroupChange}
+      />
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
