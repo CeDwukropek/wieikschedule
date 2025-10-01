@@ -73,7 +73,7 @@ export default function WeekView({ events }) {
         }
       `}</style>
 
-      <div className="week-grid" style={{ maxHeight: "calc(100vh - 220px)" }}>
+      <div className="week-grid">
         {/* Nagłówki Dni */}
         {dayNames.map((name, dayIndex) => (
           <div
