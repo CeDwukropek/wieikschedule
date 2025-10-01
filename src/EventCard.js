@@ -1,4 +1,4 @@
-import { MapPin, Users, Tag } from "lucide-react";
+import { MapPin, Users, Tag, Clock } from "lucide-react";
 import { timetableData } from "./timetable";
 const { SUBJECTS } = timetableData;
 
@@ -11,7 +11,7 @@ export default function EventCard({ ev }) {
 
   return (
     <div className="w-full h-full flex overflow-hidden bg-neutral-800 shadow-sm rounded-md">
-      <div className={`${colorBg} w-2 shrink-0`} />
+      <div className={`${colorBg} w-1 shrink-0`} />
 
       <div className="flex-1 p-2 flex flex-col">
         <div className={`${colorText} text-[0.7rem] font-semibold`}>
@@ -19,6 +19,14 @@ export default function EventCard({ ev }) {
         </div>
 
         <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
+          {ev.start && ev.end ? (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 opacity-80" />
+              <span>
+                {ev.start} - {ev.end}
+              </span>
+            </div>
+          ) : null}
           {ev.room ? (
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 opacity-80" />
