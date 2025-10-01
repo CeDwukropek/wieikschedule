@@ -61,7 +61,7 @@ export default function Timetable() {
 
   // --- cached filtered events (persisted to localStorage, 60 days TTL) ---
   const CACHE_KEY = `wieikschedule.${getUserId()}.cachedFiltered`;
-  const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
+  const CACHE_TTL = 1000 * 60 * 60 * 24 * 30 * 6; // 6 months in ms
 
   function computeFiltered(
     schedule,
