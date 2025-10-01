@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/wieikschedule/static/css/main.af8d5241.css",
-    "main.js": "/wieikschedule/static/js/main.b0af7249.js",
+    "main.js": "/wieikschedule/static/js/main.eae9fa6f.js",
     "static/js/453.87552ecc.chunk.js": "/wieikschedule/static/js/453.87552ecc.chunk.js",
     "index.html": "/wieikschedule/index.html",
     "main.af8d5241.css.map": "/wieikschedule/static/css/main.af8d5241.css.map",
-    "main.b0af7249.js.map": "/wieikschedule/static/js/main.b0af7249.js.map",
+    "main.eae9fa6f.js.map": "/wieikschedule/static/js/main.eae9fa6f.js.map",
     "453.87552ecc.chunk.js.map": "/wieikschedule/static/js/453.87552ecc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.af8d5241.css",
-    "static/js/main.b0af7249.js"
+    "static/js/main.eae9fa6f.js"
   ]
 }
