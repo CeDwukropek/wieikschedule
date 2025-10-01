@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
@@ -59,6 +59,83 @@ export default function Timetable() {
     }
   );
 
+  // --- cached filtered events (persisted to localStorage, 60 days TTL) ---
+  const CACHE_KEY = `wieikschedule.${getUserId()}.cachedFiltered`;
+  const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
+
+  function computeFiltered(
+    schedule,
+    groups,
+    hideLecturesFlag,
+    parity,
+    showAllFlag
+  ) {
+    return schedule
+      .filter((ev) => {
+        if (ev.weeks === "odd" && parity !== "odd") return false;
+        if (ev.weeks === "even" && parity !== "even") return false;
+        if (hideLecturesFlag && isLecture(ev)) return false;
+        if (isLecture(ev)) return true;
+        if (showAllFlag) return true;
+        return ev.groups.some(
+          (g) =>
+            g === groups.C ||
+            g === groups.L ||
+            g === groups.Lek ||
+            g === groups.Lk
+        );
+      })
+      .sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        return timeToMinutes(a.start) - timeToMinutes(b.start);
+      });
+  }
+
+  const [filtered, setFiltered] = useState(() => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (
+          parsed?.ts &&
+          Date.now() - parsed.ts < CACHE_TTL &&
+          Array.isArray(parsed.data)
+        ) {
+          return parsed.data;
+        }
+      }
+    } catch (e) {}
+    return computeFiltered(
+      SCHEDULE,
+      studentGroups,
+      hideLectures,
+      weekParity,
+      showAll
+    );
+  });
+
+  useEffect(() => {
+    const res = computeFiltered(
+      SCHEDULE,
+      studentGroups,
+      hideLectures,
+      weekParity,
+      showAll
+    );
+    setFiltered(res);
+    try {
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ ts: Date.now(), data: res })
+      );
+    } catch (e) {}
+  }, [
+    studentGroups,
+    hideLectures,
+    weekParity,
+    showAll /* CACHE_KEY intentionally not included */,
+  ]);
+
   // persist all inputs/settings for this user
   useEffect(() => {
     try {
@@ -93,32 +170,6 @@ export default function Timetable() {
   function isLecture(ev) {
     return ev.type?.toLowerCase() === "wykład";
   }
-
-  function matchesStudent(ev, groups) {
-    if (isLecture(ev)) return true;
-    return (
-      showAll ||
-      ev.groups.some(
-        (g) =>
-          g === groups.C ||
-          g === groups.L ||
-          g === groups.Lek ||
-          g === groups.Lk
-      )
-    );
-  }
-
-  const filtered = useMemo(() => {
-    return SCHEDULE.filter((ev) => {
-      if (ev.weeks === "odd" && weekParity !== "odd") return false;
-      if (ev.weeks === "even" && weekParity !== "even") return false;
-      if (hideLectures && isLecture(ev)) return false;
-      return matchesStudent(ev, studentGroups);
-    }).sort((a, b) => {
-      if (a.day !== b.day) return a.day - b.day;
-      return timeToMinutes(a.start) - timeToMinutes(b.start);
-    });
-  }, [studentGroups, hideLectures, weekParity, showAll]);
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
