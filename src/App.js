@@ -81,11 +81,12 @@ export default function Timetable() {
   ]);
 
   function handleGroupChange(type, number) {
-    if (!number) return;
+    // normalize to digits (allow empty)
+    const digits = (number ?? "").toString().replace(/\D/g, "");
     const prefixes = { C: "Ć", L: "L", Lek: "Lek", Lk: "Lk" };
     setStudentGroups((prev) => ({
       ...prev,
-      [type]: prefixes[type] + number,
+      [type]: digits ? prefixes[type] + digits : "",
     }));
   }
 
