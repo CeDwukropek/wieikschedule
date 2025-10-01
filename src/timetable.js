@@ -222,7 +222,7 @@ export const timetableData = {
       subj: "FIZ01",
       // Usunięto: title: "Wstęp do fizyki inżynierskiej",
       type: "Ćwiczenia",
-      groups: ["Ć2"],
+      groups: ["Ć4"],
       day: 4,
       start: "09:15",
       end: "10:45",
@@ -322,12 +322,24 @@ export const timetableData = {
       subj: "ELEC01",
       // Usunięto: title: "Język angielski",
       type: "Lektorat",
+      groups: ["L1"],
+      day: 3, // Czwartek
+      start: "11:00",
+      end: "12:30",
+      room: "O4",
+      weeks: "odd", // Widoczne jako całe, ale u Ciebie było odd/even
+    },
+    {
+      id: 45,
+      subj: "ELEC01",
+      // Usunięto: title: "Język angielski",
+      type: "Lektorat",
       groups: ["L2"],
       day: 3, // Czwartek
       start: "11:00",
       end: "12:30",
       room: "O4",
-      weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
+      weeks: "even", // Widoczne jako całe, ale u Ciebie było odd/even
     },
     {
       id: 24,
