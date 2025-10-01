@@ -1,5 +1,7 @@
 import { MapPin, Users, Tag, Clock } from "lucide-react";
 import { timetableData } from "./timetable";
+import { useState, useRef, useEffect } from "react";
+
 const { SUBJECTS } = timetableData;
 
 export default function EventCard({ ev }) {
@@ -9,22 +11,36 @@ export default function EventCard({ ev }) {
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");
 
+  const [alignRight, setAlignRight] = useState(false);
+  const tooltipRef = useRef(null);
+
+  useEffect(() => {
+    if (!tooltipRef.current) return;
+
+    const rect = tooltipRef.current.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      setAlignRight(true);
+    } else {
+      setAlignRight(false);
+    }
+  }, []);
+
   return (
-    <div className="w-full h-full flex overflow-hidden bg-neutral-800 shadow-sm rounded-md">
+    <div className="relative group w-full h-full flex overflow-hidden bg-neutral-800 shadow-sm rounded-md">
+      {/* Pasek koloru */}
       <div className={`${colorBg} w-1 shrink-0`} />
 
+      {/* Treść eventu */}
       <div className="flex-1 p-2 flex flex-col">
         <div className={`${colorText} text-[0.7rem] font-semibold`}>
           {subj.name}
         </div>
 
         <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
-          {ev.start && ev.end ? (
+          {ev.groups?.length && ev.type !== "Wykład" ? (
             <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3 opacity-80" />
-              <span>
-                {ev.start} - {ev.end}
-              </span>
+              <Users className="w-3 h-3 opacity-80" />
+              <span>{ev.groups.join(", ")}</span>
             </div>
           ) : null}
           {ev.room ? (
@@ -33,14 +49,14 @@ export default function EventCard({ ev }) {
               <span>{ev.room}</span>
             </div>
           ) : null}
-
-          {ev.groups?.length && ev.type !== "Wykład" ? (
+          {ev.start && ev.end ? (
             <div className="flex items-center gap-1">
-              <Users className="w-3 h-3 opacity-80" />
-              <span>{ev.groups.join(", ")}</span>
+              <Clock className="w-3 h-3 opacity-80" />
+              <span>
+                {ev.start} - {ev.end}
+              </span>
             </div>
           ) : null}
-
           {ev.type ? (
             <div className="flex items-center gap-1">
               <Tag className="w-3 h-3 opacity-80" />
