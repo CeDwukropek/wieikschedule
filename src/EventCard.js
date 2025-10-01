@@ -14,9 +14,11 @@ export default function EventCard({ ev }) {
       <div className={`${colorBg} w-2 shrink-0`} />
 
       <div className="flex-1 p-2 flex flex-col">
-        <div className={`${colorText} text-sm font-semibold`}>{subj.name}</div>
+        <div className={`${colorText} text-[0.7rem] font-semibold`}>
+          {subj.name}
+        </div>
 
-        <div className="text-xs text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
+        <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
           {ev.room ? (
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 opacity-80" />

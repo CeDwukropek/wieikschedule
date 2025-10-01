@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
-import { timetableData } from "./timetable"; // <- Twój JSON
-import EventCard from "./EventCard";
+import { timetableData } from "./timetable";
+import GroupInput from "./GroupInput";
+import WeekView from "./WeekView";
+import DayView from "./DayView";
+import { timeToMinutes } from "./utils";
 
 const { SCHEDULE } = timetableData;
-
-const dayNames = ["Pon", "Wt", "Śr", "Czw", "Pt"];
 
 export default function Timetable() {
   const [viewMode, setViewMode] = useState("week");
@@ -34,9 +35,7 @@ export default function Timetable() {
   }
 
   function matchesStudent(ev, groups) {
-    // wykłady widoczne zawsze
     if (isLecture(ev)) return true;
-
     return (
       showAll ||
       ev.groups.some(
@@ -146,128 +145,11 @@ export default function Timetable() {
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView events={filtered} />
+        // key causes WeekView to unmount/remount when weekParity changes
+        <WeekView key={`week-${weekParity}`} events={filtered} />
       ) : (
-        <DayView events={filtered} />
+        <DayView key={`day-${weekParity}`} events={filtered} />
       )}
     </div>
   );
-}
-
-/* --- Komponenty pomocnicze --- */
-
-function GroupInput({ label, type, value, onChange }) {
-  return (
-    <div>
-      <label className="block text-xs text-gray-400 mb-1">{label}</label>
-      <input
-        type="number"
-        min="1"
-        value={value.replace(/\D/g, "")}
-        onChange={(e) => onChange(type, e.target.value)}
-        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-2 py-1 text-white"
-      />
-    </div>
-  );
-}
-
-function WeekView({ events }) {
-  const startHour = 7;
-  const endHour = 20;
-  const slots = [];
-
-  for (let h = startHour; h <= endHour; h++) {
-    for (let m of [0, 15, 30, 45]) {
-      if (h === endHour && m > 0) break;
-      const hh = h.toString().padStart(2, "0");
-      const mm = m.toString().padStart(2, "0");
-      slots.push(`${hh}:${mm}`);
-    }
-  }
-
-  function timeToIndex(t) {
-    const [h, m] = t.split(":").map(Number);
-    return (h - startHour) * 4 + m / 15 + 2;
-    // +2 bo 1. wiersz = nagłówki dni
-  }
-
-  return (
-    <div className="overflow-auto border border-neutral-800 rounded-lg">
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: `80px repeat(${dayNames.length}, 1fr)`,
-          gridTemplateRows: `40px repeat(${slots.length}, 30px)`,
-          position: "relative",
-        }}
-      >
-        {/* nagłówki dni */}
-        <div className="bg-black" style={{ gridColumn: "1", gridRow: "1" }} />
-        {dayNames.map((dn, d) => (
-          <div
-            key={d}
-            className="text-center font-semibold py-1 border-l border-neutral-800 bg-neutral-900"
-            style={{ gridColumn: d + 2, gridRow: "1" }}
-          >
-            {dn}
-          </div>
-        ))}
-
-        {/* godziny w kolumnie */}
-        {slots.map((time, i) => (
-          <div
-            key={i}
-            className="text-xs text-gray-500 flex items-start justify-end pr-2 border-b border-neutral-800"
-            style={{ gridColumn: "1", gridRow: i + 2 }}
-          >
-            {time}
-          </div>
-        ))}
-
-        {/* highlight przerwy obiadowej */}
-        <div
-          className="bg-red-900/20 col-span-full"
-          style={{
-            gridColumn: "1 / -1",
-            gridRow: `${timeToIndex("12:30")} / ${timeToIndex("13:00")}`,
-          }}
-        />
-
-        {/* zajęcia */}
-        {events.map((ev) => {
-          const rowStart = timeToIndex(ev.start);
-          const rowEnd = timeToIndex(ev.end);
-
-          return (
-            <div
-              key={ev.id}
-              className="p-0.5"
-              style={{
-                gridColumn: ev.day + 2,
-                gridRow: `${rowStart} / ${rowEnd}`,
-              }}
-            >
-              <EventCard ev={ev} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DayView({ events }) {
-  return (
-    <div className="space-y-4">
-      {events.map((ev) => (
-        <EventCard key={ev.id} ev={ev} />
-      ))}
-    </div>
-  );
-}
-
-/* --- utils --- */
-function timeToMinutes(t) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
 }

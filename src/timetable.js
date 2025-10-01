@@ -1,5 +1,4 @@
 export const timetableData = {
-  // Definicje przedmiotów (kolory, prowadzący)
   SUBJECTS: {
     MAT01: {
       name: "Wstęp do matematyki inżynierskiej",
@@ -31,7 +30,6 @@ export const timetableData = {
       teacher: "dr J. Firląg",
       color: "bg-fuchsia-600",
     },
-    // Nowe przedmioty dodane na podstawie obrazka
     REL01: {
       name: "Zajęcia relacji międzyludzkich z elementami etyki",
       teacher: "dr M. Piekarska",
@@ -47,77 +45,69 @@ export const timetableData = {
       teacher: "dr M. Skrzyński / dr inż. K. Urbańska",
       color: "bg-red-900",
     },
+    METS: {
+      name: "Metodyka studiowania",
+      teacher: "dr M. Piekarski",
+      color: "bg-blue-900",
+    },
   },
-
-  // Szczegółowy harmonogram zajęć
   SCHEDULE: [
     // -----------------------------------------------------
     // 7:30 - 9:00
     // -----------------------------------------------------
     {
       id: 8,
+      subj: "METS",
+      // Usunięto: title: "Zagadnienia relacji międzyludzkich z elementami etyki",
+      type: "Wykład",
+      groups: [],
+      day: 0, // Wtorek
+      start: "07:30",
+      end: "09:00",
+      room: "A1",
+      weeks: "odd",
+    },
+    {
+      id: 8,
       subj: "REL01",
-      title: "Zagadnienia relacji międzyludzkich z elementami etyki",
+      // Usunięto: title: "Zagadnienia relacji międzyludzkich z elementami etyki",
       type: "Wykład",
       groups: [],
       day: 1, // Wtorek
       start: "07:30",
       end: "09:00",
-      room: "C2",
-      weeks: "both",
+      room: "A1",
+      weeks: "odd",
     },
     {
       id: 9,
       subj: "MAT01",
-      title: "Wstęp do matematyki inżynierskiej",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
       type: "Ćwiczenia",
       groups: ["Ć2"],
       day: 2, // Środa
       start: "07:45",
       end: "10:00",
       room: "A1",
-      weeks: "odd",
+      weeks: "both",
     },
-    {
-      id: 10, // Ten wpis jest dla tygodnia parzystego, ale zostaje dla spójności
-      subj: "MAT01",
-      title: "Wstęp do matematyki inżynierskiej",
-      type: "Ćwiczenia",
-      groups: ["Ć2"],
-      day: 2, // Środa
-      start: "07:30",
-      end: "09:00",
-      room: "A1",
-      weeks: "even",
-    },
-    {
-      id: 10, // Ten wpis jest dla tygodnia parzystego, ale zostaje dla spójności
-      subj: "MAT01",
-      title: "Wstęp do matematyki inżynierskiej",
-      type: "Ćwiczenia",
-      groups: ["Ć3"],
-      day: 2, // Środa
-      start: "07:45",
-      end: "10:00",
-      room: "A2",
-      weeks: "odd",
-    },
+
     {
       id: 100, // Ten wpis jest dla tygodnia parzystego, ale zostaje dla spójności
       subj: "MAT01",
-      title: "Wstęp do matematyki inżynierskiej",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
       type: "Ćwiczenia",
       groups: ["Ć3"],
       day: 2, // Środa
       start: "07:45",
       end: "10:00",
       room: "A2",
-      weeks: "even",
+      weeks: "both",
     },
     {
       id: 101,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Ćwiczenia",
       groups: ["Ć3"],
       day: 3, // Czwartek
@@ -126,41 +116,29 @@ export const timetableData = {
       room: "A2",
       weeks: "both",
     },
-    {
-      id: 42,
-      subj: "FIZ01",
-      title: "Wstęp do fizyki inżynierskiej",
-      type: "Laboratorium",
-      groups: ["L1"],
-      day: 4, // Piątek
-      start: "07:30",
-      end: "09:00",
-      room: "F204",
-      weeks: "odd",
-    },
 
     // -----------------------------------------------------
     // 9:15 - 10:45
     // -----------------------------------------------------
     // ID 1, ID 6, ID 12, ID 13, ID 14, ID 15, ID 16, ID 17 są OK
     {
-      id: 12,
-      subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
-      type: "Laboratorium",
-      groups: ["Lk2"],
-      day: 0, // Poniedziałek
+      id: 1,
+      subj: "MAT01",
+      // Usunięto: title: "Wstęp do matematyki",
+      type: "Wykład",
+      groups: [],
+      day: 0,
       start: "09:15",
       end: "10:45",
-      room: "E2",
+      room: "A4",
       weeks: "both",
     },
     {
-      id: 43,
+      id: 6,
       subj: "ALGE01",
-      title: "Algebra liniowa",
+      // Usunięto: title: "Język angielski",
       type: "Ćwiczenia",
-      groups: ["Ć2"],
+      groups: ["Ć3"],
       day: 1, // Wtorek
       start: "09:15",
       end: "10:45",
@@ -168,16 +146,88 @@ export const timetableData = {
       weeks: "both",
     },
     {
-      id: 44,
+      id: 43,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
+      // Usunięto: title: "Algebra liniowa",
       type: "Laboratorium",
       groups: ["Lk2"],
+      day: 1, // Wtorek
+      start: "9:15",
+      end: "10:45",
+      room: "12",
+      weeks: "both",
+    },
+    {
+      id: 44,
+      subj: "MAT01",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
+      type: "Ćwiczenia",
+      groups: ["Ć1"],
       day: 2, // Środa
+      start: "10:15",
+      end: "12:30",
+      room: "A2",
+      weeks: "both", // Sprawdzone
+    },
+    {
+      id: 44,
+      subj: "MAT01",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
+      type: "Ćwiczenia",
+      groups: ["Ć4"],
+      day: 2, // Środa
+      start: "10:15",
+      end: "12:30",
+      room: "A1",
+      weeks: "both", // Sprawdzone
+    },
+    {
+      id: 16,
+      subj: "ANG01",
+      // Usunięto: title: "Język angielski",
+      type: "Lektorat",
+      groups: ["Lek2"],
+      day: 3,
       start: "09:15",
       end: "10:45",
-      room: "E2",
-      weeks: "odd", // Sprawdzone
+      room: "139SJO",
+      weeks: "both",
+    },
+    {
+      id: 17,
+      subj: "FIZ01",
+      // Usunięto: title: "Wstęp do fizyki inżynierskiej",
+      type: "Ćwiczenia",
+      groups: ["Ć1"],
+      day: 4,
+      start: "09:15",
+      end: "10:45",
+      room: "F101",
+      weeks: "both",
+    },
+    {
+      id: 170,
+      subj: "FIZ01",
+      // Usunięto: title: "Wstęp do fizyki inżynierskiej",
+      type: "Ćwiczenia",
+      groups: ["Ć2"],
+      day: 4,
+      start: "09:15",
+      end: "10:45",
+      room: "F204",
+      weeks: "both",
+    },
+    {
+      id: 180,
+      subj: "FIZ01",
+      // Usunięto: title: "Wstęp do fizyki inżynierskiej",
+      type: "Ćwiczenia",
+      groups: ["Ć2"],
+      day: 4,
+      start: "09:15",
+      end: "10:45",
+      room: "F203",
+      weeks: "both",
     },
 
     // -----------------------------------------------------
@@ -186,9 +236,9 @@ export const timetableData = {
     {
       id: 18,
       subj: "ALGE01",
-      title: "Algebra liniowa",
+      // Usunięto: title: "Algebra liniowa",
       type: "Wykład",
-      groups: ["C/E/k/U"],
+      groups: [],
       day: 0, // Poniedziałek
       start: "11:00",
       end: "12:30",
@@ -198,7 +248,7 @@ export const timetableData = {
     {
       id: 19,
       subj: "ALGE01",
-      title: "Algebra liniowa",
+      // Usunięto: title: "Algebra liniowa",
       type: "Ćwiczenia",
       groups: ["Ć1"],
       day: 1, // Wtorek
@@ -208,28 +258,88 @@ export const timetableData = {
       weeks: "both",
     },
     {
-      id: 20,
-      subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
-      type: "Laboratorium",
-      groups: ["Lk1"],
-      day: 2, // Środa
+      id: 19,
+      subj: "ELEC01",
+      // Usunięto: title: "Algebra liniowa",
+      type: "Laboratoria",
+      groups: ["L10"],
+      day: 1, // Wtorek
       start: "11:00",
       end: "12:30",
-      room: "E2",
+      room: "O4",
       weeks: "odd",
+    },
+    {
+      id: 19,
+      subj: "MATLAB",
+      // Usunięto: title: "Algebra liniowa",
+      type: "Laboratorium",
+      groups: ["Lk4"],
+      day: 1, // Wtorek
+      start: "11:00",
+      end: "12:30",
+      room: "12",
+      weeks: "both",
     },
     {
       id: 45,
       subj: "ANG01",
-      title: "Język angielski",
+      // Usunięto: title: "Język angielski",
       type: "Lektorat",
-      groups: ["Lek2"],
+      groups: ["Lek3"],
       day: 3, // Czwartek
       start: "11:00",
       end: "12:30",
-      room: "E4",
+      room: "139SJO",
       weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
+    },
+    {
+      id: 45,
+      subj: "ANG01",
+      // Usunięto: title: "Język angielski",
+      type: "Lektorat",
+      groups: ["Lek4"],
+      day: 3, // Czwartek
+      start: "11:00",
+      end: "12:30",
+      room: "A4",
+      weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
+    },
+    {
+      id: 45,
+      subj: "ANG01",
+      // Usunięto: title: "Język angielski",
+      type: "Lektorat",
+      groups: ["Lek"],
+      day: 3, // Czwartek
+      start: "11:00",
+      end: "12:30",
+      room: "138SJO",
+      weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
+    },
+    {
+      id: 45,
+      subj: "ELEC01",
+      // Usunięto: title: "Język angielski",
+      type: "Lektorat",
+      groups: ["L2"],
+      day: 3, // Czwartek
+      start: "11:00",
+      end: "12:30",
+      room: "O4",
+      weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
+    },
+    {
+      id: 24,
+      subj: "FIZ01",
+      // Usunięto: title: "Wstęp do fizyki inżynierskiej",
+      type: "Wykład",
+      groups: [],
+      day: 4,
+      start: "11:00",
+      end: "12:30",
+      room: "F101",
+      weeks: "both",
     },
 
     // -----------------------------------------------------
@@ -238,9 +348,9 @@ export const timetableData = {
     {
       id: 46,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Wykład",
-      groups: ["C/E/k/U"],
+      groups: [],
       day: 0, // Poniedziałek
       start: "12:45",
       end: "14:15",
@@ -250,7 +360,7 @@ export const timetableData = {
     {
       id: 47,
       subj: "ALGE01",
-      title: "Algebra liniowa",
+      // Usunięto: title: "Algebra liniowa",
       type: "Ćwiczenia",
       groups: ["Ć2"],
       day: 1, // Wtorek
@@ -260,33 +370,94 @@ export const timetableData = {
       weeks: "both",
     },
     {
-      id: 48,
-      subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
-      type: "Laboratorium",
-      groups: ["Lk3"],
-      day: 2, // Środa
+      id: 47,
+      subj: "ELEC01",
+      // Usunięto: title: "Algebra liniowa",
+      type: "Laboratoria",
+      groups: ["L9"],
+      day: 1, // Wtorek
       start: "12:45",
       end: "14:15",
-      room: "E2",
+      room: "O4",
+      weeks: "odd",
+    },
+    {
+      id: 48,
+      subj: "MATLAB",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
+      type: "Laboratorium",
+      groups: ["Lk5"],
+      day: 1, // Wtorek
+      start: "12:45",
+      end: "14:15",
+      room: "12",
       weeks: "both",
     },
+
     {
       id: 49,
       subj: "MAT01",
-      title: "Wstęp do matematyki inżynierskiej",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
       type: "Wykład",
-      groups: ["C/E/k/U"],
-      day: 3, // Czwartek
+      groups: [],
+      day: 2, // Środa
       start: "12:45",
       end: "14:15",
       room: "A4",
       weeks: "both",
     },
     {
+      id: 49,
+      subj: "ANG01",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
+      type: "Lektorat",
+      groups: ["Lek5"],
+      day: 3, // Środa
+      start: "12:45",
+      end: "14:15",
+      room: "139SJO",
+      weeks: "both",
+    },
+    {
+      id: 49,
+      subj: "ANG01",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
+      type: "Lektorat",
+      groups: ["Lek6"],
+      day: 3, // Środa
+      start: "12:45",
+      end: "14:15",
+      room: "A4",
+      weeks: "both",
+    },
+    {
+      id: 49,
+      subj: "ELEC01",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
+      type: "Laboratorium",
+      groups: ["L4"],
+      day: 3, // Środa
+      start: "12:45",
+      end: "14:15",
+      room: "A4",
+      weeks: "even",
+    },
+    {
+      id: 49,
+      subj: "ELEC01",
+      // Usunięto: title: "Wstęp do matematyki inżynierskiej",
+      type: "Laboratorium",
+      groups: ["L3"],
+      day: 3, // Środa
+      start: "12:45",
+      end: "14:15",
+      room: "A4",
+      weeks: "odd",
+    },
+    {
       id: 50,
       subj: "FIZ01",
-      title: "Wstęp do fizyki inżynierskiej",
+      // Usunięto: title: "Wstęp do fizyki inżynierskiej",
       type: "Ćwiczenia",
       groups: ["Ć3"],
       day: 4, // Piątek
@@ -302,9 +473,9 @@ export const timetableData = {
     {
       id: 51,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
-      type: "Ćwiczenia",
-      groups: ["C/E/k/U"],
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
+      type: "Wykład",
+      groups: [],
       day: 0, // Poniedziałek
       start: "14:30",
       end: "16:00",
@@ -314,9 +485,9 @@ export const timetableData = {
     {
       id: 52,
       subj: "ALGE01",
-      title: "Algebra liniowa",
+      // Usunięto: title: "Algebra liniowa",
       type: "Ćwiczenia",
-      groups: ["Ć2"],
+      groups: ["Ć4"],
       day: 1, // Wtorek
       start: "14:30",
       end: "16:00",
@@ -324,40 +495,77 @@ export const timetableData = {
       weeks: "both",
     },
     {
-      id: 53,
-      subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
-      type: "Laboratorium",
-      groups: ["Lk4"],
-      day: 2, // Środa
+      id: 47,
+      subj: "ELEC01",
+      // Usunięto: title: "Algebra liniowa",
+      type: "Laboratoria",
+      groups: ["L7"],
+      day: 1, // Wtorek
       start: "14:30",
       end: "16:00",
-      room: "E2",
+      room: "O4",
+      weeks: "odd",
+    },
+    {
+      id: 53,
+      subj: "MATLAB",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
+      type: "Laboratorium",
+      groups: ["Lk6"],
+      day: 1, // Wtorek
+      start: "14:30",
+      end: "16:00",
+      room: "12",
       weeks: "both",
     },
+
     {
       id: 54,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
       type: "Laboratorium",
       groups: ["Lk7"],
-      day: 3, // Czwartek
+      day: 2, // Czwartek
       start: "14:30",
       end: "16:00",
-      room: "E2",
+      room: "12",
       weeks: "both",
     },
     {
       id: 55,
       subj: "ANG01",
-      title: "Język angielski",
+      // Usunięto: title: "Język angielski",
       type: "Lektorat",
       groups: ["Lek1"],
-      day: 4, // Piątek
+      day: 3, // Piątek
       start: "14:30",
       end: "16:00",
-      room: "D4",
+      room: "A4",
       weeks: "both",
+    },
+    {
+      id: 55,
+      subj: "ELEC01",
+      // Usunięto: title: "Język angielski",
+      type: "Laboratorium",
+      groups: ["L6"],
+      day: 3, // Piątek
+      start: "14:30",
+      end: "16:00",
+      room: "O4",
+      weeks: "even",
+    },
+    {
+      id: 55,
+      subj: "ELEC01",
+      // Usunięto: title: "Język angielski",
+      type: "Laboratorium",
+      groups: ["L5"],
+      day: 3, // Piątek
+      start: "14:30",
+      end: "16:00",
+      room: "O4",
+      weeks: "odd",
     },
 
     // -----------------------------------------------------
@@ -366,49 +574,61 @@ export const timetableData = {
     {
       id: 56,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Ćwiczenia",
-      groups: ["Ć2"],
+      groups: ["Ć1"],
       day: 0, // Poniedziałek
       start: "16:15",
       end: "17:45",
-      room: "A4",
+      room: "9",
       weeks: "both",
     },
     {
       id: 57,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
       type: "Laboratorium",
-      groups: ["Lk5"],
-      day: 1, // Wtorek
+      groups: ["Lk3"],
+      day: 0, // Wtorek
       start: "16:15",
       end: "17:45",
-      room: "E2",
+      room: "12",
       weeks: "both",
     },
     {
       id: 58,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Laboratorium",
-      groups: ["Lab"],
-      day: 2, // Środa
+      groups: ["L11"],
+      day: 1, // Środa
+      start: "16:15",
+      end: "18:30",
+      room: "O4",
+      weeks: "even",
+    },
+    {
+      id: 58,
+      subj: "ELEC01",
+      // Usunięto: title: "Podstawy elektrotechniki",
+      type: "Laboratorium",
+      groups: ["L8"],
+      day: 1, // Środa
       start: "16:15",
       end: "17:45",
-      room: "C4",
-      weeks: "both",
+      room: "O4",
+      weeks: "odd",
     },
     {
       id: 59,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
       type: "Laboratorium",
       groups: ["Lk8"],
-      day: 3, // Czwartek
+      day: 2, // Czwartek
       start: "16:15",
       end: "17:45",
-      room: "E2",
+      room: "12",
       weeks: "both",
     },
 
@@ -418,31 +638,31 @@ export const timetableData = {
     {
       id: 60,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Ćwiczenia",
-      groups: ["Ć1"],
+      groups: ["Ć2"],
       day: 0, // Poniedziałek
       start: "18:00",
       end: "19:30",
-      room: "A4",
+      room: "9",
       weeks: "both",
     },
     {
       id: 61,
       subj: "MATLAB",
-      title: "Wprowadzenie do MATLAB-a",
+      // Usunięto: title: "Wprowadzenie do MATLAB-a",
       type: "Laboratorium",
-      groups: ["Lk6"],
-      day: 1, // Wtorek
+      groups: ["Lk1"],
+      day: 0, // Wtorek
       start: "18:00",
       end: "19:30",
-      room: "E2",
+      room: "12",
       weeks: "both",
     },
     {
       id: 62,
       subj: "ELEC01",
-      title: "Podstawy elektrotechniki",
+      // Usunięto: title: "Podstawy elektrotechniki",
       type: "Ćwiczenia",
       groups: ["Ć4"],
       day: 2, // Środa
