@@ -302,7 +302,7 @@ export const timetableData = {
       day: 3, // Czwartek
       start: "11:00",
       end: "12:30",
-      room: "A4",
+      room: "150SJO",
       weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
     },
     {
@@ -439,7 +439,7 @@ export const timetableData = {
       day: 3, // Środa
       start: "12:45",
       end: "14:15",
-      room: "A4",
+      room: "150SJO",
       weeks: "both",
     },
     {
@@ -552,7 +552,7 @@ export const timetableData = {
       day: 3, // Piątek
       start: "14:30",
       end: "16:00",
-      room: "A4",
+      room: "150SJO",
       weeks: "both",
     },
     {
@@ -632,15 +632,15 @@ export const timetableData = {
       weeks: "odd",
     },
     {
-      id: 59,
-      subj: "MATLAB",
-      // Usunięto: title: "Wprowadzenie do MATLAB-a",
-      type: "Laboratorium",
-      groups: ["Lk8"],
-      day: 2, // Czwartek
-      start: "16:15",
-      end: "17:45",
-      room: "12",
+      id: 62,
+      subj: "ELEC01",
+      // Usunięto: title: "Podstawy elektrotechniki",
+      type: "Ćwiczenia",
+      groups: ["Ć4"],
+      day: 2, // Środa
+      start: "17:00",
+      end: "18:30",
+      room: "9",
       weeks: "both",
     },
 
@@ -669,18 +669,6 @@ export const timetableData = {
       start: "18:00",
       end: "19:30",
       room: "12",
-      weeks: "both",
-    },
-    {
-      id: 62,
-      subj: "ELEC01",
-      // Usunięto: title: "Podstawy elektrotechniki",
-      type: "Ćwiczenia",
-      groups: ["Ć4"],
-      day: 2, // Środa
-      start: "18:00",
-      end: "19:30",
-      room: "A4",
       weeks: "both",
     },
   ],
