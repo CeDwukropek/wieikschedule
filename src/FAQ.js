@@ -2,20 +2,22 @@ import { useState } from "react";
 
 const ITEMS = [
   {
-    q: "How do I save my group inputs?",
-    a: "Group inputs are saved per browser profile automatically. They persist across refreshes for 60 days.",
+    q: "Gdzie znajdę plan zajęć PK?",
+    a: "Oficjalny plan zajęć PK jest dostępny pod tym linkiem. Bardzo proszę o informowanie mnie o wszelkich błędach lub brakach w planie.",
+    href: "http://eclipse.elektron.pk.edu.pl/~plany-wieik/doku.php?id=pdf:start",
   },
   {
-    q: "How is week parity determined?",
-    a: "Parity is detected automatically using the ISO week number. You can override it with the buttons in the period bar or from the mobile menu.",
+    q: "Gdzie znajdę sale i budynek w którym mam zajęcia?",
+    href: "https://samorzad.pk.edu.pl/mapa",
   },
   {
-    q: "Why some subject colours are not visible?",
-    a: "Colors provided as Tailwind classes require those classes to be present in the build. Use hex color values in timetable data if you want reliable colours without changing Tailwind config.",
+    q: "Czy są gdzieś notatki z Wstepu do matematyki inzynierskiej?",
+    a: "Tak, regularnie uzupełniane notatki są dostępne tutaj, jednak daleko im do kompletności:",
+    href: "https://tinyurl.com/4uybarv8",
   },
   {
-    q: "How do I report broken or duplicate events?",
-    a: "Edit your source timetable data (src/timetable.js). Make sure each event has a unique id to avoid rendering duplicates.",
+    q: "Czy są gdziś notatki z Fizyki?",
+    a: "Jeszcze nie, ale będą.",
   },
 ];
 
@@ -24,7 +26,7 @@ export default function FAQ() {
 
   return (
     <section className="mt-8 pt-6 border-t border-neutral-800 text-gray-200">
-      <h2 className="text-lg font-semibold mb-3">FAL</h2>
+      <h2 className="text-lg font-semibold mb-3">FAQ</h2>
 
       <div className="space-y-2">
         {ITEMS.map((it, i) => {
@@ -43,7 +45,17 @@ export default function FAQ() {
               </button>
 
               {isOpen ? (
-                <div className="px-4 pb-3 text-sm text-gray-300">{it.a}</div>
+                <div className="px-4 pb-3 text-sm text-gray-300">
+                  {it.a ? <p className="mb-2">{it.a}</p> : null}
+                  <a
+                    href={it.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline break-words"
+                  >
+                    {it.href}
+                  </a>
+                </div>
               ) : null}
             </div>
           );
