@@ -302,27 +302,32 @@ export default function Timetable() {
 
       {/* --- Current period bar: auto parity + next week --- */}
       <div className="flex gap-3 items-center mb-4">
-        <button
-          onClick={() => setWeekParity(currentParity)}
-          className={`px-3 py-1 rounded text-sm ${
-            weekParity === currentParity
-              ? "bg-neutral-800"
-              : "bg-neutral-900 text-gray-300"
-          }`}
-        >
-          {currentParity === "even" ? "Even week" : "Odd week"} • {currentRange}
-        </button>
+        {viewMode === "week" ? (
+          <>
+            <button
+              onClick={() => setWeekParity(currentParity)}
+              className={`px-3 py-1 rounded text-sm ${
+                weekParity === currentParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {currentParity === "even" ? "Even week" : "Odd week"} •{" "}
+              {currentRange}
+            </button>
 
-        <button
-          onClick={() => setWeekParity(nextParity)}
-          className={`px-3 py-1 rounded text-sm ${
-            weekParity === nextParity
-              ? "bg-neutral-800"
-              : "bg-neutral-900 text-gray-300"
-          }`}
-        >
-          {nextParity === "even" ? "Even week" : "Odd week"} • {nextRange}
-        </button>
+            <button
+              onClick={() => setWeekParity(nextParity)}
+              className={`px-3 py-1 rounded text-sm ${
+                weekParity === nextParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {nextParity === "even" ? "Even week" : "Odd week"} • {nextRange}
+            </button>
+          </>
+        ) : null}
       </div>
 
       {/* --- Widok planu --- */}
@@ -330,7 +335,16 @@ export default function Timetable() {
         // key causes WeekView to unmount/remount when weekParity changes
         <WeekView key={`week-${weekParity}`} events={filtered} />
       ) : (
-        <DayView key={`day-${weekParity}`} events={filtered} />
+        <DayView
+          key={`day-${weekParity}`}
+          events={filtered}
+          // parity/date helpers from App so DayView can show ranges and switch parity
+          currentParity={currentParity}
+          nextParity={nextParity}
+          currentRange={currentRange}
+          nextRange={nextRange}
+          setWeekParity={setWeekParity}
+        />
       )}
 
       <FAQ />
