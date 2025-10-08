@@ -88,19 +88,6 @@ export default function FloatingMenu({
             </div>
           </div>
 
-          <div>
-            <div className="text-xs text-gray-400 mb-2">Tydzień</div>
-            <select
-              value={weekParity}
-              onChange={(e) => setWeekParity(e.target.value)}
-              className="w-full bg-neutral-900 text-gray-300 border border-neutral-700 rounded-lg px-2 py-1"
-            >
-              <option value="all">Wszystkie tygodnie</option>
-              <option value="odd">Tygodnie nieparzyste</option>
-              <option value="even">Tygodnie parzyste</option>
-            </select>
-          </div>
-
           <div className="flex gap-2">
             <button
               onClick={() => setHideLectures((s) => !s)}
