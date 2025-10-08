@@ -224,8 +224,8 @@ export const timetableData = {
       type: "Ćwiczenia",
       groups: ["Ć4"],
       day: 4,
-      start: "09:15",
-      end: "10:45",
+      start: "08:45",
+      end: "10:15",
       room: "F203",
       weeks: "both",
     },
@@ -656,7 +656,7 @@ export const timetableData = {
       day: 0, // Poniedziałek
       start: "18:00",
       end: "19:30",
-      room: "9",
+      room: "A2",
       weeks: "both",
     },
     {
