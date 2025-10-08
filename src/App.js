@@ -6,6 +6,7 @@ import WeekView from "./WeekView";
 import DayView from "./DayView";
 import FloatingMenu from "./FloatingMenu";
 import { timeToMinutes } from "./utils";
+import FAQ from "./FAQ";
 
 const { SCHEDULE } = timetableData;
 
@@ -331,6 +332,8 @@ export default function Timetable() {
       ) : (
         <DayView key={`day-${weekParity}`} events={filtered} />
       )}
+
+      <FAQ />
     </div>
   );
 }
