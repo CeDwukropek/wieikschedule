@@ -171,6 +171,45 @@ export default function Timetable() {
     return ev.type?.toLowerCase() === "wykład";
   }
 
+  // --- week / period helpers (auto parity + date ranges) ---
+  function getISOWeekNumber(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  }
+
+  function weekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 (Sun) .. 6
+    const diff = (day === 0 ? -6 : 1) - day; // shift to Monday
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function formatDate(d) {
+    return d.toLocaleDateString();
+  }
+
+  const today = new Date();
+  const thisWeekStart = weekStart(today);
+  const thisWeekEnd = new Date(thisWeekStart);
+  thisWeekEnd.setDate(thisWeekEnd.getDate() + 6);
+  const nextWeekStart = new Date(thisWeekStart);
+  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+  const nextWeekEnd = new Date(nextWeekStart);
+  nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+
+  const currentParity = getISOWeekNumber(today) % 2 === 0 ? "even" : "odd";
+  const nextParity = currentParity === "even" ? "odd" : "even";
+  const currentRange = `${formatDate(thisWeekStart)} — ${formatDate(
+    thisWeekEnd
+  )}`;
+  const nextRange = `${formatDate(nextWeekStart)} — ${formatDate(nextWeekEnd)}`;
+  // --- end helpers ---
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
@@ -196,16 +235,6 @@ export default function Timetable() {
         >
           <List className="w-4 h-4" /> Dzień
         </button>
-
-        <select
-          value={weekParity}
-          onChange={(e) => setWeekParity(e.target.value)}
-          className="bg-neutral-900 text-gray-300 border border-neutral-700 rounded-lg px-2 py-1"
-        >
-          <option value="all">Wszystkie tygodnie</option>
-          <option value="odd">Tygodnie nieparzyste</option>
-          <option value="even">Tygodnie parzyste</option>
-        </select>
 
         <button
           onClick={() => setHideLectures(!hideLectures)}
@@ -269,6 +298,31 @@ export default function Timetable() {
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
       />
+
+      {/* --- Current period bar: auto parity + next week --- */}
+      <div className="flex gap-3 items-center mb-4">
+        <button
+          onClick={() => setWeekParity(currentParity)}
+          className={`px-3 py-1 rounded text-sm ${
+            weekParity === currentParity
+              ? "bg-neutral-800"
+              : "bg-neutral-900 text-gray-300"
+          }`}
+        >
+          {currentParity === "even" ? "Even week" : "Odd week"} • {currentRange}
+        </button>
+
+        <button
+          onClick={() => setWeekParity(nextParity)}
+          className={`px-3 py-1 rounded text-sm ${
+            weekParity === nextParity
+              ? "bg-neutral-800"
+              : "bg-neutral-900 text-gray-300"
+          }`}
+        >
+          {nextParity === "even" ? "Even week" : "Odd week"} • {nextRange}
+        </button>
+      </div>
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
