@@ -65,7 +65,7 @@ export const timetableData = {
       start: "07:30",
       end: "09:00",
       room: "A1",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 8,
@@ -77,7 +77,7 @@ export const timetableData = {
       start: "07:30",
       end: "09:00",
       room: "A1",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 9,
@@ -267,7 +267,7 @@ export const timetableData = {
       start: "11:00",
       end: "12:30",
       room: "O4",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 19,
@@ -327,7 +327,7 @@ export const timetableData = {
       start: "11:00",
       end: "12:30",
       room: "O4",
-      weeks: "even", // Widoczne jako całe, ale u Ciebie było odd/even
+      weeks: "odd", // Widoczne jako całe, ale u Ciebie było odd/even
     },
     {
       id: 45,
@@ -339,7 +339,7 @@ export const timetableData = {
       start: "11:00",
       end: "12:30",
       room: "O4",
-      weeks: "odd", // Widoczne jako całe, ale u Ciebie było odd/even
+      weeks: "even", // Widoczne jako całe, ale u Ciebie było odd/even
     },
     {
       id: 24,
@@ -391,7 +391,7 @@ export const timetableData = {
       start: "12:45",
       end: "14:15",
       room: "O4",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 48,
@@ -452,7 +452,7 @@ export const timetableData = {
       start: "12:45",
       end: "14:15",
       room: "A4",
-      weeks: "odd",
+      weeks: "even",
     },
     {
       id: 49,
@@ -464,7 +464,7 @@ export const timetableData = {
       start: "12:45",
       end: "14:15",
       room: "A4",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 50,
@@ -516,7 +516,7 @@ export const timetableData = {
       start: "14:30",
       end: "16:00",
       room: "O4",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 53,
@@ -565,7 +565,7 @@ export const timetableData = {
       start: "14:30",
       end: "16:00",
       room: "O4",
-      weeks: "odd",
+      weeks: "even",
     },
     {
       id: 55,
@@ -577,7 +577,7 @@ export const timetableData = {
       start: "14:30",
       end: "16:00",
       room: "O4",
-      weeks: "even",
+      weeks: "odd",
     },
 
     // -----------------------------------------------------
@@ -617,7 +617,7 @@ export const timetableData = {
       start: "16:15",
       end: "18:30",
       room: "O4",
-      weeks: "odd",
+      weeks: "even",
     },
     {
       id: 58,
@@ -629,7 +629,7 @@ export const timetableData = {
       start: "16:15",
       end: "17:45",
       room: "O4",
-      weeks: "even",
+      weeks: "odd",
     },
     {
       id: 62,
