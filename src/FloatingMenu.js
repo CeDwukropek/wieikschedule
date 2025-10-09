@@ -159,7 +159,7 @@ export default function FloatingMenu({
           </div>
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-700 text-gray-300"
               onClick={() => exportICS(filtered)}
             >
               Export ICS
