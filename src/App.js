@@ -305,6 +305,7 @@ export default function Timetable() {
         studentGroups={studentGroups}
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
+        filtered={filtered}
       />
 
       {/* --- Current period bar: auto parity + next week --- */}

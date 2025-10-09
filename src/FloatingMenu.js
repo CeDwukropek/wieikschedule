@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
 import GroupInput from "./GroupInput";
+import { exportICS } from "./exportICS";
 
 export default function FloatingMenu({
   viewMode,
@@ -14,6 +15,7 @@ export default function FloatingMenu({
   studentGroups,
   setStudentGroups,
   handleGroupChange,
+  filtered,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -153,6 +155,14 @@ export default function FloatingMenu({
               className="flex-1 px-3 py-2 rounded border border-neutral-700 text-gray-300"
             >
               Zamknij
+            </button>
+          </div>
+          <div className="pt-3 border-t border-neutral-800 flex gap-2">
+            <button
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+              onClick={() => exportICS(filtered)}
+            >
+              Export ICS
             </button>
           </div>
         </div>
