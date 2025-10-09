@@ -2,6 +2,11 @@ import { useState } from "react";
 
 const ITEMS = [
   {
+    q: "Gdzie kupić ubezpieczenie studenckie?",
+    a: "Pod tym linkiem. Możliwość zakupu TYLKO DO 15.12.2025",
+    href: "https://samorzad.pk.edu.pl/ubezpieczenia/",
+  },
+  {
     q: "Gdzie znajdę plan zajęć PK?",
     a: "Oficjalny plan zajęć PK jest dostępny pod tym linkiem. Bardzo proszę o informowanie mnie o wszelkich błędach lub brakach w planie.",
     href: "http://eclipse.elektron.pk.edu.pl/~plany-wieik/doku.php?id=pdf:start",
@@ -14,6 +19,11 @@ const ITEMS = [
     q: "Czy są gdzieś notatki z Wstepu do matematyki inzynierskiej?",
     a: "Tak, regularnie uzupełniane notatki są dostępne tutaj, jednak daleko im do kompletności:",
     href: "https://tinyurl.com/4uybarv8",
+  },
+  {
+    q: "Ktoś kiedyś podesłał link do kursu ETRAPEZ, gdzie on jest?",
+    a: "Tu:",
+    href: "https://tinyurl.com/yvkdknth",
   },
   {
     q: "Czy są gdziś notatki z Fizyki?",
