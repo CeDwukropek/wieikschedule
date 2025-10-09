@@ -7,6 +7,7 @@ import DayView from "./DayView";
 import FloatingMenu from "./FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
+import { exportICS } from "./exportICS";
 
 const { SCHEDULE } = timetableData;
 
@@ -254,6 +255,12 @@ export default function Timetable() {
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
         >
           {showAll ? "Twój plan" : "Pokaż cały plan"}
+        </button>
+        <button
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+          onClick={() => exportICS(filtered)}
+        >
+          Export ICS
         </button>
       </div>
 
