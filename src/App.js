@@ -341,6 +341,7 @@ export default function Timetable() {
       </div>
 
       {/* Floating menu / settings (bottom-right) */}
+
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -407,11 +408,13 @@ export default function Timetable() {
       )}
 
       {/* mobile bottom nav for day navigation */}
-      <BottomDayNav
-        options={combinedOptions}
-        selection={selection}
-        onChange={setSelection}
-      />
+      {viewMode === "day" && (
+        <BottomDayNav
+          options={combinedOptions}
+          selection={selection}
+          onChange={setSelection}
+        />
+      )}
 
       <FAQ />
     </div>
