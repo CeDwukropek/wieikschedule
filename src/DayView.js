@@ -9,29 +9,23 @@ export default function DayView({
   currentRange,
   nextRange,
   setWeekParity,
+  // optional external control
+  options: externalOptions,
+  selection: externalSelection,
+  onSelectionChange: externalOnSelectionChange,
 }) {
   const startHour = 7;
   const endHour = 20;
   const slotMinutes = 15;
   const totalSlots = (endHour - startHour) * (60 / slotMinutes);
 
-  const dayNamesFull = [
-    "Poniedziałek",
-    "Wtorek",
-    "Środa",
-    "Czwartek",
-    "Piątek",
-  ];
-  const today = new Date();
+  const dayNamesFull = React.useMemo(
+    () => ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"],
+    []
+  );
+  const today = React.useMemo(() => new Date(), []);
 
-  function weekStart(date) {
-    const d = new Date(date);
-    const day = d.getDay(); // 0 (Sun)..6
-    const diff = (day === 0 ? -6 : 1) - day; // move to Monday
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
+  // weekStart logic is handled inside combinedOptions useMemo
 
   function formatDate(d) {
     return d.toLocaleDateString();
@@ -43,43 +37,65 @@ export default function DayView({
     [today]
   );
 
-  // single select value: "<parity>:<dayIndex>" e.g. "current:1" or "next:3"
+  // selection can be controlled externally via props.selection (value: "parity:dayIndex")
   const defaultSelection = `current:${defaultDayIndex}`;
-  const [selection, setSelection] = useState(defaultSelection);
+  const [internalSelection, setInternalSelection] = useState(defaultSelection);
+  const selection = externalSelection ?? internalSelection;
 
-  // helper to compute week start for parity token ('current'|'next')
-  function baseWeekStartFor(parityToken) {
-    const ws = weekStart(today);
-    if (parityToken === "next") {
-      const n = new Date(ws);
-      n.setDate(n.getDate() + 7);
-      return n;
-    }
-    return ws;
-  }
+  // helper logic for week start lives inside combinedOptions useMemo
 
-  // build combined options: current/next parity × five weekdays with dates
+  // build combined options: use externalOptions when provided otherwise compute locally
+  // build combined options: use externalOptions when provided otherwise compute locally
   const combinedOptions = useMemo(() => {
+    if (externalOptions) return externalOptions;
     return ["current", "next"].flatMap((parityToken) => {
-      const base = baseWeekStartFor(parityToken);
+      const base = (function baseWeekStartFor(parityToken) {
+        const ws = (function weekStartLocal(date) {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diff = (day === 0 ? -6 : 1) - day;
+          d.setDate(d.getDate() + diff);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })(today);
+        if (parityToken === "next") {
+          const n = new Date(ws);
+          n.setDate(n.getDate() + 7);
+          return n;
+        }
+        return ws;
+      })(parityToken);
+
       return dayNamesFull.map((name, i) => {
         const d = new Date(base);
         d.setDate(d.getDate() + i);
+        const parityLabel =
+          parityToken === "current"
+            ? currentParity === "even"
+              ? "Even"
+              : "Odd"
+            : nextParity === "even"
+            ? "Even"
+            : "Odd";
         return {
           value: `${parityToken}:${i}`,
-          label: `${name} • ${formatDate(d)}`,
+          label: `${parityLabel} • ${name} • ${formatDate(d)}`,
         };
       });
     });
-  }, [currentParity, nextParity, dayNamesFull]);
+  }, [externalOptions, currentParity, nextParity, dayNamesFull, today]);
 
   // parse selection into parityToken and selectedDay
   const [selParity, selDay] = selection.split(":");
   const selectedDayIndex = Number(selDay);
 
-  // notify parent about parity change whenever user picks an option
+  // notify parent about selection change
   function handleSelectionChange(val) {
-    setSelection(val);
+    if (externalOnSelectionChange) {
+      externalOnSelectionChange(val);
+    } else {
+      setInternalSelection(val);
+    }
     const [parityToken] = val.split(":");
     const parityToSet = parityToken === "current" ? currentParity : nextParity;
     if (setWeekParity) setWeekParity(parityToSet);
@@ -125,20 +141,6 @@ export default function DayView({
 
   return (
     <div>
-      <div className="flex gap-3 items-center mb-4">
-        <select
-          value={selection}
-          onChange={(e) => handleSelectionChange(e.target.value)}
-          className={`bg-neutral-900 text-gray-300 rounded-lg px-2 py-1 transition-shadow focus:outline-none `}
-        >
-          {combinedOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div
         className={`grid grid-cols-[60px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
           isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
