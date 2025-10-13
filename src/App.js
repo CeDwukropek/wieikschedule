@@ -206,10 +206,10 @@ export default function Timetable() {
 
   const currentParity = getISOWeekNumber(today) % 2 === 0 ? "even" : "odd";
   const nextParity = currentParity === "even" ? "odd" : "even";
-  const currentRange = `${formatDate(thisWeekStart)} — ${formatDate(
+  const currentRange = `${formatDate(thisWeekStart)} - ${formatDate(
     thisWeekEnd
   )}`;
-  const nextRange = `${formatDate(nextWeekStart)} — ${formatDate(nextWeekEnd)}`;
+  const nextRange = `${formatDate(nextWeekStart)} - ${formatDate(nextWeekEnd)}`;
   // --- end helpers ---
 
   return (
@@ -320,7 +320,6 @@ export default function Timetable() {
                   : "bg-neutral-900 text-gray-300"
               }`}
             >
-              {currentParity === "even" ? "Even week" : "Odd week"} •{" "}
               {currentRange}
             </button>
 
@@ -332,7 +331,7 @@ export default function Timetable() {
                   : "bg-neutral-900 text-gray-300"
               }`}
             >
-              {nextParity === "even" ? "Even week" : "Odd week"} • {nextRange}
+              {nextRange}
             </button>
           </>
         ) : null}

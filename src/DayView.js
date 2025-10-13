@@ -62,14 +62,6 @@ export default function DayView({
   const combinedOptions = useMemo(() => {
     return ["current", "next"].flatMap((parityToken) => {
       const base = baseWeekStartFor(parityToken);
-      const parityLabel =
-        parityToken === "current"
-          ? currentParity === "even"
-            ? "Even"
-            : "Odd"
-          : nextParity === "even"
-          ? "Even"
-          : "Odd";
       return dayNamesFull.map((name, i) => {
         const d = new Date(base);
         d.setDate(d.getDate() + i);
@@ -159,7 +151,7 @@ export default function DayView({
               key={i}
               className="h-16 flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700"
             >
-              <span className="mt-[-0.5em]">{startHour + i}:00</span>
+              <span className="">{startHour + i}:00</span>
             </div>
           ))}
         </div>
