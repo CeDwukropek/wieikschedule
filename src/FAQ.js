@@ -35,7 +35,7 @@ export default function FAQ() {
   const [open, setOpen] = useState(null);
 
   return (
-    <section className="mt-8 pt-6 border-t border-neutral-800 text-gray-200">
+    <section className="mt-8 pt-6 border-t border-neutral-800 text-gray-200 mb-[6rem]">
       <h2 className="text-lg font-semibold mb-3">FAQ</h2>
 
       <div className="space-y-2">
