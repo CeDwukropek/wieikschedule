@@ -16,9 +16,9 @@ export default function FloatingMenu({
   setStudentGroups,
   handleGroupChange,
   filtered,
+  open,
+  setOpen,
 }) {
-  const [open, setOpen] = useState(false);
-
   function clearFilters() {
     setWeekParity("all");
     setHideLectures(false);
@@ -33,7 +33,7 @@ export default function FloatingMenu({
       <button
         aria-label={open ? "Zamknij menu" : "Otwórz menu"}
         onClick={() => setOpen((s) => !s)}
-        className="fixed right-4 bottom-4 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white shadow-lg"
+        className={`fixed right-4 bottom-[5rem] z-50 flex items-center justify-center w-12 h-12 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white shadow-lg`}
       >
         {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
@@ -8,10 +8,12 @@ import FloatingMenu from "./FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
+import BottomDayNav from "./BottomDayNav";
 
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
+  const [open, setOpen] = useState(false);
   // per-browser user id (created once) -> used to namespace storage so it's unique user
   const USER_KEY = "wieikschedule.userId";
   function getUserId() {
@@ -63,9 +65,9 @@ export default function Timetable() {
 
   // --- cached filtered events (persisted to localStorage, 60 days TTL) ---
   const CACHE_KEY = `wieikschedule.${getUserId()}.cachedFiltered`;
-  const CACHE_TTL = 1000 * 60 * 60 * 24 * 30 * 6; // 6 months in ms
+  const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
 
-  function computeFiltered(
+  const computeFiltered = useCallback(function computeFiltered(
     schedule,
     groups,
     hideLecturesFlag,
@@ -91,7 +93,8 @@ export default function Timetable() {
         if (a.day !== b.day) return a.day - b.day;
         return timeToMinutes(a.start) - timeToMinutes(b.start);
       });
-  }
+  },
+  []);
 
   const [filtered, setFiltered] = useState(() => {
     try {
@@ -135,7 +138,9 @@ export default function Timetable() {
     studentGroups,
     hideLectures,
     weekParity,
-    showAll /* CACHE_KEY intentionally not included */,
+    showAll,
+    computeFiltered,
+    CACHE_KEY,
   ]);
 
   // persist all inputs/settings for this user
@@ -192,10 +197,22 @@ export default function Timetable() {
   }
 
   function formatDate(d) {
-    return d.toLocaleDateString();
+    // Return day and month only, omit year (e.g. "13.10")
+    try {
+      return d.toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "2-digit",
+      });
+    } catch (e) {
+      // Fallback: simple dd.mm
+      const dt = new Date(d);
+      const dd = String(dt.getDate()).padStart(2, "0");
+      const mm = String(dt.getMonth() + 1).padStart(2, "0");
+      return `${dd}.${mm}`;
+    }
   }
 
-  const today = new Date();
+  const today = React.useMemo(() => new Date(), []);
   const thisWeekStart = weekStart(today);
   const thisWeekEnd = new Date(thisWeekStart);
   thisWeekEnd.setDate(thisWeekEnd.getDate() + 6);
@@ -211,6 +228,42 @@ export default function Timetable() {
   )}`;
   const nextRange = `${formatDate(nextWeekStart)} - ${formatDate(nextWeekEnd)}`;
   // --- end helpers ---
+
+  // build combined options used by DayView and BottomDayNav
+  const combinedOptions = React.useMemo(() => {
+    const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
+    return ["current", "next"].flatMap((parityToken) => {
+      const base = (function () {
+        const ws = (function (date) {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diff = (day === 0 ? -6 : 1) - day;
+          d.setDate(d.getDate() + diff);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })(today);
+        if (parityToken === "next") {
+          const n = new Date(ws);
+          n.setDate(n.getDate() + 7);
+          return n;
+        }
+        return ws;
+      })();
+
+      return names.map((n, i) => {
+        const d = new Date(base);
+        d.setDate(d.getDate() + i);
+        return {
+          value: `${parityToken}:${i}`,
+          label: `${n} • ${formatDate(d)}`,
+        };
+      });
+    });
+  }, [today]);
+
+  // controlled selection for DayView / BottomDayNav
+  const defaultDayIndex = Math.min(Math.max((today.getDay() + 6) % 7, 0), 4);
+  const [selection, setSelection] = useState(`current:${defaultDayIndex}`);
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
@@ -293,6 +346,7 @@ export default function Timetable() {
       </div>
 
       {/* Floating menu / settings (bottom-right) */}
+
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -306,41 +360,23 @@ export default function Timetable() {
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
         filtered={filtered}
+        open={open}
+        setOpen={setOpen}
       />
-
-      {/* --- Current period bar: auto parity + next week --- */}
-      <div className="flex gap-3 items-center mb-4">
-        {viewMode === "week" ? (
-          <>
-            <button
-              onClick={() => setWeekParity(currentParity)}
-              className={`px-3 py-1 rounded text-sm ${
-                weekParity === currentParity
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
-              }`}
-            >
-              {currentRange}
-            </button>
-
-            <button
-              onClick={() => setWeekParity(nextParity)}
-              className={`px-3 py-1 rounded text-sm ${
-                weekParity === nextParity
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
-              }`}
-            >
-              {nextRange}
-            </button>
-          </>
-        ) : null}
-      </div>
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        // key causes WeekView to unmount/remount when weekParity changes
-        <WeekView key={`week-${weekParity}`} events={filtered} />
+        <WeekView
+          key={`week-${weekParity}`}
+          events={filtered}
+          activeParity={weekParity}
+          setWeekParity={setWeekParity}
+          currentParity={currentParity}
+          nextParity={nextParity}
+          currentRange={currentRange}
+          nextRange={nextRange}
+          open={open}
+        />
       ) : (
         <DayView
           key={`day-${weekParity}`}
@@ -351,6 +387,19 @@ export default function Timetable() {
           currentRange={currentRange}
           nextRange={nextRange}
           setWeekParity={setWeekParity}
+          // control selection externally so BottomDayNav drives it
+          options={combinedOptions}
+          selection={selection}
+          onSelectionChange={setSelection}
+        />
+      )}
+
+      {/* mobile bottom nav for day navigation */}
+      {viewMode === "day" && !open && (
+        <BottomDayNav
+          options={combinedOptions}
+          selection={selection}
+          onChange={setSelection}
         />
       )}
 
