@@ -344,6 +344,35 @@ export default function Timetable() {
           onChange={handleGroupChange}
         />
       </div>
+      {/* --- Current period bar: auto parity + next week --- */}
+
+      <div className="hidden sm:block gap-3 items-center mb-4 ">
+        {viewMode === "week" ? (
+          <>
+            <button
+              onClick={() => setWeekParity(currentParity)}
+              className={`px-3 py-1 rounded text-sm ${
+                weekParity === currentParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {currentRange}
+            </button>
+
+            <button
+              onClick={() => setWeekParity(nextParity)}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                weekParity === nextParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {nextRange}
+            </button>
+          </>
+        ) : null}
+      </div>
 
       {/* Floating menu / settings (bottom-right) */}
 
