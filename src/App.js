@@ -379,7 +379,6 @@ export default function Timetable() {
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
-        weekParity={weekParity}
         setWeekParity={setWeekParity}
         hideLectures={hideLectures}
         setHideLectures={setHideLectures}
@@ -388,24 +387,22 @@ export default function Timetable() {
         studentGroups={studentGroups}
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
+        activeParity={weekParity}
+        currentParity={currentParity}
+        currentRange={currentRange}
+        nextRange={nextRange}
+        nextParity={nextParity}
         filtered={filtered}
         open={open}
         setOpen={setOpen}
+        options={combinedOptions}
+        selection={selection}
+        onChange={setSelection}
       />
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView
-          key={`week-${weekParity}`}
-          events={filtered}
-          activeParity={weekParity}
-          setWeekParity={setWeekParity}
-          currentParity={currentParity}
-          nextParity={nextParity}
-          currentRange={currentRange}
-          nextRange={nextRange}
-          open={open}
-        />
+        <WeekView key={`week-${weekParity}`} events={filtered} />
       ) : (
         <DayView
           key={`day-${weekParity}`}
@@ -422,16 +419,6 @@ export default function Timetable() {
           onSelectionChange={setSelection}
         />
       )}
-
-      {/* mobile bottom nav for day navigation */}
-      {viewMode === "day" && !open && (
-        <BottomDayNav
-          options={combinedOptions}
-          selection={selection}
-          onChange={setSelection}
-        />
-      )}
-
       <FAQ />
     </div>
   );
