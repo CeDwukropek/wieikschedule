@@ -1,6 +1,6 @@
 import React from "react";
-import EventCard from "./EventCard";
-import { timeToMinutes } from "./utils";
+import EventCard from "../EventCard";
+import { timeToMinutes } from "../utils";
 
 export default function WeekView({ events }) {
   const startHour = 7;

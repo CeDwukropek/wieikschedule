@@ -1,6 +1,6 @@
 import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
-import GroupInput from "./GroupInput";
-import { exportICS } from "./exportICS";
+import GroupInput from "../GroupInput";
+import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
 import { WeekMenu } from "./WeekMenu";
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
-import EventCard from "./EventCard";
-import { timeToMinutes } from "./utils";
+import EventCard from "../EventCard";
+import { timeToMinutes } from "../utils";
 
 export default function DayView({ events, selection: externalSelection }) {
   const startHour = 7;

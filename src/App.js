@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
-import WeekView from "./WeekView";
-import DayView from "./DayView";
-import FloatingMenu from "./FloatingMenu";
+import WeekView from "./View/WeekView";
+import DayView from "./View/DayView";
+import FloatingMenu from "./Menu/FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
-import BottomDayNav from "./BottomDayNav";
 
 const { SCHEDULE } = timetableData;
 
