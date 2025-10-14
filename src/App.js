@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
-import WeekView from "./WeekView";
-import DayView from "./DayView";
-import FloatingMenu from "./FloatingMenu";
+import WeekView from "./View/WeekView";
+import DayView from "./View/DayView";
+import FloatingMenu from "./Menu/FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
-import BottomDayNav from "./BottomDayNav";
 
 const { SCHEDULE } = timetableData;
 
@@ -255,7 +254,8 @@ export default function Timetable() {
         d.setDate(d.getDate() + i);
         return {
           value: `${parityToken}:${i}`,
-          label: `${n} • ${formatDate(d)}`,
+          label: `${n}`,
+          date: `${formatDate(d)}`,
         };
       });
     });
@@ -379,7 +379,6 @@ export default function Timetable() {
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
-        weekParity={weekParity}
         setWeekParity={setWeekParity}
         hideLectures={hideLectures}
         setHideLectures={setHideLectures}
@@ -388,24 +387,22 @@ export default function Timetable() {
         studentGroups={studentGroups}
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
+        activeParity={weekParity}
+        currentParity={currentParity}
+        currentRange={currentRange}
+        nextRange={nextRange}
+        nextParity={nextParity}
         filtered={filtered}
         open={open}
         setOpen={setOpen}
+        options={combinedOptions}
+        selection={selection}
+        onChange={setSelection}
       />
 
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView
-          key={`week-${weekParity}`}
-          events={filtered}
-          activeParity={weekParity}
-          setWeekParity={setWeekParity}
-          currentParity={currentParity}
-          nextParity={nextParity}
-          currentRange={currentRange}
-          nextRange={nextRange}
-          open={open}
-        />
+        <WeekView key={`week-${weekParity}`} events={filtered} />
       ) : (
         <DayView
           key={`day-${weekParity}`}
@@ -422,16 +419,6 @@ export default function Timetable() {
           onSelectionChange={setSelection}
         />
       )}
-
-      {/* mobile bottom nav for day navigation */}
-      {viewMode === "day" && !open && (
-        <BottomDayNav
-          options={combinedOptions}
-          selection={selection}
-          onChange={setSelection}
-        />
-      )}
-
       <FAQ />
     </div>
   );
