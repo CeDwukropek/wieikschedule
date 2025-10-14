@@ -196,15 +196,17 @@ export default function Timetable() {
   }
 
   function formatDate(d) {
-    // Return day and month only, omit year (e.g. "13.10")
+    // Zwraca "dd.mm", np. "06.10" — zawsze po polsku
+    const dt = new Date(d);
+    if (Number.isNaN(dt)) return ""; // ochrona na złe dane
+
     try {
-      return d.toLocaleDateString(undefined, {
+      return dt.toLocaleDateString("pl-PL", {
         day: "2-digit",
         month: "2-digit",
       });
-    } catch (e) {
-      // Fallback: simple dd.mm
-      const dt = new Date(d);
+    } catch {
+      // Fallback niezależny od locale
       const dd = String(dt.getDate()).padStart(2, "0");
       const mm = String(dt.getMonth() + 1).padStart(2, "0");
       return `${dd}.${mm}`;
