@@ -17,6 +17,7 @@ export function DayMenu({ options = [], selection, onChange }) {
   }
 
   const label = options[currentIndex]?.label || "";
+  const date = options[currentIndex]?.date || "";
   return (
     <>
       <button
@@ -29,6 +30,8 @@ export function DayMenu({ options = [], selection, onChange }) {
 
       <div className="flex-1 text-center text-sm text-gray-200 truncate px-2">
         {label}
+        <br></br>
+        <span className="text-[0.75rem]">{date}</span>
       </div>
 
       <button

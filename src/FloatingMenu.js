@@ -39,7 +39,16 @@ export default function FloatingMenu({
     <div className="sm:hidden">
       {/* Floating toggle button (bottom-right) */}
       <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-3 py-2 shadow-lg">
-        <div className="w-12 h-12"></div>
+        <button
+          onClick={() => setViewMode(viewMode === "week" ? "day" : "week")}
+          className="w-12 h-12"
+        >
+          {viewMode === "week" ? (
+            <Calendar className="w-6 h-6 inline-block mr-2" />
+          ) : (
+            <List className="w-6 h-6 inline-block mr-2" />
+          )}
+        </button>
         {viewMode === "day" && (
           <DayMenu
             options={options}
@@ -50,7 +59,7 @@ export default function FloatingMenu({
         {viewMode === "week" && (
           <WeekMenu
             events={filtered}
-            activeParity={selection}
+            activeParity={activeParity}
             setWeekParity={setWeekParity}
             currentParity={currentParity}
             nextParity={nextParity}

@@ -255,7 +255,8 @@ export default function Timetable() {
         d.setDate(d.getDate() + i);
         return {
           value: `${parityToken}:${i}`,
-          label: `${n} • ${formatDate(d)}`,
+          label: `${n}`,
+          date: `${formatDate(d)}`,
         };
       });
     });

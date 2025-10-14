@@ -18,7 +18,9 @@ export function WeekMenu({
             : "bg-neutral-900 text-gray-300"
         }`}
       >
-        {currentRange}
+        This week
+        <br></br>
+        <span className="text-[0.75rem]">{currentRange}</span>
       </button>
 
       <button
@@ -29,7 +31,9 @@ export function WeekMenu({
             : "bg-neutral-900 text-gray-300"
         }`}
       >
-        {nextRange}
+        Next week
+        <br></br>
+        <span className="text-[0.75rem]">{nextRange}</span>
       </button>
     </>
   );
