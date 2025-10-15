@@ -71,34 +71,64 @@ export default function Timetable() {
   const computeFiltered = useCallback(function computeFiltered(
     schedule,
     groups,
-    hideLecturesFlag,
+    hideLectures,
     parity, // "odd" | "even" | "all"
-    showAllFlag
+    showAll
   ) {
-    return schedule
-      .filter((ev) => {
-        // ⬇️ PRAWIDŁOWA logika parzystości
-        if (parity === "odd" && ev.weeks === "even") return false;
-        if (parity === "even" && ev.weeks === "odd") return false;
-        // dla "all" nic nie odrzucamy
+    // 1) Predykat parzystości skompilowany raz
+    const passParity =
+      parity === "odd"
+        ? (e) => e.weeks !== "even"
+        : parity === "even"
+        ? (e) => e.weeks !== "odd"
+        : () => true; // "all" → nic nie odrzucamy
 
-        if (hideLecturesFlag && isLecture(ev)) return false;
-        if (isLecture(ev)) return true;
-        if (showAllFlag) return true;
+    // 2) Zestaw wybranych grup (O(1) membership)
+    const groupSet = new Set(
+      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean)
+    );
 
-        return ev.groups.some(
-          (g) =>
-            g === groups.C ||
-            g === groups.L ||
-            g === groups.Lek ||
-            g === groups.Lk
-        );
-      })
-      .sort((a, b) =>
-        a.day !== b.day
-          ? a.day - b.day
-          : timeToMinutes(a.start) - timeToMinutes(b.start)
-      );
+    // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
+    const minutesCache = new Map();
+    const getMin = (hhmm) => {
+      let v = minutesCache.get(hhmm);
+      if (v == null) {
+        v = timeToMinutes(hhmm);
+        minutesCache.set(hhmm, v);
+      }
+      return v;
+    };
+
+    // 4) Jedno przejście: filtrujemy i zbieramy w tablicę
+    const out = [];
+    for (const ev of schedule) {
+      if (!passParity(ev)) continue;
+
+      // ukryj wykłady, jeśli proszono
+      if (hideLectures && isLecture(ev)) continue;
+
+      // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
+      if (!isLecture(ev)) {
+        // jeśli nie "pokaż wszystko", filtruj po grupach
+        if (!showAll) {
+          const matchesGroup =
+            Array.isArray(ev.groups) && ev.groups.some((g) => groupSet.has(g));
+          if (!matchesGroup) continue;
+        }
+      }
+
+      out.push(ev);
+    }
+
+    // 5) Sort: dzień → start → opcjonalnie id (stabilizacja)
+    out.sort(
+      (a, b) =>
+        a.day - b.day ||
+        getMin(a.start) - getMin(b.start) ||
+        (a.id ?? 0) - (b.id ?? 0)
+    );
+
+    return out;
   }, []);
 
   const [filtered, setFiltered] = useState(() => {
