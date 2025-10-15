@@ -29,6 +29,8 @@ export default function FloatingMenu({
   nextParity,
   ref,
   weekParity,
+  computeFiltered,
+  SCHEDULE,
 }) {
   function clearFilters() {
     setWeekParity("all");
@@ -179,7 +181,16 @@ export default function FloatingMenu({
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-700 text-gray-300"
-              onClick={() => exportICS(filtered)}
+              onClick={() => {
+                const dataForICS = computeFiltered(
+                  SCHEDULE,
+                  studentGroups,
+                  hideLectures,
+                  "all", // ⬅️ klucz: ignorujemy parzystość
+                  showAll
+                );
+                exportICS(dataForICS);
+              }}
             >
               Export ICS
             </button>

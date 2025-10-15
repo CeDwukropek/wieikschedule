@@ -6,8 +6,6 @@ export function WeekMenu({
   currentRange,
   nextRange,
 }) {
-  console.log("activeParity :>> ", activeParity);
-  console.log("currentParity :>> ", currentParity);
   return (
     <>
       <button

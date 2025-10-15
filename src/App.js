@@ -71,31 +71,65 @@ export default function Timetable() {
   const computeFiltered = useCallback(function computeFiltered(
     schedule,
     groups,
-    hideLecturesFlag,
-    parity,
-    showAllFlag
+    hideLectures,
+    parity, // "odd" | "even" | "all"
+    showAll
   ) {
-    return schedule
-      .filter((ev) => {
-        if (ev.weeks === "odd" && parity !== "odd") return false;
-        if (ev.weeks === "even" && parity !== "even") return false;
-        if (hideLecturesFlag && isLecture(ev)) return false;
-        if (isLecture(ev)) return true;
-        if (showAllFlag) return true;
-        return ev.groups.some(
-          (g) =>
-            g === groups.C ||
-            g === groups.L ||
-            g === groups.Lek ||
-            g === groups.Lk
-        );
-      })
-      .sort((a, b) => {
-        if (a.day !== b.day) return a.day - b.day;
-        return timeToMinutes(a.start) - timeToMinutes(b.start);
-      });
-  },
-  []);
+    // 1) Predykat parzystości skompilowany raz
+    const passParity =
+      parity === "odd"
+        ? (e) => e.weeks !== "even"
+        : parity === "even"
+        ? (e) => e.weeks !== "odd"
+        : () => true; // "all" → nic nie odrzucamy
+
+    // 2) Zestaw wybranych grup (O(1) membership)
+    const groupSet = new Set(
+      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean)
+    );
+
+    // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
+    const minutesCache = new Map();
+    const getMin = (hhmm) => {
+      let v = minutesCache.get(hhmm);
+      if (v == null) {
+        v = timeToMinutes(hhmm);
+        minutesCache.set(hhmm, v);
+      }
+      return v;
+    };
+
+    // 4) Jedno przejście: filtrujemy i zbieramy w tablicę
+    const out = [];
+    for (const ev of schedule) {
+      if (!passParity(ev)) continue;
+
+      // ukryj wykłady, jeśli proszono
+      if (hideLectures && isLecture(ev)) continue;
+
+      // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
+      if (!isLecture(ev)) {
+        // jeśli nie "pokaż wszystko", filtruj po grupach
+        if (!showAll) {
+          const matchesGroup =
+            Array.isArray(ev.groups) && ev.groups.some((g) => groupSet.has(g));
+          if (!matchesGroup) continue;
+        }
+      }
+
+      out.push(ev);
+    }
+
+    // 5) Sort: dzień → start → opcjonalnie id (stabilizacja)
+    out.sort(
+      (a, b) =>
+        a.day - b.day ||
+        getMin(a.start) - getMin(b.start) ||
+        (a.id ?? 0) - (b.id ?? 0)
+    );
+
+    return out;
+  }, []);
 
   const [filtered, setFiltered] = useState(() => {
     try {
@@ -315,7 +349,17 @@ export default function Timetable() {
         </button>
         <button
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-          onClick={() => exportICS(filtered)}
+          // w App.js, przy kliknięciu Export ICS
+          onClick={() => {
+            const dataForICS = computeFiltered(
+              SCHEDULE,
+              studentGroups,
+              hideLectures,
+              "all", // ⬅️ klucz: ignorujemy parzystość
+              showAll
+            );
+            exportICS(dataForICS);
+          }}
         >
           Export ICS
         </button>
@@ -415,6 +459,8 @@ export default function Timetable() {
         onChange={setSelection}
         ref={exportRef}
         weekParity={weekParity}
+        computeFiltered={computeFiltered}
+        SCHEDULE={SCHEDULE}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
