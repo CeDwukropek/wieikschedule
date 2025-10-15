@@ -1,8 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, forwardRef } from "react";
 import EventCard from "../EventCard";
 import { timeToMinutes } from "../utils";
 
-export default function DayView({ events, selection: externalSelection }) {
+const DayView = forwardRef(function DayView(
+  { events, selection: externalSelection },
+  ref
+) {
   const startHour = 7;
   const endHour = 20;
   const slotMinutes = 15;
@@ -61,6 +64,7 @@ export default function DayView({ events, selection: externalSelection }) {
   return (
     <div>
       <div
+        ref={ref}
         className={`grid grid-cols-[60px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
           isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
         }`}
@@ -125,4 +129,6 @@ export default function DayView({ events, selection: externalSelection }) {
       </div>
     </div>
   );
-}
+});
+
+export default DayView;

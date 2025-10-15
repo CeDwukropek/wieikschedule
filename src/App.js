@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
@@ -8,10 +8,12 @@ import FloatingMenu from "./Menu/FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
+import { ExportPngBtn } from "./ExportPngBtn";
 
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
+  const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
   // per-browser user id (created once) -> used to namespace storage so it's unique user
   const USER_KEY = "wieikschedule.userId";
@@ -317,6 +319,17 @@ export default function Timetable() {
         >
           Export ICS
         </button>
+        <ExportPngBtn
+          viewMode={viewMode}
+          exportRef={exportRef}
+          weekParity={weekParity}
+          currentParity={currentParity}
+          currentRange={currentRange}
+          nextRange={nextRange}
+          nextParity={nextParity}
+          selection={selection}
+          combinedOptions={combinedOptions}
+        />
       </div>
 
       {/* --- Wybór grup --- hidden on mobile, visible on sm+ */}
@@ -400,11 +413,16 @@ export default function Timetable() {
         options={combinedOptions}
         selection={selection}
         onChange={setSelection}
+        ref={exportRef}
+        weekParity={weekParity}
       />
-
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView key={`week-${weekParity}`} events={filtered} />
+        <WeekView
+          key={`week-${weekParity}`}
+          events={filtered}
+          ref={exportRef}
+        />
       ) : (
         <DayView
           key={`day-${weekParity}`}
@@ -419,6 +437,7 @@ export default function Timetable() {
           options={combinedOptions}
           selection={selection}
           onSelectionChange={setSelection}
+          ref={exportRef}
         />
       )}
       <FAQ />
