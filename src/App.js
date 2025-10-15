@@ -72,16 +72,20 @@ export default function Timetable() {
     schedule,
     groups,
     hideLecturesFlag,
-    parity,
+    parity, // "odd" | "even" | "all"
     showAllFlag
   ) {
     return schedule
       .filter((ev) => {
-        if (ev.weeks === "odd" && parity !== "odd") return false;
-        if (ev.weeks === "even" && parity !== "even") return false;
+        // ⬇️ PRAWIDŁOWA logika parzystości
+        if (parity === "odd" && ev.weeks === "even") return false;
+        if (parity === "even" && ev.weeks === "odd") return false;
+        // dla "all" nic nie odrzucamy
+
         if (hideLecturesFlag && isLecture(ev)) return false;
         if (isLecture(ev)) return true;
         if (showAllFlag) return true;
+
         return ev.groups.some(
           (g) =>
             g === groups.C ||
@@ -90,12 +94,12 @@ export default function Timetable() {
             g === groups.Lk
         );
       })
-      .sort((a, b) => {
-        if (a.day !== b.day) return a.day - b.day;
-        return timeToMinutes(a.start) - timeToMinutes(b.start);
-      });
-  },
-  []);
+      .sort((a, b) =>
+        a.day !== b.day
+          ? a.day - b.day
+          : timeToMinutes(a.start) - timeToMinutes(b.start)
+      );
+  }, []);
 
   const [filtered, setFiltered] = useState(() => {
     try {
@@ -315,7 +319,17 @@ export default function Timetable() {
         </button>
         <button
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-          onClick={() => exportICS(filtered)}
+          // w App.js, przy kliknięciu Export ICS
+          onClick={() => {
+            const dataForICS = computeFiltered(
+              SCHEDULE,
+              studentGroups,
+              hideLectures,
+              "all", // ⬅️ klucz: ignorujemy parzystość
+              showAll
+            );
+            exportICS(dataForICS);
+          }}
         >
           Export ICS
         </button>
@@ -415,6 +429,8 @@ export default function Timetable() {
         onChange={setSelection}
         ref={exportRef}
         weekParity={weekParity}
+        computeFiltered={computeFiltered}
+        SCHEDULE={SCHEDULE}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
