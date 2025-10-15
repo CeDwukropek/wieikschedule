@@ -89,8 +89,6 @@ export function exportICS(events) {
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
     ].join("\r\n") + "\r\n";
-
-  console.log("events :>> ", events);
   // Każde zajęcia → VEVENT
   events.forEach((e) => {
     // Wylicz datę konkretnego dnia w bazowym tygodniu
@@ -106,7 +104,6 @@ export function exportICS(events) {
       eventDate.setDate(eventDate.getDate() + 7);
     }
     const kinds = new Set(events.map((e) => e.weeks || "every"));
-    console.log("weeks kinds:", [...kinds]); // oczekiwane: ["odd","even",...] lub przynajmniej ["odd","even"]
 
     // Godziny
     const [sh, sm] = (e.start || "00:00").split(":").map((n) => Number(n) || 0);
