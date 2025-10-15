@@ -1,8 +1,8 @@
-import React from "react";
 import EventCard from "../EventCard";
+import React, { forwardRef } from "react";
 import { timeToMinutes } from "../utils";
 
-export default function WeekView({ events }) {
+const WeekView = forwardRef(function WeekView({ events }, ref) {
   const startHour = 7;
   const endHour = 20;
   const slotMinutes = 15;
@@ -73,7 +73,7 @@ export default function WeekView({ events }) {
         }
       `}</style>
 
-      <div className="week-grid">
+      <div className="week-grid" ref={ref}>
         {/* Nagłówki Dni */}
         {dayNames.map((name, dayIndex) => (
           <div
@@ -160,4 +160,6 @@ export default function WeekView({ events }) {
       </div>
     </div>
   );
-}
+});
+
+export default WeekView;

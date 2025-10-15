@@ -3,6 +3,7 @@ import GroupInput from "../GroupInput";
 import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
 import { WeekMenu } from "./WeekMenu";
+import { ExportPngBtn } from "../ExportPngBtn";
 
 export default function FloatingMenu({
   viewMode,
@@ -26,6 +27,8 @@ export default function FloatingMenu({
   currentRange,
   nextRange,
   nextParity,
+  ref,
+  weekParity,
 }) {
   function clearFilters() {
     setWeekParity("all");
@@ -180,6 +183,17 @@ export default function FloatingMenu({
             >
               Export ICS
             </button>
+            <ExportPngBtn
+              viewMode={viewMode}
+              exportRef={ref}
+              weekParity={weekParity}
+              currentParity={currentParity}
+              currentRange={currentRange}
+              nextRange={nextRange}
+              nextParity={nextParity}
+              selection={selection}
+              combinedOptions={options}
+            />
           </div>
         </div>
       </div>
