@@ -303,6 +303,34 @@ export default function Timetable() {
   const defaultDayIndex = Math.min(Math.max((today.getDay() + 6) % 7, 0), 4);
   const [selection, setSelection] = useState(`current:${defaultDayIndex}`);
 
+  // events for DayView should depend on the selection's parity token (current|next)
+  const dayEvents = React.useMemo(() => {
+    try {
+      const parts = (selection || "current:0").split(":");
+      const selParityToken = parts[0];
+      const parityToUse =
+        selParityToken === "current" ? currentParity : nextParity;
+      return computeFiltered(
+        SCHEDULE,
+        studentGroups,
+        hideLectures,
+        parityToUse,
+        showAll
+      );
+    } catch (e) {
+      return filtered;
+    }
+  }, [
+    selection,
+    computeFiltered,
+    studentGroups,
+    hideLectures,
+    showAll,
+    currentParity,
+    nextParity,
+    filtered,
+  ]);
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
@@ -471,8 +499,8 @@ export default function Timetable() {
         />
       ) : (
         <DayView
-          key={`day-${weekParity}`}
-          events={filtered}
+          key={`day-${selection}`}
+          events={dayEvents}
           // parity/date helpers from App so DayView can show ranges and switch parity
           currentParity={currentParity}
           nextParity={nextParity}
