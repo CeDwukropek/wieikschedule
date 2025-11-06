@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
-import WeekView from "./WeekView";
-import DayView from "./DayView";
-import FloatingMenu from "./FloatingMenu";
+import WeekView from "./View/WeekView";
+import DayView from "./View/DayView";
+import FloatingMenu from "./Menu/FloatingMenu";
 import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
-import BottomDayNav from "./BottomDayNav";
+import { ExportPngBtn } from "./ExportPngBtn";
 
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
+  const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
   // per-browser user id (created once) -> used to namespace storage so it's unique user
   const USER_KEY = "wieikschedule.userId";
@@ -70,31 +71,65 @@ export default function Timetable() {
   const computeFiltered = useCallback(function computeFiltered(
     schedule,
     groups,
-    hideLecturesFlag,
-    parity,
-    showAllFlag
+    hideLectures,
+    parity, // "odd" | "even" | "all"
+    showAll
   ) {
-    return schedule
-      .filter((ev) => {
-        if (ev.weeks === "odd" && parity !== "odd") return false;
-        if (ev.weeks === "even" && parity !== "even") return false;
-        if (hideLecturesFlag && isLecture(ev)) return false;
-        if (isLecture(ev)) return true;
-        if (showAllFlag) return true;
-        return ev.groups.some(
-          (g) =>
-            g === groups.C ||
-            g === groups.L ||
-            g === groups.Lek ||
-            g === groups.Lk
-        );
-      })
-      .sort((a, b) => {
-        if (a.day !== b.day) return a.day - b.day;
-        return timeToMinutes(a.start) - timeToMinutes(b.start);
-      });
-  },
-  []);
+    // 1) Predykat parzystości skompilowany raz
+    const passParity =
+      parity === "odd"
+        ? (e) => e.weeks !== "even"
+        : parity === "even"
+        ? (e) => e.weeks !== "odd"
+        : () => true; // "all" → nic nie odrzucamy
+
+    // 2) Zestaw wybranych grup (O(1) membership)
+    const groupSet = new Set(
+      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean)
+    );
+
+    // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
+    const minutesCache = new Map();
+    const getMin = (hhmm) => {
+      let v = minutesCache.get(hhmm);
+      if (v == null) {
+        v = timeToMinutes(hhmm);
+        minutesCache.set(hhmm, v);
+      }
+      return v;
+    };
+
+    // 4) Jedno przejście: filtrujemy i zbieramy w tablicę
+    const out = [];
+    for (const ev of schedule) {
+      if (!passParity(ev)) continue;
+
+      // ukryj wykłady, jeśli proszono
+      if (hideLectures && isLecture(ev)) continue;
+
+      // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
+      if (!isLecture(ev)) {
+        // jeśli nie "pokaż wszystko", filtruj po grupach
+        if (!showAll) {
+          const matchesGroup =
+            Array.isArray(ev.groups) && ev.groups.some((g) => groupSet.has(g));
+          if (!matchesGroup) continue;
+        }
+      }
+
+      out.push(ev);
+    }
+
+    // 5) Sort: dzień → start → opcjonalnie id (stabilizacja)
+    out.sort(
+      (a, b) =>
+        a.day - b.day ||
+        getMin(a.start) - getMin(b.start) ||
+        (a.id ?? 0) - (b.id ?? 0)
+    );
+
+    return out;
+  }, []);
 
   const [filtered, setFiltered] = useState(() => {
     try {
@@ -197,15 +232,17 @@ export default function Timetable() {
   }
 
   function formatDate(d) {
-    // Return day and month only, omit year (e.g. "13.10")
+    // Zwraca "dd.mm", np. "06.10" — zawsze po polsku
+    const dt = new Date(d);
+    if (Number.isNaN(dt)) return ""; // ochrona na złe dane
+
     try {
-      return d.toLocaleDateString(undefined, {
+      return dt.toLocaleDateString("pl-PL", {
         day: "2-digit",
         month: "2-digit",
       });
-    } catch (e) {
-      // Fallback: simple dd.mm
-      const dt = new Date(d);
+    } catch {
+      // Fallback niezależny od locale
       const dd = String(dt.getDate()).padStart(2, "0");
       const mm = String(dt.getMonth() + 1).padStart(2, "0");
       return `${dd}.${mm}`;
@@ -255,7 +292,8 @@ export default function Timetable() {
         d.setDate(d.getDate() + i);
         return {
           value: `${parityToken}:${i}`,
-          label: `${n} • ${formatDate(d)}`,
+          label: `${n}`,
+          date: `${formatDate(d)}`,
         };
       });
     });
@@ -264,6 +302,34 @@ export default function Timetable() {
   // controlled selection for DayView / BottomDayNav
   const defaultDayIndex = Math.min(Math.max((today.getDay() + 6) % 7, 0), 4);
   const [selection, setSelection] = useState(`current:${defaultDayIndex}`);
+
+  // events for DayView should depend on the selection's parity token (current|next)
+  const dayEvents = React.useMemo(() => {
+    try {
+      const parts = (selection || "current:0").split(":");
+      const selParityToken = parts[0];
+      const parityToUse =
+        selParityToken === "current" ? currentParity : nextParity;
+      return computeFiltered(
+        SCHEDULE,
+        studentGroups,
+        hideLectures,
+        parityToUse,
+        showAll
+      );
+    } catch (e) {
+      return filtered;
+    }
+  }, [
+    selection,
+    computeFiltered,
+    studentGroups,
+    hideLectures,
+    showAll,
+    currentParity,
+    nextParity,
+    filtered,
+  ]);
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
@@ -311,10 +377,31 @@ export default function Timetable() {
         </button>
         <button
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-          onClick={() => exportICS(filtered)}
+          // w App.js, przy kliknięciu Export ICS
+          onClick={() => {
+            const dataForICS = computeFiltered(
+              SCHEDULE,
+              studentGroups,
+              hideLectures,
+              "all", // ⬅️ klucz: ignorujemy parzystość
+              showAll
+            );
+            exportICS(dataForICS);
+          }}
         >
           Export ICS
         </button>
+        <ExportPngBtn
+          viewMode={viewMode}
+          exportRef={exportRef}
+          weekParity={weekParity}
+          currentParity={currentParity}
+          currentRange={currentRange}
+          nextRange={nextRange}
+          nextParity={nextParity}
+          selection={selection}
+          combinedOptions={combinedOptions}
+        />
       </div>
 
       {/* --- Wybór grup --- hidden on mobile, visible on sm+ */}
@@ -379,7 +466,6 @@ export default function Timetable() {
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
-        weekParity={weekParity}
         setWeekParity={setWeekParity}
         hideLectures={hideLectures}
         setHideLectures={setHideLectures}
@@ -388,28 +474,33 @@ export default function Timetable() {
         studentGroups={studentGroups}
         setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
+        activeParity={weekParity}
+        currentParity={currentParity}
+        currentRange={currentRange}
+        nextRange={nextRange}
+        nextParity={nextParity}
         filtered={filtered}
         open={open}
         setOpen={setOpen}
+        options={combinedOptions}
+        selection={selection}
+        onChange={setSelection}
+        ref={exportRef}
+        weekParity={weekParity}
+        computeFiltered={computeFiltered}
+        SCHEDULE={SCHEDULE}
       />
-
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView
           key={`week-${weekParity}`}
           events={filtered}
-          activeParity={weekParity}
-          setWeekParity={setWeekParity}
-          currentParity={currentParity}
-          nextParity={nextParity}
-          currentRange={currentRange}
-          nextRange={nextRange}
-          open={open}
+          ref={exportRef}
         />
       ) : (
         <DayView
-          key={`day-${weekParity}`}
-          events={filtered}
+          key={`day-${selection}`}
+          events={dayEvents}
           // parity/date helpers from App so DayView can show ranges and switch parity
           currentParity={currentParity}
           nextParity={nextParity}
@@ -420,18 +511,9 @@ export default function Timetable() {
           options={combinedOptions}
           selection={selection}
           onSelectionChange={setSelection}
+          ref={exportRef}
         />
       )}
-
-      {/* mobile bottom nav for day navigation */}
-      {viewMode === "day" && !open && (
-        <BottomDayNav
-          options={combinedOptions}
-          selection={selection}
-          onChange={setSelection}
-        />
-      )}
-
       <FAQ />
     </div>
   );
