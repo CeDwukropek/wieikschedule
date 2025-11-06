@@ -1,17 +1,8 @@
-import React from "react";
-import EventCard from "./EventCard";
-import { timeToMinutes } from "./utils";
+import EventCard from "../EventCard";
+import React, { forwardRef } from "react";
+import { timeToMinutes } from "../utils";
 
-export default function WeekView({
-  events,
-  activeParity,
-  setWeekParity,
-  currentParity,
-  nextParity,
-  currentRange,
-  nextRange,
-  open,
-}) {
+const WeekView = forwardRef(function WeekView({ events }, ref) {
   const startHour = 7;
   const endHour = 20;
   const slotMinutes = 15;
@@ -82,7 +73,7 @@ export default function WeekView({
         }
       `}</style>
 
-      <div className="week-grid">
+      <div className="week-grid" ref={ref}>
         {/* Nagłówki Dni */}
         {dayNames.map((name, dayIndex) => (
           <div
@@ -167,32 +158,8 @@ export default function WeekView({
           );
         })}
       </div>
-      {/* Mobile-only bottom bar: this week / next week */}
-      {!open && (
-        <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-2 py-2 shadow-lg">
-          <button
-            onClick={() => setWeekParity && setWeekParity(currentParity)}
-            className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-              activeParity === currentParity
-                ? "bg-neutral-800 text-white"
-                : "bg-neutral-900 text-gray-300"
-            }`}
-          >
-            {currentRange}
-          </button>
-
-          <button
-            onClick={() => setWeekParity && setWeekParity(nextParity)}
-            className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-              activeParity === nextParity
-                ? "bg-neutral-800 text-white"
-                : "bg-neutral-900 text-gray-300"
-            }`}
-          >
-            {nextRange}
-          </button>
-        </div>
-      )}
     </div>
   );
-}
+});
+
+export default WeekView;
