@@ -1,27 +1,105 @@
-import React, { useMemo, forwardRef } from "react";
-import EventCard from "../EventCard";
-import { timeToMinutes } from "../utils";
+import React, { useState, useMemo } from "react";
+import EventCard from "./EventCard";
+import { timeToMinutes } from "./utils";
 
-const DayView = forwardRef(function DayView(
-  { events, selection: externalSelection },
-  ref
-) {
+export default function DayView({
+  events,
+  currentParity,
+  nextParity,
+  currentRange,
+  nextRange,
+  setWeekParity,
+  // optional external control
+  options: externalOptions,
+  selection: externalSelection,
+  onSelectionChange: externalOnSelectionChange,
+}) {
   const startHour = 7;
   const endHour = 20;
   const slotMinutes = 15;
   const totalSlots = (endHour - startHour) * (60 / slotMinutes);
 
+  const dayNamesFull = React.useMemo(
+    () => ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"],
+    []
+  );
   const today = React.useMemo(() => new Date(), []);
+
+  // weekStart logic is handled inside combinedOptions useMemo
+
+  function formatDate(d) {
+    return d.toLocaleDateString();
+  }
+
   // default selected day index (clamped to 0..4) - used to detect "today"
   const defaultDayIndex = useMemo(
     () => Math.min(Math.max((today.getDay() + 6) % 7, 0), 4),
     [today]
   );
 
-  const selection = externalSelection;
+  // selection can be controlled externally via props.selection (value: "parity:dayIndex")
+  const defaultSelection = `current:${defaultDayIndex}`;
+  const [internalSelection, setInternalSelection] = useState(defaultSelection);
+  const selection = externalSelection ?? internalSelection;
+
+  // helper logic for week start lives inside combinedOptions useMemo
+
+  // build combined options: use externalOptions when provided otherwise compute locally
+  // build combined options: use externalOptions when provided otherwise compute locally
+  const combinedOptions = useMemo(() => {
+    if (externalOptions) return externalOptions;
+    return ["current", "next"].flatMap((parityToken) => {
+      const base = (function baseWeekStartFor(parityToken) {
+        const ws = (function weekStartLocal(date) {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diff = (day === 0 ? -6 : 1) - day;
+          d.setDate(d.getDate() + diff);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })(today);
+        if (parityToken === "next") {
+          const n = new Date(ws);
+          n.setDate(n.getDate() + 7);
+          return n;
+        }
+        return ws;
+      })(parityToken);
+
+      return dayNamesFull.map((name, i) => {
+        const d = new Date(base);
+        d.setDate(d.getDate() + i);
+        const parityLabel =
+          parityToken === "current"
+            ? currentParity === "even"
+              ? "Even"
+              : "Odd"
+            : nextParity === "even"
+            ? "Even"
+            : "Odd";
+        return {
+          value: `${parityToken}:${i}`,
+          label: `${parityLabel} • ${name} • ${formatDate(d)}`,
+        };
+      });
+    });
+  }, [externalOptions, currentParity, nextParity, dayNamesFull, today]);
+
   // parse selection into parityToken and selectedDay
   const [selParity, selDay] = selection.split(":");
   const selectedDayIndex = Number(selDay);
+
+  // notify parent about selection change
+  function handleSelectionChange(val) {
+    if (externalOnSelectionChange) {
+      externalOnSelectionChange(val);
+    } else {
+      setInternalSelection(val);
+    }
+    const [parityToken] = val.split(":");
+    const parityToSet = parityToken === "current" ? currentParity : nextParity;
+    if (setWeekParity) setWeekParity(parityToSet);
+  }
 
   function groupOverlapping(eventsForDay) {
     const sorted = [...eventsForDay].sort(
@@ -64,7 +142,6 @@ const DayView = forwardRef(function DayView(
   return (
     <div>
       <div
-        ref={ref}
         className={`grid grid-cols-[60px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
           isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
         }`}
@@ -129,6 +206,4 @@ const DayView = forwardRef(function DayView(
       </div>
     </div>
   );
-});
-
-export default DayView;
+}
