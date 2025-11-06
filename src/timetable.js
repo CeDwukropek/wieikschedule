@@ -20,6 +20,10 @@ export const timetableData = {
       teacher: "lek. mgr J. Firląg / inni",
       color: "bg-sky-500",
     },
+    NIEM01: {
+      name: "Język niemiecki",
+      teacher: "lek. mgr E. Targosz",
+    },
     PROG01: {
       name: "Podstawy programowania",
       teacher: "dr W. Pasierski",
@@ -290,7 +294,7 @@ export const timetableData = {
       day: 3, // Czwartek
       start: "11:00",
       end: "12:30",
-      room: "139SJO",
+      room: "149bSJO",
       weeks: "both", // Widoczne jako całe, ale u Ciebie było odd/even
     },
     {
@@ -669,6 +673,17 @@ export const timetableData = {
       start: "18:00",
       end: "19:30",
       room: "12",
+      weeks: "both",
+    },
+    {
+      id: 63,
+      subj: "NIEM01",
+      type: "Lektorat",
+      groups: ["Lek0"],
+      day: 3, // Środa
+      start: "11:00",
+      end: "12:30",
+      room: "139SJO",
       weeks: "both",
     },
   ],
