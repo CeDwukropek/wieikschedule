@@ -9,7 +9,11 @@ export function WeekMenu({
   return (
     <>
       <button
-        onClick={() => setWeekParity && setWeekParity(currentParity)}
+        onClick={() => {
+          if (setWeekParity) {
+            setWeekParity(currentParity);
+          }
+        }}
         className={`flex-1 text-sm px-3 py-2 rounded truncate ${
           activeParity === currentParity
             ? "bg-neutral-800 text-white"
@@ -22,7 +26,11 @@ export function WeekMenu({
       </button>
 
       <button
-        onClick={() => setWeekParity && setWeekParity(nextParity)}
+        onClick={() => {
+          if (setWeekParity) {
+            setWeekParity(nextParity);
+          }
+        }}
         className={`flex-1 text-sm px-3 py-2 rounded truncate ${
           activeParity === nextParity
             ? "bg-neutral-800 text-white"
