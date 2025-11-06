@@ -1,13 +1,12 @@
+import { useState } from "react";
 import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
-import GroupInput from "../GroupInput";
-import { exportICS } from "../exportICS";
-import { DayMenu } from "./DayMenu";
-import { WeekMenu } from "./WeekMenu";
-import { ExportPngBtn } from "../ExportPngBtn";
+import GroupInput from "./GroupInput";
+import { exportICS } from "./exportICS";
 
 export default function FloatingMenu({
   viewMode,
   setViewMode,
+  weekParity,
   setWeekParity,
   hideLectures,
   setHideLectures,
@@ -19,18 +18,6 @@ export default function FloatingMenu({
   filtered,
   open,
   setOpen,
-  options = [],
-  selection,
-  onChange,
-  activeParity,
-  currentParity,
-  currentRange,
-  nextRange,
-  nextParity,
-  ref,
-  weekParity,
-  computeFiltered,
-  SCHEDULE,
 }) {
   function clearFilters() {
     setWeekParity("all");
@@ -43,44 +30,14 @@ export default function FloatingMenu({
   return (
     <div className="sm:hidden">
       {/* Floating toggle button (bottom-right) */}
-      <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-3 py-2 shadow-lg">
-        <button
-          onClick={() => setViewMode(viewMode === "week" ? "day" : "week")}
-          className="w-12 h-12"
-        >
-          {viewMode === "week" ? (
-            <Calendar className="w-6 h-6 inline-block mr-2" />
-          ) : (
-            <List className="w-6 h-6 inline-block mr-2" />
-          )}
-        </button>
-        {viewMode === "day" && (
-          <DayMenu
-            options={options}
-            selection={selection}
-            onChange={onChange}
-          />
-        )}
-        {viewMode === "week" && (
-          <WeekMenu
-            events={filtered}
-            activeParity={activeParity}
-            setWeekParity={setWeekParity}
-            currentParity={currentParity}
-            nextParity={nextParity}
-            currentRange={currentRange}
-            nextRange={nextRange}
-            open={open}
-          />
-        )}
-        <button
-          aria-label={open ? "Zamknij menu" : "Otwórz menu"}
-          onClick={() => setOpen((s) => !s)}
-          className={` z-50 flex items-center justify-center w-12 h-12 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white shadow-lg`}
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
+      <button
+        aria-label={open ? "Zamknij menu" : "Otwórz menu"}
+        onClick={() => setOpen((s) => !s)}
+        className={`fixed right-4 bottom-[5rem] z-50 flex items-center justify-center w-12 h-12 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white shadow-lg`}
+      >
+        {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
       {/* Slide-over panel */}
       <div
         className={`fixed right-0 bottom-0 top-0 z-40 w-full sm:w-96 bg-neutral-900 text-white shadow-xl transform transition-transform duration-300 ${
@@ -89,6 +46,20 @@ export default function FloatingMenu({
         role="dialog"
         aria-modal="true"
       >
+        <div className="p-4 flex items-center justify-between border-b border-neutral-800">
+          <div className="flex items-center gap-2">
+            <Menu className="w-4 h-4 opacity-80" />
+            <div className="font-semibold">Ustawienia i filtry</div>
+          </div>
+          <button
+            aria-label="Zamknij"
+            onClick={() => setOpen(false)}
+            className="p-1 rounded hover:bg-neutral-800"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
         <div
           className="p-4 space-y-4 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 96px)" }}
@@ -177,34 +148,22 @@ export default function FloatingMenu({
             >
               Wyczyść filtry
             </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+              }}
+              className="flex-1 px-3 py-2 rounded border border-neutral-700 text-gray-300"
+            >
+              Zamknij
+            </button>
           </div>
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-700 text-gray-300"
-              onClick={() => {
-                const dataForICS = computeFiltered(
-                  SCHEDULE,
-                  studentGroups,
-                  hideLectures,
-                  "all", // ⬅️ klucz: ignorujemy parzystość
-                  showAll
-                );
-                exportICS(dataForICS);
-              }}
+              onClick={() => exportICS(filtered)}
             >
               Export ICS
             </button>
-            <ExportPngBtn
-              viewMode={viewMode}
-              exportRef={ref}
-              weekParity={weekParity}
-              currentParity={currentParity}
-              currentRange={currentRange}
-              nextRange={nextRange}
-              nextParity={nextParity}
-              selection={selection}
-              combinedOptions={options}
-            />
           </div>
         </div>
       </div>
