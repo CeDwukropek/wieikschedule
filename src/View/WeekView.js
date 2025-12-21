@@ -181,6 +181,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
       <style>{`
         .week-grid {
           display: grid;
+          position: relative;
           overflow: hidden;
           color: #e5e7eb;
           border-left: 1px solid rgba(148,163,184,0.08);
@@ -224,6 +225,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         /* Hover/focus tooltip for event details */
         .event-wrapper {
           position: relative;
+          z-index: 10;
           flex: 1;
           min-width: 0;
           display: flex;
@@ -295,7 +297,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
           box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 2px rgba(239, 68, 68, 0.9);
           pointer-events: none;
-          z-index: 5;
+          z-index: 2;
         }
         
         .current-time-line::before {
