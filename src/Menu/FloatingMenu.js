@@ -1,4 +1,4 @@
-import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
+import { Menu, X, Calendar, List, Eye, EyeOff, Palette } from "lucide-react";
 import GroupInput from "../GroupInput";
 import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
@@ -31,6 +31,8 @@ export default function FloatingMenu({
   weekParity,
   computeFiltered,
   SCHEDULE,
+  theme,
+  toggleTheme,
 }) {
   function clearFilters() {
     setWeekParity("all");
@@ -43,10 +45,10 @@ export default function FloatingMenu({
   return (
     <div className="sm:hidden">
       {/* Floating toggle button (bottom-right) */}
-      <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-3 py-2 shadow-lg">
+      <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 backdrop-blur-md rounded-full px-3 py-2" style={{ background: 'var(--ds-surface)', border: '1px solid var(--ds-border)', boxShadow: 'var(--ds-shadow-2)' }}>
         <button
           onClick={() => setViewMode(viewMode === "week" ? "day" : "week")}
-          className="w-12 h-12"
+          className="ds-btn-ghost w-12 h-12"
         >
           {viewMode === "week" ? (
             <Calendar className="w-6 h-6 inline-block mr-2" />
@@ -76,16 +78,17 @@ export default function FloatingMenu({
         <button
           aria-label={open ? "Zamknij menu" : "Otwórz menu"}
           onClick={() => setOpen((s) => !s)}
-          className={` z-50 flex items-center justify-center w-12 h-12 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white shadow-lg`}
+          className={` z-50 ds-btn w-12 h-12 flex items-center justify-center rounded-full`}
         >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
       {/* Slide-over panel */}
       <div
-        className={`fixed right-0 bottom-0 top-0 z-40 w-full sm:w-96 bg-neutral-900 text-white shadow-xl transform transition-transform duration-300 ${
+        className={`fixed right-0 bottom-0 top-0 z-40 w-full sm:w-96 shadow-xl transform transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{ background: 'var(--ds-bg)', color: 'var(--ds-text)' }}
         role="dialog"
         aria-modal="true"
       >
@@ -98,21 +101,15 @@ export default function FloatingMenu({
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode("week")}
-                className={`flex-1 px-3 py-2 rounded ${
-                  viewMode === "week"
-                    ? "bg-neutral-800"
-                    : "bg-neutral-900 text-gray-300"
-                }`}
+                className="ds-btn flex-1"
+                data-active={viewMode === "week"}
               >
                 <Calendar className="w-4 h-4 inline-block mr-2" /> Tydzień
               </button>
               <button
                 onClick={() => setViewMode("day")}
-                className={`flex-1 px-3 py-2 rounded ${
-                  viewMode === "day"
-                    ? "bg-neutral-800"
-                    : "bg-neutral-900 text-gray-300"
-                }`}
+                className="ds-btn flex-1"
+                data-active={viewMode === "day"}
               >
                 <List className="w-4 h-4 inline-block mr-2" /> Dzień
               </button>
@@ -122,7 +119,7 @@ export default function FloatingMenu({
           <div className="flex gap-2">
             <button
               onClick={() => setHideLectures((s) => !s)}
-              className="flex-1 px-3 py-2 rounded bg-neutral-900 text-gray-300 flex items-center gap-2"
+              className="ds-btn flex-1"
             >
               {hideLectures ? (
                 <EyeOff className="w-4 h-4" />
@@ -134,9 +131,20 @@ export default function FloatingMenu({
 
             <button
               onClick={() => setShowAll((s) => !s)}
-              className="flex-1 px-3 py-2 rounded bg-neutral-900 text-gray-300"
+              className="ds-btn flex-1"
+              data-active={showAll}
             >
               {showAll ? "Twój plan" : "Pokaż cały plan"}
+            </button>
+          </div>
+
+          <div className="border-t border-neutral-800 pt-3">
+            <button
+              onClick={toggleTheme}
+              className="ds-btn w-full"
+            >
+              <Palette className="w-4 h-4" />
+              {theme === 'dark' ? 'Motyw niebieski' : 'Motyw ciemny'}
             </button>
           </div>
 
@@ -173,14 +181,14 @@ export default function FloatingMenu({
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
               onClick={clearFilters}
-              className="flex-1 px-3 py-2 rounded bg-neutral-800 text-white"
+              className="ds-btn flex-1"
             >
               Wyczyść filtry
             </button>
           </div>
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-700 text-gray-300"
+              className="ds-btn"
               onClick={() => {
                 const dataForICS = computeFiltered(
                   SCHEDULE,
