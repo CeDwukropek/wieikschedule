@@ -1,5 +1,5 @@
 import EventCard from "../EventCard";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef, useState } from "react";
 import { timeToMinutes } from "../utils";
 
 const WeekView = forwardRef(function WeekView({ events }, ref) {
@@ -46,6 +46,122 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
     const evEnd = toMinutes(ev.end);
     const durationMinutes = evEnd - evStart;
     return Math.ceil(durationMinutes / slotMinutes);
+  }
+
+  // Local component to handle tooltip positioning and interaction
+  function EventTooltipWrapper({ ev, children }) {
+    const wrapperRef = useRef(null);
+    const tooltipRef = useRef(null);
+    const [visible, setVisible] = useState(false);
+    const [pos, setPos] = useState("top"); // 'top' or 'bottom'
+    const [offsetX, setOffsetX] = useState(0);
+    const longPressTimer = useRef(null);
+
+    const positionTooltip = () => {
+      const wr = wrapperRef.current?.getBoundingClientRect();
+      const tt = tooltipRef.current?.getBoundingClientRect();
+      if (!wr || !tt) return;
+
+      const spaceAbove = wr.top;
+      const spaceBelow = window.innerHeight - wr.bottom;
+      const shouldPlaceTop = spaceAbove >= tt.height + 12 || spaceAbove >= spaceBelow;
+      setPos(shouldPlaceTop ? "top" : "bottom");
+
+      // Horizontal clamping
+      const overflowRight = wr.left + tt.width - window.innerWidth;
+      let shift = overflowRight > 0 ? -(overflowRight + 8) : 0; // shift left if overflowing right
+      // ensure not go beyond left viewport margin
+      const minLeftMargin = 8;
+      if (wr.left + shift < minLeftMargin) {
+        shift = shift + (minLeftMargin - (wr.left + shift));
+      }
+      setOffsetX(shift);
+    };
+
+    const show = () => {
+      setVisible(true);
+      // wait for tooltip to render then position
+      requestAnimationFrame(positionTooltip);
+    };
+    const hide = () => {
+      setVisible(false);
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+
+    const onMouseEnter = () => show();
+    const onMouseLeave = () => hide();
+    const onFocus = () => show();
+    const onBlur = () => hide();
+    const onMouseMove = () => {
+      if (visible) positionTooltip();
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") hide();
+    };
+    const onTouchStart = () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      longPressTimer.current = setTimeout(() => {
+        show();
+      }, 400);
+    };
+    const onTouchEnd = () => hide();
+    const onTouchMove = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+
+    const title = ev.title || ev.subj;
+    const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
+
+    const transformY = pos === "top" ? "translateY(-100%)" : "translateY(0)";
+    const transform = `translate(${offsetX}px, ${pos === "top" ? "-100%" : "0"})`;
+
+    return (
+      <div
+        ref={wrapperRef}
+        className="event-wrapper"
+        tabIndex={0}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchMove={onTouchMove}
+      >
+        {children}
+        <div
+          ref={tooltipRef}
+          className="event-tooltip"
+          data-pos={pos}
+          data-visible={visible ? "true" : "false"}
+          style={{ transform }}
+        >
+          {title ? (
+            <div className="row"><span className="label">Przedmiot:</span> <span>{title}</span></div>
+          ) : null}
+          {ev.type ? (
+            <div className="row"><span className="label">Typ:</span> <span>{ev.type}</span></div>
+          ) : null}
+          {(ev.start && ev.end) ? (
+            <div className="row"><span className="label">Czas:</span> <span>{ev.start} - {ev.end}</span></div>
+          ) : null}
+          {ev.room ? (
+            <div className="row"><span className="label">Sala:</span> <span>{ev.room}</span></div>
+          ) : null}
+          {groups ? (
+            <div className="row"><span className="label">Grupy:</span> <span>{groups}</span></div>
+          ) : null}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -102,8 +218,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         .event-tooltip {
           position: absolute;
           left: 0;
-          top: -8px;
-          transform: translateY(-100%);
+          top: -8px; /* default top, overridden when pos=bottom */
           opacity: 0;
           pointer-events: none;
           z-index: 50;
@@ -119,11 +234,11 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           line-height: 1.1rem;
         }
 
+        .event-tooltip[data-pos="bottom"] { top: calc(100% + 8px); }
+        .event-tooltip[data-visible="true"] { opacity: 1; }
+        /* Fallback for simple hover/focus */
         .event-wrapper:hover .event-tooltip,
-        .event-wrapper:focus .event-tooltip {
-          opacity: 1;
-          transform: translateY(calc(-100% - 4px));
-        }
+        .event-wrapper:focus .event-tooltip { opacity: 1; }
 
         .event-tooltip .row { display: flex; align-items: center; gap: 0.4rem; }
         .event-tooltip .label { opacity: 0.7; }
@@ -220,34 +335,10 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
                   <div className="event-container">
                     {newEvents.map((ev, idx) => {
                       const uniqueKey = `${day}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
-                      const title = ev.title || ev.subj;
-                      const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
-
                       return (
-                        <div
-                          key={uniqueKey}
-                          className="event-wrapper"
-                          tabIndex={0}
-                        >
+                        <EventTooltipWrapper ev={ev} key={uniqueKey}>
                           <EventCard ev={ev} />
-                          <div className="event-tooltip">
-                            {title ? (
-                              <div className="row"><span className="label">Przedmiot:</span> <span>{title}</span></div>
-                            ) : null}
-                            {ev.type ? (
-                              <div className="row"><span className="label">Typ:</span> <span>{ev.type}</span></div>
-                            ) : null}
-                            {(ev.start && ev.end) ? (
-                              <div className="row"><span className="label">Czas:</span> <span>{ev.start} - {ev.end}</span></div>
-                            ) : null}
-                            {ev.room ? (
-                              <div className="row"><span className="label">Sala:</span> <span>{ev.room}</span></div>
-                            ) : null}
-                            {groups ? (
-                              <div className="row"><span className="label">Grupy:</span> <span>{groups}</span></div>
-                            ) : null}
-                          </div>
-                        </div>
+                        </EventTooltipWrapper>
                       );
                     })}
                   </div>
