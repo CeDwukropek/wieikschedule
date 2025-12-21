@@ -118,8 +118,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
     const title = ev.title || ev.subj;
     const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
 
-    const transformY = pos === "top" ? "translateY(-100%)" : "translateY(0)";
-    const transform = `translate(${offsetX}px, ${pos === "top" ? "-100%" : "0"})`;
+    const transform = `translate(${offsetX}px, ${pos === "top" ? (visible ? "calc(-100% - 6px)" : "-100%") : (visible ? "6px" : "0")})`;
 
     return (
       <div
@@ -195,6 +194,9 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           min-height: 1rem;
           align-items: flex-start;
         }
+
+        /* Alternate hour striping for readability */
+        .hour-even { background-color: rgba(255,255,255,0.02); }
         
         .event-container {
           display: flex;
@@ -232,6 +234,8 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           color: #e5e7eb;
           font-size: 0.75rem;
           line-height: 1.1rem;
+          will-change: transform, opacity;
+          transition: opacity 120ms ease, transform 160ms ease;
         }
 
         .event-tooltip[data-pos="bottom"] { top: calc(100% + 8px); }
@@ -240,8 +244,33 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         .event-wrapper:hover .event-tooltip,
         .event-wrapper:focus .event-tooltip { opacity: 1; }
 
+        /* Arrow indicator */
+        .event-tooltip::after {
+          content: "";
+          position: absolute;
+          left: 14px;
+          width: 0;
+          height: 0;
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
+        }
+        .event-tooltip[data-pos="top"]::after {
+          bottom: -6px;
+          border-top: 6px solid rgba(148,163,184,0.25);
+        }
+        .event-tooltip[data-pos="bottom"]::after {
+          top: -6px;
+          border-bottom: 6px solid rgba(148,163,184,0.25);
+        }
+
         .event-tooltip .row { display: flex; align-items: center; gap: 0.4rem; }
         .event-tooltip .label { opacity: 0.7; }
+
+        /* Sticky header polish */
+        .week-header {
+          backdrop-filter: saturate(180%) blur(8px);
+          background-color: rgba(31,41,55,0.85); /* neutral-800 with opacity */
+        }
       `}</style>
 
       <div className="week-grid" ref={ref}>
@@ -249,7 +278,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         {dayNames.map((name, dayIndex) => (
           <div
             key={dayIndex}
-            className="sticky top-0 z-10 py-2 border-b border-neutral-700 bg-neutral-800 text-center text-sm font-semibold"
+            className="sticky top-0 z-10 py-2 border-b border-neutral-700 week-header text-center text-sm font-semibold"
             style={{ 
               gridColumn: dayIndex + 2,
               gridRow: 1
@@ -269,7 +298,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         {Array.from({ length: endHour - startHour }, (_, i) => (
           <div
             key={i}
-            className="sticky left-0 z-10 flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900"
+            className="sticky left-0 z-10 flex justify-end pr-2 text-xs ds-muted border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
               gridRow: i * slotsPerHour + 2,
@@ -318,13 +347,14 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
               : 1;
 
             const isHourBoundary = slot.index % slotsPerHour === 0;
+            const hourBlock = Math.floor(slot.index / slotsPerHour);
 
             return (
               <div
                 key={`${day}-${slot.index}`}
                 className={`time-slot border-l border-neutral-800 border-t ${
                   isHourBoundary ? "border-neutral-700" : "border-neutral-800"
-                }`}
+                } ${hourBlock % 2 === 0 ? "hour-even" : ""}`}
                 style={{
                   gridColumn: day + 2,
                   gridRow: slot.index + 2,

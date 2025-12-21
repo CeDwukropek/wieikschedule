@@ -3,49 +3,46 @@ import { timetableData } from "./timetable";
 const { SUBJECTS } = timetableData;
 
 export default function EventCard({ ev }) {
-  const subj = SUBJECTS[ev.subj] ||
-    SUBJECTS[ev.title] || { name: ev.title || ev.subj, color: "bg-gray-600" };
-
+  const subj = SUBJECTS[ev.subj] || SUBJECTS[ev.title] || { name: ev.title || ev.subj, color: "bg-gray-600" };
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");
 
   return (
-    <div className="w-full h-full flex overflow-hidden bg-neutral-800 shadow-sm rounded-md">
+    <div className="ds-card w-full h-full overflow-hidden">
       <div className={`${colorBg} w-1 shrink-0`} />
 
-      <div className="flex-1 p-2 flex flex-col">
-        <div className={`${colorText} text-[0.7rem] font-semibold`}>
+      <div className="flex-1 p-2 flex flex-col gap-1" style={{ minWidth: 0 }}>
+        <div className={`ds-title ${colorText}`} title={subj.name}>
           {subj.name}
         </div>
 
-        <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
+        <div className="ds-row">
           {ev.start && ev.end ? (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3 opacity-80" />
-              <span>
-                {ev.start} - {ev.end}
-              </span>
-            </div>
+            <span className="ds-chip" title={`${ev.start} - ${ev.end}`}>
+              <Clock className="icon" />
+              <span className="text">{ev.start} - {ev.end}</span>
+            </span>
           ) : null}
+
           {ev.room ? (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 opacity-80" />
-              <span>{ev.room}</span>
-            </div>
+            <span className="ds-chip" title={ev.room}>
+              <MapPin className="icon" />
+              <span className="text">{ev.room}</span>
+            </span>
           ) : null}
 
           {ev.groups?.length && ev.type !== "Wykład" ? (
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3 opacity-80" />
-              <span>{ev.groups.join(", ")}</span>
-            </div>
+            <span className="ds-chip" title={ev.groups.join(", ")}>
+              <Users className="icon" />
+              <span className="text">{ev.groups.join(", ")}</span>
+            </span>
           ) : null}
 
           {ev.type ? (
-            <div className="flex items-center gap-1">
-              <Tag className="w-3 h-3 opacity-80" />
-              <span>{ev.type}</span>
-            </div>
+            <span className="ds-chip" title={ev.type}>
+              <Tag className="icon" />
+              <span className="text">{ev.type}</span>
+            </span>
           ) : null}
         </div>
       </div>

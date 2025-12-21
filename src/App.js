@@ -332,34 +332,28 @@ export default function Timetable() {
   ]);
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen p-6 max-w-7xl mx-auto">
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
       <div className="hidden sm:flex flex-wrap items-center gap-3 mb-6">
         <button
           onClick={() => setViewMode("week")}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-            viewMode === "week"
-              ? "bg-neutral-800 text-white"
-              : "bg-neutral-900 text-gray-400"
-          }`}
+          className="ds-btn"
+          data-active={viewMode === "week"}
         >
           <Calendar className="w-4 h-4" /> Tydzień
         </button>
         <button
           onClick={() => setViewMode("day")}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-            viewMode === "day"
-              ? "bg-neutral-800 text-white"
-              : "bg-neutral-900 text-gray-400"
-          }`}
+          className="ds-btn"
+          data-active={viewMode === "day"}
         >
           <List className="w-4 h-4" /> Dzień
         </button>
 
         <button
           onClick={() => setHideLectures(!hideLectures)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+          className="ds-btn"
         >
           {hideLectures ? (
             <EyeOff className="w-4 h-4" />
@@ -371,12 +365,13 @@ export default function Timetable() {
 
         <button
           onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+          className="ds-btn"
+          data-active={showAll}
         >
           {showAll ? "Twój plan" : "Pokaż cały plan"}
         </button>
         <button
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+          className="ds-btn"
           // w App.js, przy kliknięciu Export ICS
           onClick={() => {
             const dataForICS = computeFiltered(
@@ -438,22 +433,17 @@ export default function Timetable() {
           <>
             <button
               onClick={() => setWeekParity(currentParity)}
-              className={`px-3 py-1 rounded text-sm ${
-                weekParity === currentParity
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
-              }`}
+              className="ds-btn"
+              data-active={weekParity === currentParity}
             >
               {currentRange}
             </button>
 
             <button
               onClick={() => setWeekParity(nextParity)}
-              className={`px-3 ml-3 py-1 rounded text-sm ${
-                weekParity === nextParity
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
-              }`}
+              className="ds-btn"
+              data-active={weekParity === nextParity}
+              style={{ marginLeft: '0.75rem' }}
             >
               {nextRange}
             </button>
