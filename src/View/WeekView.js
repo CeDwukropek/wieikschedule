@@ -11,19 +11,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
   const days = [0, 1, 2, 3, 4]; // Pon–Pt
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
-  // Current time tracking
-  const [currentTime, setCurrentTime] = React.useState(new Date());
-  React.useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
-    return () => clearInterval(timer);
-  }, []);
-
-  const now = currentTime;
-  const currentDay = (now.getDay() + 6) % 7; // 0=Mon, 1=Tue, ..., 4=Fri
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const isCurrentTimeVisible = currentDay < 5 && currentMinutes >= startHour * 60 && currentMinutes <= endHour * 60;
-  const currentTimeRow = isCurrentTimeVisible ? ((currentMinutes - startHour * 60) / slotMinutes) + 2 : null;
-
   function toMinutes(t) {
     return timeToMinutes(t);
   }
@@ -131,7 +118,8 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
     const title = ev.title || ev.subj;
     const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
 
-    const transform = `translate(${offsetX}px, ${pos === "top" ? (visible ? "calc(-100% - 6px)" : "-100%") : (visible ? "6px" : "0")})`;
+    const transformY = pos === "top" ? "translateY(-100%)" : "translateY(0)";
+    const transform = `translate(${offsetX}px, ${pos === "top" ? "-100%" : "0"})`;
 
     return (
       <div
@@ -181,7 +169,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
       <style>{`
         .week-grid {
           display: grid;
-          position: relative;
           overflow: hidden;
           color: #e5e7eb;
           border-left: 1px solid rgba(148,163,184,0.08);
@@ -208,9 +195,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           min-height: 1rem;
           align-items: flex-start;
         }
-
-        /* Alternate hour striping for readability */
-        .hour-even { background-color: rgba(255,255,255,0.02); }
         
         .event-container {
           display: flex;
@@ -225,7 +209,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         /* Hover/focus tooltip for event details */
         .event-wrapper {
           position: relative;
-          z-index: 10;
           flex: 1;
           min-width: 0;
           display: flex;
@@ -249,8 +232,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           color: #e5e7eb;
           font-size: 0.75rem;
           line-height: 1.1rem;
-          will-change: transform, opacity;
-          transition: opacity 120ms ease, transform 160ms ease;
         }
 
         .event-tooltip[data-pos="bottom"] { top: calc(100% + 8px); }
@@ -259,59 +240,8 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         .event-wrapper:hover .event-tooltip,
         .event-wrapper:focus .event-tooltip { opacity: 1; }
 
-        /* Arrow indicator */
-        .event-tooltip::after {
-          content: "";
-          position: absolute;
-          left: 14px;
-          width: 0;
-          height: 0;
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-        }
-        .event-tooltip[data-pos="top"]::after {
-          bottom: -6px;
-          border-top: 6px solid rgba(148,163,184,0.25);
-        }
-        .event-tooltip[data-pos="bottom"]::after {
-          top: -6px;
-          border-bottom: 6px solid rgba(148,163,184,0.25);
-        }
-
         .event-tooltip .row { display: flex; align-items: center; gap: 0.4rem; }
         .event-tooltip .label { opacity: 0.7; }
-
-        /* Sticky header polish */
-        .week-header {
-          backdrop-filter: saturate(180%) blur(8px);
-          background-color: var(--ds-surface);
-          opacity: 0.95;
-        }
-
-        /* Current time indicator */
-        .current-time-line {
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
-          box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 2px rgba(239, 68, 68, 0.9);
-          pointer-events: none;
-          z-index: 2;
-        }
-        
-        .current-time-line::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 8px;
-          height: 8px;
-          background: #ef4444;
-          border-radius: 50%;
-          box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
-        }
       `}</style>
 
       <div className="week-grid" ref={ref}>
@@ -319,7 +249,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         {dayNames.map((name, dayIndex) => (
           <div
             key={dayIndex}
-            className="sticky top-0 z-10 py-2 border-b border-neutral-700 week-header text-center text-sm font-semibold"
+            className="sticky top-0 z-10 py-2 border-b border-neutral-700 bg-neutral-800 text-center text-sm font-semibold"
             style={{ 
               gridColumn: dayIndex + 2,
               gridRow: 1
@@ -331,15 +261,15 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
 
         {/* Empty corner above time column */}
         <div
-          className="sticky top-0 z-10 border-r border-b week-header"
-          style={{ gridColumn: 1, gridRow: 1, borderColor: 'var(--ds-border)' }}
+          className="sticky top-0 z-10 bg-neutral-900 border-r border-b border-neutral-700"
+          style={{ gridColumn: 1, gridRow: 1 }}
         />
 
         {/* Time column labels - only on hourly rows */}
         {Array.from({ length: endHour - startHour }, (_, i) => (
           <div
             key={i}
-            className="sticky left-0 z-10 flex justify-end pr-2 text-xs ds-muted border-t border-neutral-700 bg-neutral-900"
+            className="sticky left-0 z-10 flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
               gridRow: i * slotsPerHour + 2,
@@ -388,14 +318,13 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
               : 1;
 
             const isHourBoundary = slot.index % slotsPerHour === 0;
-            const hourBlock = Math.floor(slot.index / slotsPerHour);
 
             return (
               <div
                 key={`${day}-${slot.index}`}
                 className={`time-slot border-l border-neutral-800 border-t ${
                   isHourBoundary ? "border-neutral-700" : "border-neutral-800"
-                } ${hourBlock % 2 === 0 ? "hour-even" : ""}`}
+                }`}
                 style={{
                   gridColumn: day + 2,
                   gridRow: slot.index + 2,
@@ -418,18 +347,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
             );
           });
         })}
-
-        {/* Current time indicator */}
-        {isCurrentTimeVisible && (
-          <div
-            className="current-time-line"
-            style={{
-              gridColumn: `${currentDay + 2} / span 1`,
-              gridRow: currentTimeRow,
-              top: `${((currentMinutes - startHour * 60) % slotMinutes) / slotMinutes * 100}%`
-            }}
-          />
-        )}
       </div>
     </div>
   );

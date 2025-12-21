@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Calendar, List, Eye, EyeOff, Palette, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
 import WeekView from "./View/WeekView";
@@ -9,14 +9,12 @@ import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
 import { ExportPngBtn } from "./ExportPngBtn";
-import { useTheme } from "./useTheme";
 
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   // per-browser user id (created once) -> used to namespace storage so it's unique user
   const USER_KEY = "wieikschedule.userId";
   function getUserId() {
@@ -334,28 +332,34 @@ export default function Timetable() {
   ]);
 
   return (
-    <div className="min-h-screen p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
       <div className="hidden sm:flex flex-wrap items-center gap-3 mb-6">
         <button
           onClick={() => setViewMode("week")}
-          className="ds-btn"
-          data-active={viewMode === "week"}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
+            viewMode === "week"
+              ? "bg-neutral-800 text-white"
+              : "bg-neutral-900 text-gray-400"
+          }`}
         >
           <Calendar className="w-4 h-4" /> Tydzień
         </button>
         <button
           onClick={() => setViewMode("day")}
-          className="ds-btn"
-          data-active={viewMode === "day"}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
+            viewMode === "day"
+              ? "bg-neutral-800 text-white"
+              : "bg-neutral-900 text-gray-400"
+          }`}
         >
           <List className="w-4 h-4" /> Dzień
         </button>
 
         <button
           onClick={() => setHideLectures(!hideLectures)}
-          className="ds-btn"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
         >
           {hideLectures ? (
             <EyeOff className="w-4 h-4" />
@@ -367,13 +371,12 @@ export default function Timetable() {
 
         <button
           onClick={() => setShowAll(!showAll)}
-          className="ds-btn"
-          data-active={showAll}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
         >
           {showAll ? "Twój plan" : "Pokaż cały plan"}
         </button>
         <button
-          className="ds-btn"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
           // w App.js, przy kliknięciu Export ICS
           onClick={() => {
             const dataForICS = computeFiltered(
@@ -387,13 +390,6 @@ export default function Timetable() {
           }}
         >
           Export ICS
-        </button>
-        <button
-          className="ds-btn"
-          onClick={toggleTheme}
-        >
-          <Palette className="w-4 h-4" />
-          {theme === 'dark' ? 'Motyw niebieski' : 'Motyw ciemny'}
         </button>
         <ExportPngBtn
           viewMode={viewMode}
@@ -442,17 +438,22 @@ export default function Timetable() {
           <>
             <button
               onClick={() => setWeekParity(currentParity)}
-              className="ds-btn"
-              data-active={weekParity === currentParity}
+              className={`px-3 py-1 rounded text-sm ${
+                weekParity === currentParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
             >
               {currentRange}
             </button>
 
             <button
               onClick={() => setWeekParity(nextParity)}
-              className="ds-btn"
-              data-active={weekParity === nextParity}
-              style={{ marginLeft: '0.75rem' }}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                weekParity === nextParity
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
             >
               {nextRange}
             </button>
@@ -488,8 +489,6 @@ export default function Timetable() {
         weekParity={weekParity}
         computeFiltered={computeFiltered}
         SCHEDULE={SCHEDULE}
-        theme={theme}
-        toggleTheme={toggleTheme}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
@@ -499,54 +498,21 @@ export default function Timetable() {
           ref={exportRef}
         />
       ) : (
-        <>
-          {/* Desktop day navigation */}
-          <div className="hidden sm:flex items-center justify-center gap-3 mb-4 p-3 rounded-lg" style={{ background: 'var(--ds-surface)' }}>
-            <button
-              onClick={() => {
-                const idx = combinedOptions.findIndex((o) => o.value === selection);
-                const currentIndex = idx === -1 ? 0 : idx;
-                const nextIndex = (currentIndex - 1 + combinedOptions.length) % combinedOptions.length;
-                setSelection(combinedOptions[nextIndex].value);
-              }}
-              className="ds-btn"
-              aria-label="Previous day"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="text-center min-w-[200px]">
-              <div className="font-semibold">{combinedOptions.find(o => o.value === selection)?.label}</div>
-              <div className="text-sm ds-muted">{combinedOptions.find(o => o.value === selection)?.date}</div>
-            </div>
-            <button
-              onClick={() => {
-                const idx = combinedOptions.findIndex((o) => o.value === selection);
-                const currentIndex = idx === -1 ? 0 : idx;
-                const nextIndex = (currentIndex + 1) % combinedOptions.length;
-                setSelection(combinedOptions[nextIndex].value);
-              }}
-              className="ds-btn"
-              aria-label="Next day"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          <DayView
-            key={`day-${selection}`}
-            events={dayEvents}
-            // parity/date helpers from App so DayView can show ranges and switch parity
-            currentParity={currentParity}
-            nextParity={nextParity}
-            currentRange={currentRange}
-            nextRange={nextRange}
-            setWeekParity={setWeekParity}
-            // control selection externally so BottomDayNav drives it
-            options={combinedOptions}
-            selection={selection}
-            onSelectionChange={setSelection}
-            ref={exportRef}
-          />
-        </>
+        <DayView
+          key={`day-${selection}`}
+          events={dayEvents}
+          // parity/date helpers from App so DayView can show ranges and switch parity
+          currentParity={currentParity}
+          nextParity={nextParity}
+          currentRange={currentRange}
+          nextRange={nextRange}
+          setWeekParity={setWeekParity}
+          // control selection externally so BottomDayNav drives it
+          options={combinedOptions}
+          selection={selection}
+          onSelectionChange={setSelection}
+          ref={exportRef}
+        />
       )}
       <FAQ />
     </div>
