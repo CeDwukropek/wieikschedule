@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Calendar, List, Eye, EyeOff } from "lucide-react";
+import { Calendar, List, Eye, EyeOff, Palette } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
 import WeekView from "./View/WeekView";
@@ -9,12 +9,14 @@ import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
 import { ExportPngBtn } from "./ExportPngBtn";
+import { useTheme } from "./useTheme";
 
 const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   // per-browser user id (created once) -> used to namespace storage so it's unique user
   const USER_KEY = "wieikschedule.userId";
   function getUserId() {
@@ -386,6 +388,13 @@ export default function Timetable() {
         >
           Export ICS
         </button>
+        <button
+          className="ds-btn"
+          onClick={toggleTheme}
+        >
+          <Palette className="w-4 h-4" />
+          {theme === 'dark' ? 'Motyw niebieski' : 'Motyw ciemny'}
+        </button>
         <ExportPngBtn
           viewMode={viewMode}
           exportRef={exportRef}
@@ -479,6 +488,8 @@ export default function Timetable() {
         weekParity={weekParity}
         computeFiltered={computeFiltered}
         SCHEDULE={SCHEDULE}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (

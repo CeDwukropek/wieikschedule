@@ -1,4 +1,4 @@
-import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
+import { Menu, X, Calendar, List, Eye, EyeOff, Palette } from "lucide-react";
 import GroupInput from "../GroupInput";
 import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
@@ -31,6 +31,8 @@ export default function FloatingMenu({
   weekParity,
   computeFiltered,
   SCHEDULE,
+  theme,
+  toggleTheme,
 }) {
   function clearFilters() {
     setWeekParity("all");
@@ -132,6 +134,16 @@ export default function FloatingMenu({
               data-active={showAll}
             >
               {showAll ? "Twój plan" : "Pokaż cały plan"}
+            </button>
+          </div>
+
+          <div className="border-t border-neutral-800 pt-3">
+            <button
+              onClick={toggleTheme}
+              className="ds-btn w-full"
+            >
+              <Palette className="w-4 h-4" />
+              {theme === 'dark' ? 'Motyw niebieski' : 'Motyw ciemny'}
             </button>
           </div>
 
