@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Calendar, List, Eye, EyeOff, Palette } from "lucide-react";
+import { Calendar, List, Eye, EyeOff, Palette, ChevronLeft, ChevronRight } from "lucide-react";
 import { timetableData } from "./timetable";
 import GroupInput from "./GroupInput";
 import WeekView from "./View/WeekView";
@@ -499,21 +499,54 @@ export default function Timetable() {
           ref={exportRef}
         />
       ) : (
-        <DayView
-          key={`day-${selection}`}
-          events={dayEvents}
-          // parity/date helpers from App so DayView can show ranges and switch parity
-          currentParity={currentParity}
-          nextParity={nextParity}
-          currentRange={currentRange}
-          nextRange={nextRange}
-          setWeekParity={setWeekParity}
-          // control selection externally so BottomDayNav drives it
-          options={combinedOptions}
-          selection={selection}
-          onSelectionChange={setSelection}
-          ref={exportRef}
-        />
+        <>
+          {/* Desktop day navigation */}
+          <div className="hidden sm:flex items-center justify-center gap-3 mb-4 p-3 rounded-lg" style={{ background: 'var(--ds-surface)' }}>
+            <button
+              onClick={() => {
+                const idx = combinedOptions.findIndex((o) => o.value === selection);
+                const currentIndex = idx === -1 ? 0 : idx;
+                const nextIndex = (currentIndex - 1 + combinedOptions.length) % combinedOptions.length;
+                setSelection(combinedOptions[nextIndex].value);
+              }}
+              className="ds-btn"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-center min-w-[200px]">
+              <div className="font-semibold">{combinedOptions.find(o => o.value === selection)?.label}</div>
+              <div className="text-sm ds-muted">{combinedOptions.find(o => o.value === selection)?.date}</div>
+            </div>
+            <button
+              onClick={() => {
+                const idx = combinedOptions.findIndex((o) => o.value === selection);
+                const currentIndex = idx === -1 ? 0 : idx;
+                const nextIndex = (currentIndex + 1) % combinedOptions.length;
+                setSelection(combinedOptions[nextIndex].value);
+              }}
+              className="ds-btn"
+              aria-label="Next day"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <DayView
+            key={`day-${selection}`}
+            events={dayEvents}
+            // parity/date helpers from App so DayView can show ranges and switch parity
+            currentParity={currentParity}
+            nextParity={nextParity}
+            currentRange={currentRange}
+            nextRange={nextRange}
+            setWeekParity={setWeekParity}
+            // control selection externally so BottomDayNav drives it
+            options={combinedOptions}
+            selection={selection}
+            onSelectionChange={setSelection}
+            ref={exportRef}
+          />
+        </>
       )}
       <FAQ />
     </div>

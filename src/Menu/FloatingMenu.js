@@ -45,7 +45,7 @@ export default function FloatingMenu({
   return (
     <div className="sm:hidden">
       {/* Floating toggle button (bottom-right) */}
-      <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-3 py-2 shadow-lg">
+      <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 backdrop-blur-md rounded-full px-3 py-2" style={{ background: 'var(--ds-surface)', border: '1px solid var(--ds-border)', boxShadow: 'var(--ds-shadow-2)' }}>
         <button
           onClick={() => setViewMode(viewMode === "week" ? "day" : "week")}
           className="ds-btn-ghost w-12 h-12"
@@ -85,9 +85,10 @@ export default function FloatingMenu({
       </div>
       {/* Slide-over panel */}
       <div
-        className={`fixed right-0 bottom-0 top-0 z-40 w-full sm:w-96 bg-neutral-900 text-white shadow-xl transform transition-transform duration-300 ${
+        className={`fixed right-0 bottom-0 top-0 z-40 w-full sm:w-96 shadow-xl transform transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{ background: 'var(--ds-bg)', color: 'var(--ds-text)' }}
         role="dialog"
         aria-modal="true"
       >

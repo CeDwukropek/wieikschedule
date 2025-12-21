@@ -11,6 +11,19 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
   const days = [0, 1, 2, 3, 4]; // Pon–Pt
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
+  // Current time tracking
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+  React.useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
+  const now = currentTime;
+  const currentDay = (now.getDay() + 6) % 7; // 0=Mon, 1=Tue, ..., 4=Fri
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const isCurrentTimeVisible = currentDay < 5 && currentMinutes >= startHour * 60 && currentMinutes <= endHour * 60;
+  const currentTimeRow = isCurrentTimeVisible ? ((currentMinutes - startHour * 60) / slotMinutes) + 2 : null;
+
   function toMinutes(t) {
     return timeToMinutes(t);
   }
@@ -269,7 +282,33 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         /* Sticky header polish */
         .week-header {
           backdrop-filter: saturate(180%) blur(8px);
-          background-color: rgba(31,41,55,0.85); /* neutral-800 with opacity */
+          background-color: var(--ds-surface);
+          opacity: 0.95;
+        }
+
+        /* Current time indicator */
+        .current-time-line {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 2px rgba(239, 68, 68, 0.9);
+          pointer-events: none;
+          z-index: 5;
+        }
+        
+        .current-time-line::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 8px;
+          height: 8px;
+          background: #ef4444;
+          border-radius: 50%;
+          box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
         }
       `}</style>
 
@@ -290,8 +329,8 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
 
         {/* Empty corner above time column */}
         <div
-          className="sticky top-0 z-10 bg-neutral-900 border-r border-b border-neutral-700"
-          style={{ gridColumn: 1, gridRow: 1 }}
+          className="sticky top-0 z-10 border-r border-b week-header"
+          style={{ gridColumn: 1, gridRow: 1, borderColor: 'var(--ds-border)' }}
         />
 
         {/* Time column labels - only on hourly rows */}
@@ -377,6 +416,18 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
             );
           });
         })}
+
+        {/* Current time indicator */}
+        {isCurrentTimeVisible && (
+          <div
+            className="current-time-line"
+            style={{
+              gridColumn: `${currentDay + 2} / span 1`,
+              gridRow: currentTimeRow,
+              top: `${((currentMinutes - startHour * 60) % slotMinutes) / slotMinutes * 100}%`
+            }}
+          />
+        )}
       </div>
     </div>
   );
