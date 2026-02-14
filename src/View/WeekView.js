@@ -64,7 +64,8 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
 
       const spaceAbove = wr.top;
       const spaceBelow = window.innerHeight - wr.bottom;
-      const shouldPlaceTop = spaceAbove >= tt.height + 12 || spaceAbove >= spaceBelow;
+      const shouldPlaceTop =
+        spaceAbove >= tt.height + 12 || spaceAbove >= spaceBelow;
       setPos(shouldPlaceTop ? "top" : "bottom");
 
       // Horizontal clamping
@@ -118,7 +119,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
     const title = ev.title || ev.subj;
     const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
 
-    const transformY = pos === "top" ? "translateY(-100%)" : "translateY(0)";
     const transform = `translate(${offsetX}px, ${pos === "top" ? "-100%" : "0"})`;
 
     return (
@@ -145,19 +145,32 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           style={{ transform }}
         >
           {title ? (
-            <div className="row"><span className="label">Przedmiot:</span> <span>{title}</span></div>
+            <div className="row">
+              <span className="label">Przedmiot:</span> <span>{title}</span>
+            </div>
           ) : null}
           {ev.type ? (
-            <div className="row"><span className="label">Typ:</span> <span>{ev.type}</span></div>
+            <div className="row">
+              <span className="label">Typ:</span> <span>{ev.type}</span>
+            </div>
           ) : null}
-          {(ev.start && ev.end) ? (
-            <div className="row"><span className="label">Czas:</span> <span>{ev.start} - {ev.end}</span></div>
+          {ev.start && ev.end ? (
+            <div className="row">
+              <span className="label">Czas:</span>{" "}
+              <span>
+                {ev.start} - {ev.end}
+              </span>
+            </div>
           ) : null}
           {ev.room ? (
-            <div className="row"><span className="label">Sala:</span> <span>{ev.room}</span></div>
+            <div className="row">
+              <span className="label">Sala:</span> <span>{ev.room}</span>
+            </div>
           ) : null}
           {groups ? (
-            <div className="row"><span className="label">Grupy:</span> <span>{groups}</span></div>
+            <div className="row">
+              <span className="label">Grupy:</span> <span>{groups}</span>
+            </div>
           ) : null}
         </div>
       </div>
@@ -250,9 +263,9 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
           <div
             key={dayIndex}
             className="sticky top-0 z-10 py-2 border-b border-neutral-700 bg-neutral-800 text-center text-sm font-semibold"
-            style={{ 
+            style={{
               gridColumn: dayIndex + 2,
-              gridRow: 1
+              gridRow: 1,
             }}
           >
             {name}
@@ -273,7 +286,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
             style={{
               gridColumn: 1,
               gridRow: i * slotsPerHour + 2,
-              gridRowEnd: (i + 1) * slotsPerHour + 2
+              gridRowEnd: (i + 1) * slotsPerHour + 2,
             }}
           >
             <span className="mt-[0.25em]">{startHour + i}:00</span>
@@ -292,14 +305,19 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
               return null;
             }
 
-            const slotEvents = getEventsForSlot(dayEvents, slot.slotStart, slot.slotEnd);
-            
+            const slotEvents = getEventsForSlot(
+              dayEvents,
+              slot.slotStart,
+              slot.slotEnd,
+            );
+
             // Filter out events that were already rendered in a previous slot
             const newEvents = slotEvents.filter((ev) => {
               const evStart = toMinutes(ev.start);
-              const eventStartsInThisSlot = evStart >= slot.slotStart && evStart < slot.slotEnd;
+              const eventStartsInThisSlot =
+                evStart >= slot.slotStart && evStart < slot.slotEnd;
               const notYetRendered = !renderedEvents.has(ev);
-              
+
               if (eventStartsInThisSlot && notYetRendered) {
                 renderedEvents.add(ev);
                 // Mark all slots this event occupies as occupied
@@ -313,9 +331,10 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
             });
 
             // Calculate the maximum span of events in this slot
-            const maxSpan = newEvents.length > 0 
-              ? Math.max(...newEvents.map((ev) => getEventSpan(ev)))
-              : 1;
+            const maxSpan =
+              newEvents.length > 0
+                ? Math.max(...newEvents.map((ev) => getEventSpan(ev)))
+                : 1;
 
             const isHourBoundary = slot.index % slotsPerHour === 0;
 
