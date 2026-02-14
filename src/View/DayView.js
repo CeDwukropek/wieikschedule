@@ -4,7 +4,7 @@ import { timeToMinutes } from "../utils";
 
 const DayView = forwardRef(function DayView(
   { events, selection: externalSelection },
-  ref
+  ref,
 ) {
   const startHour = 7;
   const endHour = 20;
@@ -15,7 +15,7 @@ const DayView = forwardRef(function DayView(
   // default selected day index (clamped to 0..4) - used to detect "today"
   const defaultDayIndex = useMemo(
     () => Math.min(Math.max((today.getDay() + 6) % 7, 0), 4),
-    [today]
+    [today],
   );
 
   const selection = externalSelection;
@@ -25,7 +25,7 @@ const DayView = forwardRef(function DayView(
 
   function groupOverlapping(eventsForDay) {
     const sorted = [...eventsForDay].sort(
-      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)
+      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
     );
     const groups = [];
     sorted.forEach((ev) => {
@@ -35,7 +35,7 @@ const DayView = forwardRef(function DayView(
           group.some(
             (g) =>
               timeToMinutes(ev.start) < timeToMinutes(g.end) &&
-              timeToMinutes(ev.end) > timeToMinutes(g.start)
+              timeToMinutes(ev.end) > timeToMinutes(g.start),
           )
         ) {
           group.push(ev);
@@ -46,14 +46,14 @@ const DayView = forwardRef(function DayView(
       if (!placed) groups.push([ev]);
     });
     groups.forEach((g) =>
-      g.sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start))
+      g.sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)),
     );
     return groups;
   }
 
   const eventsForDay = useMemo(
     () => events.filter((e) => e.day === selectedDayIndex),
-    [events, selectedDayIndex]
+    [events, selectedDayIndex],
   );
   const groups = useMemo(() => groupOverlapping(eventsForDay), [eventsForDay]);
 
@@ -123,7 +123,7 @@ const DayView = forwardRef(function DayView(
                   <EventCard ev={ev} />
                 </div>
               );
-            })
+            }),
           )}
         </div>
       </div>
