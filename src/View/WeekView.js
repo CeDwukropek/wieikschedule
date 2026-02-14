@@ -20,36 +20,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
   const days = [0, 1, 2, 3, 4]; // Pon–Pt
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
-  // Stable pixel height per slot -> no rem/subpixel drift
-  const SLOT_PX = 20; // <- dostosuj (np. 16/20/24)
-
-  // Current time tracking
-  const [currentTime, setCurrentTime] = React.useState(() => new Date());
-  React.useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const now = currentTime;
-  const currentDay = (now.getDay() + 6) % 7; // Mon=0..Sun=6
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const isCurrentTimeVisible =
-    currentDay < 5 &&
-    currentMinutes >= startHour * 60 &&
-    currentMinutes <= endHour * 60;
-
-  // IMPORTANT: gridRow must be integer
-  const minutesFromStart = currentMinutes - startHour * 60;
-  const currentBaseRow = isCurrentTimeVisible
-    ? Math.floor(minutesFromStart / slotMinutes) + 2
-    : null;
-
-  // Offset within the current slot row (0..1)
-  const currentOffset = isCurrentTimeVisible
-    ? (minutesFromStart % slotMinutes) / slotMinutes
-    : 0;
-
   const timeSlots = createTimeSlots(startHour, endHour, slotMinutes);
 
   return (
@@ -57,7 +27,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
       <style>{`
         .week-grid {
           grid-template-columns: 60px repeat(5, minmax(160px, 1fr));
-          grid-template-rows: auto repeat(${totalSlots}, ${SLOT_PX}px);
+          grid-template-rows: auto repeat(${totalSlots}, 1rem);
         }
 
         @media (max-width: 768px) {
@@ -178,18 +148,6 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
             );
           });
         })}
-
-        {/* Current time indicator */}
-        {isCurrentTimeVisible && currentBaseRow != null && (
-          <div
-            className="current-time-line"
-            style={{
-              gridColumn: `${currentDay + 2} / span 1`,
-              gridRow: currentBaseRow,
-              top: `${currentOffset * 100}%`,
-            }}
-          />
-        )}
       </div>
     </div>
   );
