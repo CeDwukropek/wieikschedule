@@ -138,9 +138,10 @@
 .day-time-slot {
   display: flex;
   gap: 2px;
-  padding: 2px;
-  min-height: 1rem;
+  padding: 2px; /* OK przy SLOT_PX >= 18-20 */
+  min-height: 0; /* <- kluczowe */
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .hour-even,
