@@ -37,6 +37,7 @@ export default function Timetable() {
     studentGroups,
     schedule,
     subjects,
+    groupConfigs,
     handleGroupChange,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
@@ -188,30 +189,15 @@ export default function Timetable() {
 
       {/* --- Wybór grup --- hidden on mobile, visible on sm+ */}
       <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <GroupInput
-          label="Ćwiczenia"
-          type="C"
-          value={studentGroups.C}
-          onChange={handleGroupChange}
-        />
-        <GroupInput
-          label="Laboratoria"
-          type="L"
-          value={studentGroups.L}
-          onChange={handleGroupChange}
-        />
-        <GroupInput
-          label="Lektorat"
-          type="Lek"
-          value={studentGroups.Lek}
-          onChange={handleGroupChange}
-        />
-        <GroupInput
-          label="Lab. komp."
-          type="Lk"
-          value={studentGroups.Lk}
-          onChange={handleGroupChange}
-        />
+        {groupConfigs.map((groupConfig) => (
+          <GroupInput
+            key={groupConfig.type}
+            label={groupConfig.label}
+            type={groupConfig.type}
+            value={studentGroups[groupConfig.type] || ""}
+            onChange={handleGroupChange}
+          />
+        ))}
       </div>
       {/* --- Current period bar: auto parity + next week --- */}
 
@@ -254,6 +240,7 @@ export default function Timetable() {
         showAll={showAll}
         setShowAll={setShowAll}
         studentGroups={studentGroups}
+        groupConfigs={groupConfigs}
         handleGroupChange={handleGroupChange}
         activeParity={weekParity}
         currentParity={currentParity}

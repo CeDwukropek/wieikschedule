@@ -1,57 +1,62 @@
 export const timetableData = {
   NAME: "EiA 4sem",
+  GROUPS: [
+    { type: "C", prefix: "Ć", label: "Ćwiczenia" },
+    { type: "L", prefix: "L", label: "Laboratoria" },
+    { type: "Lk", prefix: "Lk", label: "Lab. komp." },
+    { type: "Lek", prefix: "Lek", label: "Lektorat" },
+    { type: "P", prefix: "P", label: "Projekt" },
+  ],
   SUBJECTS: {
     MASZ: {
       name: "Maszyny elektryczne",
       teacher:
         "dr inż. J. Tulicki / dr inż. A. Shymanska / dr inż. M. Sierżęga",
-      color: "bg-indigo-900", // rgb(26, 35, 126)
+      color: "bg-indigo-900",
     },
     LABVIEW: {
       name: "Podstawy programowania w LabVIEW",
       teacher: "dr inż. T. Makowski / mgr inż. K. Sołtys",
-      color: "bg-blue-500", // rgb(30, 144, 255)
+      color: "bg-blue-500",
     },
     SIECI: {
       name: "Sieci i urządzenia elektryczne",
       teacher: "dr inż. T. Sieńko / mgr inż. D. Mamcarz",
-      color: "bg-sky-400", // rgb(0, 191, 255)
+      color: "bg-sky-400",
     },
     MICRO: {
       name: "Technika mikroprocesorowa",
       teacher: "dr inż. K. Suchenia / mgr inż. M. Raźny / dr inż. A. Drwal",
-      color: "bg-purple-800", // rgb(128, 0, 128)
+      color: "bg-purple-800",
     },
     ENERGO: {
       name: "Energoelektronika",
       teacher: "prof. W. Mazgaj / dr inż. W. Czuchra / mgr inż. M. Wawro",
-      color: "bg-pink-600", // rgb(199, 21, 133)
+      color: "bg-pink-600",
     },
     ANG01: {
       name: "Język angielski",
       teacher: "mgr J. Firganek",
-      color: "bg-pink-400", // rgb(255, 105, 180) - w tym planie ma inny odcień niż LabVIEW
+      color: "bg-pink-400",
     },
     WF: {
       name: "Wychowanie fizyczne",
       teacher: "CSiR",
-      color: "bg-green-500", // rgb(50, 205, 50)
+      color: "bg-green-500",
     },
     UKLADY: {
       name: "Układy elektromechaniczne",
       teacher: "dr inż. Z. Pilch",
-      color: "bg-green-800", // rgb(0, 100, 0)
+      color: "bg-green-800",
     },
     PSPICE: {
       name: "Podstawy programu Pspice",
       teacher: "dr inż. Z. Szular",
-      color: "bg-red-900", // rgb(128, 0, 0)
+      color: "bg-red-900",
     },
   },
   SCHEDULE: [
-    // -----------------------------------------------------
-    // PONIEDZIAŁEK (day: 0)
-    // -----------------------------------------------------
+    // PONIEDZIAŁEK
     {
       id: 301,
       subj: "SIECI",
@@ -64,7 +69,7 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // Blok 9:15 - 10:45
+    // Blok 9:15
     {
       id: 302,
       subj: "MASZ",
@@ -90,7 +95,7 @@ export const timetableData = {
     {
       id: 304,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 0,
       start: "09:15",
@@ -101,7 +106,7 @@ export const timetableData = {
     {
       id: 305,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 0,
       start: "09:15",
@@ -141,9 +146,9 @@ export const timetableData = {
       end: "10:45",
       room: "208E",
       weeks: "both",
-    }, // W obu tygodniach L6
+    },
 
-    // Blok 11:00 - 12:30
+    // Blok 11:00
     {
       id: 309,
       subj: "ENERGO",
@@ -169,7 +174,7 @@ export const timetableData = {
     {
       id: 311,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 0,
       start: "11:00",
@@ -180,7 +185,7 @@ export const timetableData = {
     {
       id: 312,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 0,
       start: "11:00",
@@ -211,7 +216,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 12:45 - 14:15
+    // Blok 12:45
     {
       id: 315,
       subj: "ENERGO",
@@ -255,9 +260,9 @@ export const timetableData = {
       end: "14:15",
       room: "06",
       weeks: "both",
-    }, // "L7 / P5"
+    },
 
-    // Blok 14:30 - 16:00
+    // Blok 14:30
     {
       id: 319,
       subj: "LABVIEW",
@@ -279,7 +284,7 @@ export const timetableData = {
       end: "16:00",
       room: "WA2",
       weeks: "even",
-    }, // Zmiana w tyg parzystym na L7
+    },
     {
       id: 321,
       subj: "ANG01",
@@ -316,7 +321,7 @@ export const timetableData = {
     {
       id: 324,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 0,
       start: "14:30",
@@ -325,7 +330,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 16:15 - 17:45
+    // Blok 16:15
     {
       id: 325,
       subj: "LABVIEW",
@@ -358,11 +363,11 @@ export const timetableData = {
       end: "17:45",
       room: "WA2",
       weeks: "even",
-    }, // Kolizja sali z L4 w danych? W divie jest WA2
+    },
     {
       id: 328,
       subj: "LABVIEW",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 0,
       start: "16:15",
@@ -382,7 +387,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 18:00 - 19:30
+    // Blok 18:00
     {
       id: 330,
       subj: "LABVIEW",
@@ -406,7 +411,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 19:45 - 21:15
+    // Blok 19:45
     {
       id: 332,
       subj: "MICRO",
@@ -419,10 +424,8 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // -----------------------------------------------------
-    // WTOREK (day: 1)
-    // -----------------------------------------------------
-    // Blok 11:00 - 12:30
+    // WTOREK
+    // Blok 11:00
     {
       id: 333,
       subj: "ANG01",
@@ -479,7 +482,7 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // Blok 12:45 - 14:15
+    // Blok 12:45
     {
       id: 338,
       subj: "ANG01",
@@ -536,9 +539,7 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // -----------------------------------------------------
-    // ŚRODA (day: 2)
-    // -----------------------------------------------------
+    // ŚRODA
     {
       id: 343,
       subj: "WF",
@@ -588,7 +589,7 @@ export const timetableData = {
     {
       id: 347,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 2,
       start: "18:00",
@@ -610,7 +611,7 @@ export const timetableData = {
     {
       id: 349,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 2,
       start: "19:45",
@@ -630,9 +631,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // -----------------------------------------------------
-    // CZWARTEK (day: 3)
-    // -----------------------------------------------------
+    // CZWARTEK
     {
       id: 351,
       subj: "PSPICE",
@@ -656,7 +655,7 @@ export const timetableData = {
       end: "11:30",
       room: "013B",
       weeks: "odd",
-    }, // Długi blok
+    },
     {
       id: 353,
       subj: "ENERGO",
@@ -667,7 +666,7 @@ export const timetableData = {
       end: "11:30",
       room: "013B",
       weeks: "even",
-    }, // Długi blok
+    },
     {
       id: 354,
       subj: "ANG01",
@@ -693,18 +692,18 @@ export const timetableData = {
     {
       id: 356,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 3,
       start: "09:15",
       end: "10:45",
       room: "109B",
       weeks: "even",
-    }, // W divach raz jako Lk1, raz Lk2 w tym czasie
+    },
     {
       id: 357,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 3,
       start: "09:15",
@@ -717,18 +716,18 @@ export const timetableData = {
     {
       id: 358,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 3,
       start: "11:00",
       end: "12:30",
       room: "109B",
       weeks: "odd",
-    }, // W divie jest Lk3 w tyg parzystym też... poprawka: Lk3 jest w Even o 11:00, ale też w Odd. Przyjmuję both?
+    },
     {
       id: 359,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 3,
       start: "11:00",
@@ -737,7 +736,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 11:45+ (Energo)
+    // Blok 11:45+
     {
       id: 360,
       subj: "ENERGO",
@@ -761,7 +760,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Blok 12:30 / 12:45
+    // Blok 12:30
     {
       id: 362,
       subj: "UKLADY",
@@ -787,7 +786,7 @@ export const timetableData = {
     {
       id: 364,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 3,
       start: "12:45",
@@ -798,7 +797,7 @@ export const timetableData = {
     {
       id: 365,
       subj: "PSPICE",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 3,
       start: "12:45",
@@ -833,7 +832,7 @@ export const timetableData = {
     {
       id: 368,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 3,
       start: "14:15",
@@ -857,7 +856,7 @@ export const timetableData = {
     {
       id: 370,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 3,
       start: "16:00",
@@ -905,7 +904,7 @@ export const timetableData = {
     {
       id: 374,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 3,
       start: "17:45",
@@ -929,7 +928,7 @@ export const timetableData = {
     {
       id: 376,
       subj: "UKLADY",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 3,
       start: "19:30",
@@ -949,9 +948,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // -----------------------------------------------------
-    // PIĄTEK (day: 4)
-    // -----------------------------------------------------
+    // PIĄTEK
     {
       id: 378,
       subj: "ENERGO",

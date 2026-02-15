@@ -1,21 +1,28 @@
 import { useState, useMemo, useCallback } from "react";
 import { allTimetables, timetableMap } from "../timetables";
 
-const DEFAULT_GROUPS = { C: "Ć1", L: "L1", Lek: "Lek1", Lk: "Lk1" };
+// Build default groups from timetable group configurations
+function buildDefaultGroupsForTimetable(timetable) {
+  const groups = {};
+  if (timetable.groups && Array.isArray(timetable.groups)) {
+    timetable.groups.forEach((g) => {
+      groups[g.type] = `${g.prefix}1`;
+    });
+  }
+  return groups;
+}
 
 export function useScheduleManager(savedSettings) {
   const defaultScheduleId = allTimetables[0]?.id || "eia2";
 
-  // Memoize default values to prevent object recreation
-  const defaultGroups = useMemo(() => ({ ...DEFAULT_GROUPS }), []);
-
+  // Build initial groups for all schedules
   const initialScheduleGroups = useMemo(
     () =>
       allTimetables.reduce((acc, tt) => {
-        acc[tt.id] = { ...defaultGroups };
+        acc[tt.id] = buildDefaultGroupsForTimetable(tt);
         return acc;
       }, {}),
-    [defaultGroups],
+    [],
   );
 
   const [currentSchedule, setCurrentSchedule] = useState(
@@ -26,15 +33,20 @@ export function useScheduleManager(savedSettings) {
     savedSettings?.scheduleGroups ?? initialScheduleGroups,
   );
 
-  // Get current schedule's groups and data - memoized to prevent infinite loops
-  const studentGroups = useMemo(
-    () => scheduleGroups[currentSchedule] || defaultGroups,
-    [scheduleGroups, currentSchedule, defaultGroups],
-  );
-
+  // Get current schedule's data - memoized to prevent infinite loops
   const currentTimetable = useMemo(
     () => timetableMap[currentSchedule] || allTimetables[0],
     [currentSchedule],
+  );
+
+  const defaultGroups = useMemo(
+    () => buildDefaultGroupsForTimetable(currentTimetable),
+    [currentTimetable],
+  );
+
+  const studentGroups = useMemo(
+    () => scheduleGroups[currentSchedule] || defaultGroups,
+    [scheduleGroups, currentSchedule, defaultGroups],
   );
 
   const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
@@ -44,19 +56,28 @@ export function useScheduleManager(savedSettings) {
     [currentTimetable],
   );
 
+  // Get group configs for the current schedule
+  const groupConfigs = useMemo(
+    () => currentTimetable.groups || [],
+    [currentTimetable],
+  );
+
   const handleGroupChange = useCallback(
     (type, number) => {
       const digits = (number ?? "").toString().replace(/\D/g, "");
-      const prefixes = { C: "Ć", L: "L", Lek: "Lek", Lk: "Lk" };
+      // Find the prefix for this type
+      const groupConfig = groupConfigs.find((g) => g.type === type);
+      const prefix = groupConfig ? groupConfig.prefix : type;
+
       setScheduleGroups((prev) => ({
         ...prev,
         [currentSchedule]: {
           ...prev[currentSchedule],
-          [type]: digits ? prefixes[type] + digits : "",
+          [type]: digits ? prefix + digits : "",
         },
       }));
     },
-    [currentSchedule],
+    [currentSchedule, groupConfigs],
   );
 
   const handleScheduleChange = useCallback((scheduleId) => {
@@ -69,6 +90,7 @@ export function useScheduleManager(savedSettings) {
     studentGroups,
     schedule,
     subjects,
+    groupConfigs,
     handleGroupChange,
     handleScheduleChange,
   };

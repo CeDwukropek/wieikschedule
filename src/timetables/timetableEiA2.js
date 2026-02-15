@@ -1,50 +1,57 @@
 export const timetableData = {
-  NAME_EiA2: "EiA 2sem",
-  SUBJECTS_EiA2: {
+  NAME: "EiA 2sem",
+  GROUPS: [
+    { type: "C", prefix: "Ć", label: "Ćwiczenia" },
+    { type: "L", prefix: "L", label: "Laboratoria" },
+    { type: "Lek", prefix: "Lek", label: "Lektorat" },
+    { type: "Lk", prefix: "Lk", label: "Lab. komp." },
+    { type: "P", prefix: "P", label: "Projekt" },
+  ],
+  SUBJECTS: {
     ANAL: {
       name: "Analiza matematyczna",
       teacher: "dr A. Pudełko / mgr M. Ból / dr J. Czajkowski",
-      color: "bg-indigo-900", // rgb(26, 35, 126)
+      color: "bg-indigo-900",
     },
     ANG01: {
       name: "Język angielski",
       teacher: "mgr J. Firganek / mgr A. Zwierzyńska-Dubis",
-      color: "bg-sky-500", // rgb(30, 144, 255)
+      color: "bg-sky-500",
     },
     PROG_CPP: {
       name: "Programowanie w C++",
       teacher:
         "dr inż. K. Suchenia / mgr inż. M. Raźny / dr inż. D. Gutenko / mgr inż. K. Kopera",
-      color: "bg-sky-400", // rgb(0, 191, 255)
+      color: "bg-sky-400",
     },
     NIEM01: {
       name: "Język niemiecki",
       teacher: "mgr E. Targosz",
-      color: "bg-purple-800", // rgb(128, 0, 128)
+      color: "bg-purple-800",
     },
     ELEC_BAS: {
       name: "Podstawy elektroniki",
       teacher: "prof. A. Szromba / dr inż. A. Drwal / dr inż. S. Żaba",
-      color: "bg-pink-700", // rgb(199, 21, 133)
+      color: "bg-pink-700",
     },
     NUMER: {
       name: "Metody numeryczne",
       teacher: "dr inż. G. Pędrak / dr inż. M. Orkisz",
-      color: "bg-green-500", // rgb(50, 205, 50)
+      color: "bg-green-500",
     },
     AUTOCAD: {
       name: "Geometria i grafika inżynierska w AUTOCAD",
       teacher: "prof. P. Małka / mgr inż. M. Gibas",
-      color: "bg-pink-400", // rgb(255, 105, 180)
+      color: "bg-pink-400",
     },
     FIZ01: {
       name: "Fizyka",
       teacher: "Pracownicy katedry",
-      color: "bg-green-900", // rgb(0, 100, 0)
+      color: "bg-green-900",
     },
   },
-  SCHEDULE_EiA2: [
-    // PONIEDZIAŁEK (day: 0)
+  SCHEDULE: [
+    // PONIEDZIAŁEK
     {
       id: 201,
       subj: "ANAL",
@@ -211,7 +218,7 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // WTOREK (day: 1)
+    // WTOREK
     {
       id: 216,
       subj: "ELEC_BAS",
@@ -303,7 +310,7 @@ export const timetableData = {
     {
       id: 224,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 1,
       start: "16:15",
@@ -314,7 +321,7 @@ export const timetableData = {
     {
       id: 225,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk7"],
       day: 1,
       start: "16:15",
@@ -325,7 +332,7 @@ export const timetableData = {
     {
       id: 226,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk7"],
       day: 1,
       start: "18:00",
@@ -336,7 +343,7 @@ export const timetableData = {
     {
       id: 227,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 1,
       start: "18:00",
@@ -367,7 +374,7 @@ export const timetableData = {
       weeks: "odd",
     },
 
-    // ŚRODA (day: 2)
+    // ŚRODA
     {
       id: 230,
       subj: "AUTOCAD",
@@ -393,7 +400,7 @@ export const timetableData = {
     {
       id: 232,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 2,
       start: "11:45",
@@ -404,7 +411,7 @@ export const timetableData = {
     {
       id: 233,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 2,
       start: "11:45",
@@ -459,7 +466,7 @@ export const timetableData = {
     {
       id: 238,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 2,
       start: "13:30",
@@ -470,7 +477,7 @@ export const timetableData = {
     {
       id: 239,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 2,
       start: "13:30",
@@ -492,7 +499,7 @@ export const timetableData = {
     {
       id: 241,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 2,
       start: "13:30",
@@ -503,7 +510,7 @@ export const timetableData = {
     {
       id: 242,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 2,
       start: "15:15",
@@ -514,7 +521,7 @@ export const timetableData = {
     {
       id: 243,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk6"],
       day: 2,
       start: "15:15",
@@ -536,7 +543,7 @@ export const timetableData = {
     {
       id: 245,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 2,
       start: "15:15",
@@ -547,7 +554,7 @@ export const timetableData = {
     {
       id: 246,
       subj: "NUMER",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk7"],
       day: 2,
       start: "17:00",
@@ -569,7 +576,7 @@ export const timetableData = {
     {
       id: 248,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 2,
       start: "17:00",
@@ -589,7 +596,7 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // CZWARTEK (day: 3)
+    // CZWARTEK
     {
       id: 250,
       subj: "PROG_CPP",
@@ -604,7 +611,7 @@ export const timetableData = {
     {
       id: 251,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 3,
       start: "10:00",
@@ -626,7 +633,7 @@ export const timetableData = {
     {
       id: 253,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 3,
       start: "11:45",
@@ -648,7 +655,7 @@ export const timetableData = {
     {
       id: 255,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 3,
       start: "13:30",
@@ -670,7 +677,7 @@ export const timetableData = {
     {
       id: 257,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 3,
       start: "15:15",
@@ -692,7 +699,7 @@ export const timetableData = {
     {
       id: 259,
       subj: "AUTOCAD",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 3,
       start: "17:00",
@@ -714,7 +721,7 @@ export const timetableData = {
     {
       id: 261,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 3,
       start: "17:00",
@@ -758,7 +765,7 @@ export const timetableData = {
     {
       id: 265,
       subj: "PROG_CPP",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 3,
       start: "18:45",
@@ -767,7 +774,7 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // PIĄTEK (day: 4)
+    // PIĄTEK
     {
       id: 266,
       subj: "FIZ01",
