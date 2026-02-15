@@ -48,7 +48,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
         {dayNames.map((name, dayIndex) => (
           <div
             key={dayIndex}
-            className="sticky top-0 z-10 py-2 border-b border-neutral-700 week-header text-center text-sm font-semibold"
+            className="sticky top-0 z-10 py-2 border-b border-neutral-700 text-center text-sm font-semibold bg-neutral-900"
             style={{
               gridColumn: dayIndex + 2,
               gridRow: 1,
@@ -60,7 +60,7 @@ const WeekView = forwardRef(function WeekView({ events }, ref) {
 
         {/* Empty corner above time column */}
         <div
-          className="sticky top-0 z-10 week-header border-r border-b"
+          className="sticky top-0 z-10 border-r border-b bg-neutral-900"
           style={{ gridColumn: 1, gridRow: 1, borderColor: "var(--ds-border)" }}
         />
 
