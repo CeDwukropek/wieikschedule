@@ -35,9 +35,7 @@ export function useEventFiltering(
           : () => true; // "all" → nic nie odrzucamy
 
     // 2) Zestaw wybranych grup (O(1) membership)
-    const groupSet = new Set(
-      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean),
-    );
+    const groupSet = new Set(Object.values(groups || {}).filter(Boolean));
 
     // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
     const minutesCache = new Map();

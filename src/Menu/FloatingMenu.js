@@ -14,6 +14,7 @@ export default function FloatingMenu({
   showAll,
   setShowAll,
   studentGroups,
+  groupConfigs = [],
   handleGroupChange,
   filtered,
   open,
@@ -160,30 +161,15 @@ export default function FloatingMenu({
           <div className="border-t border-neutral-800 pt-3">
             <div className="text-xs text-gray-400 mb-2">Grupy studenta</div>
             <div className="grid grid-cols-2 gap-2">
-              <GroupInput
-                label="Ćw."
-                type="C"
-                value={studentGroups.C}
-                onChange={handleGroupChange}
-              />
-              <GroupInput
-                label="Lab."
-                type="L"
-                value={studentGroups.L}
-                onChange={handleGroupChange}
-              />
-              <GroupInput
-                label="Lektorat"
-                type="Lek"
-                value={studentGroups.Lek}
-                onChange={handleGroupChange}
-              />
-              <GroupInput
-                label="Lab. komp."
-                type="Lk"
-                value={studentGroups.Lk}
-                onChange={handleGroupChange}
-              />
+              {groupConfigs.map((groupConfig) => (
+                <GroupInput
+                  key={groupConfig.type}
+                  label={groupConfig.label}
+                  type={groupConfig.type}
+                  value={studentGroups[groupConfig.type] || ""}
+                  onChange={handleGroupChange}
+                />
+              ))}
             </div>
           </div>
 
