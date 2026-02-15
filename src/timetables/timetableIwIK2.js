@@ -1,51 +1,58 @@
 export const timetableData = {
   NAME: "IwIK 2sem",
+  GROUPS: [
+    { type: "C", prefix: "Ć", label: "Ćwiczenia" },
+    { type: "L", prefix: "L", label: "Laboratoria" },
+    { type: "Lek", prefix: "Lek", label: "Lektorat" },
+    { type: "Lk", prefix: "Lk", label: "Lab. komp." },
+    { type: "S", prefix: "S", label: "Seminarium" },
+  ],
   SUBJECTS: {
     ELEKTRO: {
       name: "Elektrotechnika",
       teacher: "prof. A. Szromba / dr inż. K. Hawron / dr inż. B. Woszczyna",
-      color: "bg-orange-600", // rgb(255, 69, 0)
+      color: "bg-orange-600",
     },
     VHDL: {
       name: "Programowanie w języku VHDL",
       teacher: "dr inż. M. Węgrzyn / dr inż. D. Dorota",
-      color: "bg-red-500", // rgb(255, 99, 71)
+      color: "bg-red-500",
     },
     EL_BAS: {
       name: "Podstawy elektroniki",
       teacher: "dr inż. A. Drwal / dr inż. S. Żaba",
-      color: "bg-sky-700", // rgb(70, 130, 180)
+      color: "bg-sky-700",
     },
     MET_PROG: {
       name: "Metody programowania",
       teacher: "prof. Z. Kokosiński / mgr inż. G. Nowakowski",
-      color: "bg-fuchsia-400", // rgb(218, 112, 214)
+      color: "bg-fuchsia-400",
     },
     MET_OBL: {
       name: "Metody obliczeniowe",
       teacher:
         "dr inż. A. Romańska / mgr inż. K. Hatłas / mgr inż. J. Progorowicz",
-      color: "bg-amber-800", // rgb(160, 82, 45)
+      color: "bg-amber-800",
     },
     ANG: {
       name: "Język angielski",
       teacher: "mgr A. Gunia-Tracz",
-      color: "bg-pink-400", // rgb(255, 105, 180)
+      color: "bg-pink-400",
     },
     WF: {
       name: "Wychowanie fizyczne",
       teacher: "CSiR",
-      color: "bg-green-500", // rgb(50, 205, 50)
+      color: "bg-green-500",
     },
     NTS: {
       name: "Nauka, technika i społeczeństwo",
       teacher: "prof. K. Węc",
-      color: "bg-teal-600", // rgb(95, 158, 160)
+      color: "bg-teal-600",
     },
     MAT_DYS: {
       name: "Matematyka dyskretna",
       teacher: "dr G. Gancarzewicz",
-      color: "bg-blue-600", // rgb(65, 105, 225)
+      color: "bg-blue-600",
     },
   },
   SCHEDULE: [
@@ -104,7 +111,7 @@ export const timetableData = {
     {
       id: 405,
       subj: "MET_PROG",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 1,
       start: "09:15",
@@ -126,7 +133,7 @@ export const timetableData = {
     {
       id: 407,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 1,
       start: "09:15",
@@ -150,7 +157,7 @@ export const timetableData = {
     {
       id: 409,
       subj: "MET_PROG",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 1,
       start: "11:00",
@@ -172,7 +179,7 @@ export const timetableData = {
     {
       id: 411,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 1,
       start: "11:00",
@@ -207,7 +214,7 @@ export const timetableData = {
     {
       id: 414,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 1,
       start: "12:45",
@@ -242,7 +249,7 @@ export const timetableData = {
     {
       id: 417,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 1,
       start: "14:30",
@@ -253,7 +260,7 @@ export const timetableData = {
     {
       id: 418,
       subj: "MET_PROG",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 1,
       start: "14:30",
@@ -277,7 +284,7 @@ export const timetableData = {
     {
       id: 420,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 1,
       start: "16:15",
@@ -387,7 +394,7 @@ export const timetableData = {
     {
       id: 429,
       subj: "MET_PROG",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 3,
       start: "07:30",
@@ -409,7 +416,7 @@ export const timetableData = {
     {
       id: 431,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk5"],
       day: 3,
       start: "07:30",
@@ -455,7 +462,7 @@ export const timetableData = {
     {
       id: 435,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk3"],
       day: 3,
       start: "09:15",
@@ -490,7 +497,7 @@ export const timetableData = {
     {
       id: 438,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 3,
       start: "11:00",
@@ -536,7 +543,7 @@ export const timetableData = {
     {
       id: 442,
       subj: "MET_OBL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 3,
       start: "12:45",
@@ -547,7 +554,7 @@ export const timetableData = {
     {
       id: 443,
       subj: "MET_PROG",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk4"],
       day: 3,
       start: "12:45",
@@ -645,7 +652,7 @@ export const timetableData = {
     {
       id: 451,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 4,
       start: "11:00",
@@ -667,7 +674,7 @@ export const timetableData = {
     {
       id: 453,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 4,
       start: "12:45",
@@ -676,7 +683,7 @@ export const timetableData = {
       weeks: "odd",
     },
 
-    // Tydzień parzysty (06.03) - przesunięcia godzinowe
+    // Tydzień parzysty (06.03) - uwzględnione przesunięcia godzinowe z drugiego widoku
     {
       id: 454,
       subj: "MAT_DYS",
@@ -687,7 +694,7 @@ export const timetableData = {
       end: "11:30",
       room: "A1",
       weeks: "even",
-    }, // To samo co odd
+    },
     {
       id: 455,
       subj: "MAT_DYS",
@@ -702,7 +709,7 @@ export const timetableData = {
     {
       id: 456,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk1"],
       day: 4,
       start: "11:45",
@@ -724,7 +731,7 @@ export const timetableData = {
     {
       id: 458,
       subj: "VHDL",
-      type: "Laboratorium",
+      type: "Laboratorium komputerowe",
       groups: ["Lk2"],
       day: 4,
       start: "14:15",
@@ -742,6 +749,6 @@ export const timetableData = {
       end: "16:00",
       room: "A1",
       weeks: "even",
-    }, // Dodatkowa grupa Ć1 w parzysty?
+    },
   ],
 };
