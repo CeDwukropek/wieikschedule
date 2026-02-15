@@ -1,10 +1,13 @@
 import { MapPin, Users, Tag, Clock } from "lucide-react";
-import { timetableData } from "./timetable";
-const { SUBJECTS } = timetableData;
+import { timetableData } from "./timetables/timetableEiA2";
+const { SUBJECTS_EiA2 } = timetableData;
 
 export default function EventCard({ ev }) {
-  const subj = SUBJECTS[ev.subj] ||
-    SUBJECTS[ev.title] || { name: ev.title || ev.subj, color: "bg-gray-600" };
+  const subj = SUBJECTS_EiA2[ev.subj] ||
+    SUBJECTS_EiA2[ev.title] || {
+      name: ev.title || ev.subj,
+      color: "bg-gray-600",
+    };
 
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");
