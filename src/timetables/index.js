@@ -1,6 +1,7 @@
 // Automatically import all timetables
 import { timetableData as timetableEiA2 } from "./timetableEiA2";
 import { timetableData as timetableEiA4 } from "./timetableEiA4";
+import { timetableData as timetableIwIK2 } from "./timetableIwIK2";
 
 // Normalize the timetable structure
 // EiA2 uses suffix naming (NAME_EiA2, SCHEDULE_EiA2), EiA4 uses plain naming (NAME, SCHEDULE)
@@ -26,6 +27,7 @@ const normalizeTimetable = (data, id) => {
 export const allTimetables = [
   normalizeTimetable(timetableEiA2, "eia2"),
   normalizeTimetable(timetableEiA4, "eia4"),
+  normalizeTimetable(timetableIwIK2, "iwik2"),
 ];
 
 // Export a map for quick access by id
