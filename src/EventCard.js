@@ -1,10 +1,11 @@
 import { MapPin, Users, Tag, Clock } from "lucide-react";
-import { timetableData } from "./timetable";
-const { SUBJECTS } = timetableData;
 
-export default function EventCard({ ev }) {
-  const subj = SUBJECTS[ev.subj] ||
-    SUBJECTS[ev.title] || { name: ev.title || ev.subj, color: "bg-gray-600" };
+export default function EventCard({ ev, subjects = {} }) {
+  const subj = subjects[ev.subj] ||
+    subjects[ev.title] || {
+      name: ev.title || ev.subj,
+      color: "bg-gray-600",
+    };
 
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");

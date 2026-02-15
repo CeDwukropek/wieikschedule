@@ -1,6 +1,7 @@
 export const timetableData = {
-  SUBJECTS: {
-    ANALM: {
+  NAME_EiA2: "EiA 2sem",
+  SUBJECTS_EiA2: {
+    ANAL: {
       name: "Analiza matematyczna",
       teacher: "dr A. Pudełko / mgr M. Ból / dr J. Czajkowski",
       color: "bg-indigo-900", // rgb(26, 35, 126)
@@ -42,11 +43,11 @@ export const timetableData = {
       color: "bg-green-900", // rgb(0, 100, 0)
     },
   },
-  SCHEDULE: [
+  SCHEDULE_EiA2: [
     // PONIEDZIAŁEK (day: 0)
     {
       id: 201,
-      subj: "ANALM",
+      subj: "ANAL",
       type: "Wykład",
       groups: [],
       day: 0,
@@ -57,7 +58,7 @@ export const timetableData = {
     },
     {
       id: 202,
-      subj: "ANALM",
+      subj: "ANAL",
       type: "Ćwiczenia",
       groups: ["Ć1"],
       day: 0,
@@ -90,7 +91,7 @@ export const timetableData = {
     },
     {
       id: 205,
-      subj: "ANALM",
+      subj: "ANAL",
       type: "Ćwiczenia",
       groups: ["Ć2"],
       day: 0,
@@ -123,7 +124,7 @@ export const timetableData = {
     },
     {
       id: 208,
-      subj: "ANALM",
+      subj: "ANAL",
       type: "Ćwiczenia",
       groups: ["Ć3"],
       day: 0,
@@ -167,7 +168,7 @@ export const timetableData = {
     },
     {
       id: 212,
-      subj: "ANALM",
+      subj: "ANAL",
       type: "Ćwiczenia",
       groups: ["Ć4"],
       day: 0,
