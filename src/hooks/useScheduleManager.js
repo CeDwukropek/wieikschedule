@@ -39,6 +39,11 @@ export function useScheduleManager(savedSettings) {
 
   const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
 
+  const subjects = useMemo(
+    () => currentTimetable.subjects || {},
+    [currentTimetable],
+  );
+
   const handleGroupChange = useCallback(
     (type, number) => {
       const digits = (number ?? "").toString().replace(/\D/g, "");
@@ -63,6 +68,7 @@ export function useScheduleManager(savedSettings) {
     scheduleGroups,
     studentGroups,
     schedule,
+    subjects,
     handleGroupChange,
     handleScheduleChange,
   };

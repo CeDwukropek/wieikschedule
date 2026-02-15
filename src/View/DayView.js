@@ -3,7 +3,7 @@ import EventCard from "../EventCard";
 import { timeToMinutes } from "../utils";
 
 const DayView = forwardRef(function DayView(
-  { events, selection: externalSelection },
+  { events, subjects = {}, selection: externalSelection },
   ref,
 ) {
   const startHour = 7;
@@ -120,7 +120,7 @@ const DayView = forwardRef(function DayView(
                     zIndex: 10 + ei,
                   }}
                 >
-                  <EventCard ev={ev} />
+                  <EventCard ev={ev} subjects={subjects} />
                 </div>
               );
             }),

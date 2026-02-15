@@ -8,6 +8,11 @@
   z-index: 10;
 }
 
+.event-wrapper:hover,
+.event-wrapper:focus {
+  z-index: 100;
+}
+
 .event-tooltip {
   position: absolute;
   left: 0;

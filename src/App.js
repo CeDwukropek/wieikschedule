@@ -36,6 +36,7 @@ export default function Timetable() {
     scheduleGroups,
     studentGroups,
     schedule,
+    subjects,
     handleGroupChange,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
@@ -278,12 +279,14 @@ export default function Timetable() {
         <WeekView
           key={`week-${weekParity}`}
           events={filtered}
+          subjects={subjects}
           ref={exportRef}
         />
       ) : (
         <DayView
           key={`day-${selection}`}
           events={dayEvents}
+          subjects={subjects}
           // parity/date helpers from App so DayView can show ranges and switch parity
           currentParity={currentParity}
           nextParity={nextParity}

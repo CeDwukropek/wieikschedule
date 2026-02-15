@@ -1,10 +1,8 @@
 import { MapPin, Users, Tag, Clock } from "lucide-react";
-import { timetableData } from "./timetables/timetableEiA2";
-const { SUBJECTS_EiA2 } = timetableData;
 
-export default function EventCard({ ev }) {
-  const subj = SUBJECTS_EiA2[ev.subj] ||
-    SUBJECTS_EiA2[ev.title] || {
+export default function EventCard({ ev, subjects = {} }) {
+  const subj = subjects[ev.subj] ||
+    subjects[ev.title] || {
       name: ev.title || ev.subj,
       color: "bg-gray-600",
     };
