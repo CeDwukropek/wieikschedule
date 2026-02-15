@@ -1,5 +1,6 @@
 export const timetableData = {
-  SUBJECTS: {
+  NAME_EiA2: "EiA 2sem",
+  SUBJECTS_EiA2: {
     ANAL: {
       name: "Analiza matematyczna",
       teacher: "dr A. Pudełko / mgr M. Ból / dr J. Czajkowski",
@@ -42,7 +43,7 @@ export const timetableData = {
       color: "bg-green-900", // rgb(0, 100, 0)
     },
   },
-  SCHEDULE: [
+  SCHEDULE_EiA2: [
     // PONIEDZIAŁEK (day: 0)
     {
       id: 201,

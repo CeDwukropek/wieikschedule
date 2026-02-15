@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
-import { timetableData } from "./timetable";
+import { allTimetables, timetableMap } from "./timetables";
 import GroupInput from "./GroupInput";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
@@ -9,8 +9,6 @@ import { timeToMinutes } from "./utils";
 import FAQ from "./FAQ";
 import { exportICS } from "./exportICS";
 import { ExportPngBtn } from "./ExportPngBtn";
-
-const { SCHEDULE } = timetableData;
 
 export default function Timetable() {
   const exportRef = useRef(null);
@@ -37,35 +35,73 @@ export default function Timetable() {
   }
 
   // single settings key (namespaced per user) to persist all inputs/settings
-  const SETTINGS_KEY = `wieikschedule.${getUserId()}.settings`;
+  const SETTINGS_KEY = React.useMemo(
+    () => `wieikschedule.${getUserId()}.settings`,
+    [],
+  );
 
-  // load saved settings (if any) on first render
-  const saved = (() => {
+  // load saved settings (if any) on first render - memoize to prevent recalculation
+  const saved = React.useMemo(() => {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return null;
-  })();
+  }, [SETTINGS_KEY]);
+
+  // Schedule management - each schedule has its own groups
+  // Initialize with first available timetable
+  const defaultScheduleId = allTimetables[0]?.id || "eia2";
+
+  // Memoize default values to prevent object recreation
+  const defaultGroups = React.useMemo(
+    () => ({ C: "Ć1", L: "L1", Lek: "Lek1", Lk: "Lk1" }),
+    [],
+  );
+
+  const initialScheduleGroups = React.useMemo(
+    () =>
+      allTimetables.reduce((acc, tt) => {
+        acc[tt.id] = defaultGroups;
+        return acc;
+      }, {}),
+    [defaultGroups],
+  );
+
+  const [currentSchedule, setCurrentSchedule] = useState(
+    saved?.currentSchedule ?? defaultScheduleId,
+  );
+
+  const [scheduleGroups, setScheduleGroups] = useState(
+    saved?.scheduleGroups ?? initialScheduleGroups,
+  );
 
   const [viewMode, setViewMode] = useState(saved?.viewMode ?? "week");
   const [weekParity, setWeekParity] = useState(saved?.weekParity ?? "all");
   const [hideLectures, setHideLectures] = useState(
-    saved?.hideLectures ?? false
+    saved?.hideLectures ?? false,
   );
   const [showAll, setShowAll] = useState(saved?.showAll ?? false);
 
-  const [studentGroups, setStudentGroups] = useState(
-    saved?.studentGroups ?? {
-      C: "Ć1",
-      L: "L1",
-      Lek: "Lek1",
-      Lk: "Lk1",
-    }
+  // Get current schedule's groups and data - memoized to prevent infinite loops
+  const studentGroups = React.useMemo(
+    () => scheduleGroups[currentSchedule] || defaultGroups,
+    [scheduleGroups, currentSchedule, defaultGroups],
+  );
+  const currentTimetable = React.useMemo(
+    () => timetableMap[currentSchedule] || allTimetables[0],
+    [currentSchedule],
+  );
+  const SCHEDULE = React.useMemo(
+    () => currentTimetable.schedule,
+    [currentTimetable],
   );
 
   // --- cached filtered events (persisted to localStorage, 60 days TTL) ---
-  const CACHE_KEY = `wieikschedule.${getUserId()}.cachedFiltered`;
+  const CACHE_KEY = React.useMemo(
+    () => `wieikschedule.${getUserId()}.cachedFiltered`,
+    [],
+  );
   const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
 
   const computeFiltered = useCallback(function computeFiltered(
@@ -73,19 +109,19 @@ export default function Timetable() {
     groups,
     hideLectures,
     parity, // "odd" | "even" | "all"
-    showAll
+    showAll,
   ) {
     // 1) Predykat parzystości skompilowany raz
     const passParity =
       parity === "odd"
         ? (e) => e.weeks !== "even"
         : parity === "even"
-        ? (e) => e.weeks !== "odd"
-        : () => true; // "all" → nic nie odrzucamy
+          ? (e) => e.weeks !== "odd"
+          : () => true; // "all" → nic nie odrzucamy
 
     // 2) Zestaw wybranych grup (O(1) membership)
     const groupSet = new Set(
-      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean)
+      [groups?.C, groups?.L, groups?.Lek, groups?.Lk].filter(Boolean),
     );
 
     // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
@@ -125,7 +161,7 @@ export default function Timetable() {
       (a, b) =>
         a.day - b.day ||
         getMin(a.start) - getMin(b.start) ||
-        (a.id ?? 0) - (b.id ?? 0)
+        (a.id ?? 0) - (b.id ?? 0),
     );
 
     return out;
@@ -150,7 +186,7 @@ export default function Timetable() {
       studentGroups,
       hideLectures,
       weekParity,
-      showAll
+      showAll,
     );
   });
 
@@ -160,16 +196,17 @@ export default function Timetable() {
       studentGroups,
       hideLectures,
       weekParity,
-      showAll
+      showAll,
     );
     setFiltered(res);
     try {
       localStorage.setItem(
         CACHE_KEY,
-        JSON.stringify({ ts: Date.now(), data: res })
+        JSON.stringify({ ts: Date.now(), data: res }),
       );
     } catch (e) {}
   }, [
+    SCHEDULE,
     studentGroups,
     hideLectures,
     weekParity,
@@ -186,7 +223,8 @@ export default function Timetable() {
         weekParity,
         hideLectures,
         showAll,
-        studentGroups,
+        currentSchedule,
+        scheduleGroups,
       };
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
     } catch (e) {}
@@ -195,7 +233,8 @@ export default function Timetable() {
     weekParity,
     hideLectures,
     showAll,
-    studentGroups,
+    currentSchedule,
+    scheduleGroups,
     SETTINGS_KEY,
   ]);
 
@@ -203,10 +242,17 @@ export default function Timetable() {
     // normalize to digits (allow empty)
     const digits = (number ?? "").toString().replace(/\D/g, "");
     const prefixes = { C: "Ć", L: "L", Lek: "Lek", Lk: "Lk" };
-    setStudentGroups((prev) => ({
+    setScheduleGroups((prev) => ({
       ...prev,
-      [type]: digits ? prefixes[type] + digits : "",
+      [currentSchedule]: {
+        ...prev[currentSchedule],
+        [type]: digits ? prefixes[type] + digits : "",
+      },
     }));
+  }
+
+  function handleScheduleChange(scheduleId) {
+    setCurrentSchedule(scheduleId);
   }
 
   function isLecture(ev) {
@@ -261,7 +307,7 @@ export default function Timetable() {
   const currentParity = getISOWeekNumber(today) % 2 === 0 ? "even" : "odd";
   const nextParity = currentParity === "even" ? "odd" : "even";
   const currentRange = `${formatDate(thisWeekStart)} - ${formatDate(
-    thisWeekEnd
+    thisWeekEnd,
   )}`;
   const nextRange = `${formatDate(nextWeekStart)} - ${formatDate(nextWeekEnd)}`;
   // --- end helpers ---
@@ -315,7 +361,7 @@ export default function Timetable() {
         studentGroups,
         hideLectures,
         parityToUse,
-        showAll
+        showAll,
       );
     } catch (e) {
       return filtered;
@@ -329,6 +375,7 @@ export default function Timetable() {
     currentParity,
     nextParity,
     filtered,
+    SCHEDULE,
   ]);
 
   return (
@@ -336,6 +383,18 @@ export default function Timetable() {
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
       <div className="hidden sm:flex flex-wrap items-center gap-3 mb-6">
+        {/* Schedule selector */}
+        <select
+          value={currentSchedule}
+          onChange={(e) => handleScheduleChange(e.target.value)}
+          className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
+        >
+          {allTimetables.map((tt) => (
+            <option key={tt.id} value={tt.id}>
+              {tt.name}
+            </option>
+          ))}
+        </select>
         <button
           onClick={() => setViewMode("week")}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
@@ -384,7 +443,7 @@ export default function Timetable() {
               studentGroups,
               hideLectures,
               "all", // ⬅️ klucz: ignorujemy parzystość
-              showAll
+              showAll,
             );
             exportICS(dataForICS);
           }}
@@ -472,7 +531,6 @@ export default function Timetable() {
         showAll={showAll}
         setShowAll={setShowAll}
         studentGroups={studentGroups}
-        setStudentGroups={setStudentGroups}
         handleGroupChange={handleGroupChange}
         activeParity={weekParity}
         currentParity={currentParity}
@@ -489,6 +547,9 @@ export default function Timetable() {
         weekParity={weekParity}
         computeFiltered={computeFiltered}
         SCHEDULE={SCHEDULE}
+        currentSchedule={currentSchedule}
+        onScheduleChange={handleScheduleChange}
+        allTimetables={allTimetables}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (

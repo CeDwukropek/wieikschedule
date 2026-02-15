@@ -14,7 +14,6 @@ export default function FloatingMenu({
   showAll,
   setShowAll,
   studentGroups,
-  setStudentGroups,
   handleGroupChange,
   filtered,
   open,
@@ -31,12 +30,14 @@ export default function FloatingMenu({
   weekParity,
   computeFiltered,
   SCHEDULE,
+  currentSchedule,
+  onScheduleChange,
+  allTimetables = [],
 }) {
   function clearFilters() {
     setWeekParity("all");
     setHideLectures(false);
     setShowAll(false);
-    setStudentGroups({ C: "Ć1", L: "L1", Lek: "Lek1", Lk: "Lk1" });
   }
 
   // whole floating menu visible only on mobile (hidden on sm and larger)
@@ -93,6 +94,22 @@ export default function FloatingMenu({
           className="p-4 space-y-4 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 96px)" }}
         >
+          {/* Schedule selector */}
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Plan zajęć</div>
+            <select
+              value={currentSchedule}
+              onChange={(e) => onScheduleChange(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
+            >
+              {allTimetables.map((tt) => (
+                <option key={tt.id} value={tt.id}>
+                  {tt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="space-y-2">
             <div className="text-xs text-gray-400">Widok</div>
             <div className="flex gap-2">
@@ -187,7 +204,7 @@ export default function FloatingMenu({
                   studentGroups,
                   hideLectures,
                   "all", // ⬅️ klucz: ignorujemy parzystość
-                  showAll
+                  showAll,
                 );
                 exportICS(dataForICS);
               }}
