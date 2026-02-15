@@ -52,7 +52,6 @@ const WeekView = forwardRef(function WeekView({ events, subjects = {} }, ref) {
             style={{
               gridColumn: dayIndex + 2,
               gridRow: 1,
-              gridRow: 1,
             }}
           >
             {name}
@@ -73,7 +72,6 @@ const WeekView = forwardRef(function WeekView({ events, subjects = {} }, ref) {
             style={{
               gridColumn: 1,
               gridRow: i * slotsPerHour + 2,
-              gridRowEnd: (i + 1) * slotsPerHour + 2,
               gridRowEnd: (i + 1) * slotsPerHour + 2,
             }}
           >
