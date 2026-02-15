@@ -86,7 +86,7 @@ export default function Timetable() {
   // Get current schedule's groups and data - memoized to prevent infinite loops
   const studentGroups = React.useMemo(
     () => scheduleGroups[currentSchedule] || defaultGroups,
-    [scheduleGroups, currentSchedule],
+    [scheduleGroups, currentSchedule, defaultGroups],
   );
   const currentTimetable = React.useMemo(
     () => timetableMap[currentSchedule] || allTimetables[0],
@@ -212,6 +212,7 @@ export default function Timetable() {
     weekParity,
     showAll,
     computeFiltered,
+    CACHE_KEY,
   ]);
 
   // persist all inputs/settings for this user
@@ -374,6 +375,7 @@ export default function Timetable() {
     currentParity,
     nextParity,
     filtered,
+    SCHEDULE,
   ]);
 
   return (
