@@ -263,12 +263,7 @@ export default function Timetable() {
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView
-          key={`week-${weekParity}`}
-          events={filtered}
-          subjects={subjects}
-          ref={exportRef}
-        />
+        <WeekView events={filtered} subjects={subjects} ref={exportRef} />
       ) : (
         <DayView
           key={`day-${selection}`}
