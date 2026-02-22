@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { splitTeacherDisplay } from "./utils";
 
 export default function EventTooltipWrapper({ ev, children }) {
   const wrapperRef = useRef(null);
@@ -67,6 +68,7 @@ export default function EventTooltipWrapper({ ev, children }) {
 
   const title = ev.title || ev.subj;
   const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
+  const teacherLines = splitTeacherDisplay(ev?.teacher);
   const transform = `translate(${offsetX}px, ${pos === "top" ? (visible ? "calc(-100% - 6px)" : "-100%") : visible ? "6px" : "0"})`;
 
   return (
@@ -113,6 +115,16 @@ export default function EventTooltipWrapper({ ev, children }) {
         {ev.room ? (
           <div className="row">
             <span className="label">Sala:</span> <span>{ev.room}</span>
+          </div>
+        ) : null}
+        {teacherLines.length ? (
+          <div className="row">
+            <span className="label">Prowadzący:</span>
+            <span className="flex flex-col">
+              {teacherLines.map((teacherLine) => (
+                <span key={teacherLine}>{teacherLine}</span>
+              ))}
+            </span>
           </div>
         ) : null}
         {groups ? (
