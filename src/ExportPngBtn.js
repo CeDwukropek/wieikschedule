@@ -28,8 +28,8 @@ export function ExportPngBtn({
         weekParity === currentParity
           ? currentRange
           : weekParity === nextParity
-          ? nextRange
-          : currentRange; // fallback
+            ? nextRange
+            : currentRange; // fallback
 
       const label = `Tydzień_${range.replaceAll(" ", "")}}`;
       return sanitizeFileName(label) + ".png";
@@ -49,7 +49,7 @@ export function ExportPngBtn({
         if (document.fonts?.ready) await document.fonts.ready;
         const dataUrl = await toPng(exportRef.current, {
           pixelRatio: 2, // wyraźniejszy eksport
-          // backgroundColor: "#fff", // w razie potrzeby wymuszamy jasne tło
+          backgroundColor: "#000", // wymuszamy czarne, pełne tło (bez przezroczystości)
           cacheBust: true,
         });
         const a = document.createElement("a");
