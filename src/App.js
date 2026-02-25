@@ -1,6 +1,5 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
-import { allTimetables } from "./timetables";
 import GroupInput from "./GroupInput";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
@@ -12,6 +11,16 @@ import { useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
+import { formatDate } from "./utils/dateUtils";
+
+function formatWeekRangeFromKey(weekKey) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(weekKey || ""))) return "";
+  const start = new Date(`${weekKey}T12:00:00`);
+  if (Number.isNaN(start.getTime())) return "";
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return `${formatDate(start)} - ${formatDate(end)}`;
+}
 
 export default function Timetable() {
   const exportRef = useRef(null);
@@ -32,6 +41,7 @@ export default function Timetable() {
 
   // Schedule and group management
   const {
+    timetables,
     currentSchedule,
     scheduleGroups,
     studentGroups,
@@ -50,7 +60,70 @@ export default function Timetable() {
     nextRange,
     combinedOptions,
     defaultDayIndex,
-  } = useDateHelpers();
+    hasDateBasedEvents,
+    availableWeekKeys,
+  } = useDateHelpers(schedule);
+
+  const hasNavigableWeekRange =
+    hasDateBasedEvents &&
+    Array.isArray(availableWeekKeys) &&
+    availableWeekKeys.length > 0;
+
+  const activeWeekIndex = useMemo(() => {
+    if (!hasNavigableWeekRange) return -1;
+    return availableWeekKeys.indexOf(weekParity);
+  }, [availableWeekKeys, hasNavigableWeekRange, weekParity]);
+
+  const canGoPrevWeek = hasNavigableWeekRange && activeWeekIndex > 0;
+  const canGoNextWeek =
+    hasNavigableWeekRange &&
+    activeWeekIndex >= 0 &&
+    activeWeekIndex < availableWeekKeys.length - 1;
+
+  const activeWeekRange = useMemo(() => {
+    if (!hasNavigableWeekRange) {
+      return weekParity === nextParity ? nextRange : currentRange;
+    }
+    return formatWeekRangeFromKey(weekParity) || currentRange;
+  }, [hasNavigableWeekRange, weekParity, nextParity, nextRange, currentRange]);
+
+  const handlePrevWeek = () => {
+    if (!hasNavigableWeekRange) {
+      setWeekParity(currentParity);
+      return;
+    }
+    if (!canGoPrevWeek) return;
+    setWeekParity(availableWeekKeys[activeWeekIndex - 1]);
+  };
+
+  const handleCurrentWeek = () => {
+    setWeekParity(currentParity);
+  };
+
+  const handleNextWeek = () => {
+    if (!hasNavigableWeekRange) {
+      setWeekParity(nextParity);
+      return;
+    }
+    if (!canGoNextWeek) return;
+    setWeekParity(availableWeekKeys[activeWeekIndex + 1]);
+  };
+
+  useEffect(() => {
+    if (!hasDateBasedEvents) return;
+
+    const isLegacyParity = weekParity === "odd" || weekParity === "even";
+    if (isLegacyParity || weekParity === "all") {
+      setWeekParity(currentParity);
+    }
+  }, [hasDateBasedEvents, currentParity, weekParity]);
+
+  useEffect(() => {
+    if (!hasNavigableWeekRange) return;
+    if (weekParity === "all" || !availableWeekKeys.includes(weekParity)) {
+      setWeekParity(currentParity);
+    }
+  }, [hasNavigableWeekRange, availableWeekKeys, weekParity, currentParity]);
 
   // Event filtering with caching
   const { filtered, computeFiltered } = useEventFiltering(
@@ -114,7 +187,7 @@ export default function Timetable() {
           onChange={(e) => handleScheduleChange(e.target.value)}
           className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
         >
-          {allTimetables.map((tt) => (
+          {timetables.map((tt) => (
             <option key={tt.id} value={tt.id}>
               {tt.name}
             </option>
@@ -182,6 +255,7 @@ export default function Timetable() {
           currentRange={currentRange}
           nextRange={nextRange}
           nextParity={nextParity}
+          activeWeekRange={activeWeekRange}
           selection={selection}
           combinedOptions={combinedOptions}
         />
@@ -205,25 +279,38 @@ export default function Timetable() {
         {viewMode === "week" ? (
           <>
             <button
-              onClick={() => setWeekParity(currentParity)}
+              onClick={handlePrevWeek}
+              disabled={hasNavigableWeekRange ? !canGoPrevWeek : false}
               className={`px-3 py-1 rounded text-sm ${
+                hasNavigableWeekRange && !canGoPrevWeek
+                  ? "bg-neutral-900 text-gray-500 cursor-not-allowed"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              Poprzedni
+            </button>
+
+            <button
+              onClick={handleCurrentWeek}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
                 weekParity === currentParity
                   ? "bg-neutral-800"
                   : "bg-neutral-900 text-gray-300"
               }`}
             >
-              {currentRange}
+              {activeWeekRange}
             </button>
 
             <button
-              onClick={() => setWeekParity(nextParity)}
+              onClick={handleNextWeek}
+              disabled={hasNavigableWeekRange ? !canGoNextWeek : false}
               className={`px-3 ml-3 py-1 rounded text-sm ${
-                weekParity === nextParity
-                  ? "bg-neutral-800"
+                hasNavigableWeekRange && !canGoNextWeek
+                  ? "bg-neutral-900 text-gray-500 cursor-not-allowed"
                   : "bg-neutral-900 text-gray-300"
               }`}
             >
-              {nextRange}
+              Następny
             </button>
           </>
         ) : null}
@@ -247,6 +334,12 @@ export default function Timetable() {
         currentRange={currentRange}
         nextRange={nextRange}
         nextParity={nextParity}
+        activeWeekRange={activeWeekRange}
+        onPrevWeek={handlePrevWeek}
+        onCurrentWeek={handleCurrentWeek}
+        onNextWeek={handleNextWeek}
+        disablePrevWeek={hasNavigableWeekRange ? !canGoPrevWeek : false}
+        disableNextWeek={hasNavigableWeekRange ? !canGoNextWeek : false}
         filtered={filtered}
         open={open}
         setOpen={setOpen}
@@ -259,7 +352,7 @@ export default function Timetable() {
         SCHEDULE={schedule}
         currentSchedule={currentSchedule}
         onScheduleChange={handleScheduleChange}
-        allTimetables={allTimetables}
+        allTimetables={timetables}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (

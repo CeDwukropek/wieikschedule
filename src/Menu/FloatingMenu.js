@@ -27,6 +27,12 @@ export default function FloatingMenu({
   currentRange,
   nextRange,
   nextParity,
+  activeWeekRange,
+  onPrevWeek,
+  onCurrentWeek,
+  onNextWeek,
+  disablePrevWeek,
+  disableNextWeek,
   ref,
   weekParity,
   computeFiltered,
@@ -72,6 +78,11 @@ export default function FloatingMenu({
             nextParity={nextParity}
             currentRange={currentRange}
             nextRange={nextRange}
+            onPrevWeek={onPrevWeek}
+            onCurrentWeek={onCurrentWeek}
+            onNextWeek={onNextWeek}
+            disablePrevWeek={disablePrevWeek}
+            disableNextWeek={disableNextWeek}
             open={open}
           />
         )}
@@ -205,6 +216,7 @@ export default function FloatingMenu({
               currentRange={currentRange}
               nextRange={nextRange}
               nextParity={nextParity}
+              activeWeekRange={activeWeekRange}
               selection={selection}
               combinedOptions={options}
             />

@@ -1,42 +1,88 @@
-import { useState, useMemo, useCallback } from "react";
-import { allTimetables, timetableMap } from "../timetables";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { allTimetables as localTimetables } from "../timetables";
+import { useFirebaseTimetables } from "./useFirebaseTimetables";
 
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
   const groups = {};
   if (timetable.groups && Array.isArray(timetable.groups)) {
     timetable.groups.forEach((g) => {
-      groups[g.type] = `${g.prefix}1`;
+      groups[g.type] = g.defaultValue || `${g.prefix}1`;
     });
   }
   return groups;
 }
 
 export function useScheduleManager(savedSettings) {
-  const defaultScheduleId = allTimetables[0]?.id || "eia2";
+  const [currentSchedule, setCurrentSchedule] = useState(
+    savedSettings?.currentSchedule ?? null,
+  );
 
-  // Build initial groups for all schedules
-  const initialScheduleGroups = useMemo(
+  const {
+    timetables: remoteTimetables,
+    scheduleList,
+    loading: timetablesLoading,
+  } = useFirebaseTimetables(currentSchedule);
+
+  const timetables = useMemo(
+    () => (remoteTimetables.length > 0 ? remoteTimetables : localTimetables),
+    [remoteTimetables],
+  );
+
+  const timetableMap = useMemo(
     () =>
-      allTimetables.reduce((acc, tt) => {
-        acc[tt.id] = buildDefaultGroupsForTimetable(tt);
+      timetables.reduce((acc, tt) => {
+        acc[tt.id] = tt;
         return acc;
       }, {}),
-    [],
+    [timetables],
   );
 
-  const [currentSchedule, setCurrentSchedule] = useState(
-    savedSettings?.currentSchedule ?? defaultScheduleId,
-  );
+  const defaultScheduleId = useMemo(() => {
+    if (scheduleList && scheduleList.length > 0) {
+      return scheduleList[0].collectionId;
+    }
+    return timetables[0]?.id || "eia2";
+  }, [scheduleList, timetables]);
 
   const [scheduleGroups, setScheduleGroups] = useState(
-    savedSettings?.scheduleGroups ?? initialScheduleGroups,
+    savedSettings?.scheduleGroups ?? {},
   );
+
+  // Initialize currentSchedule on first load
+  useEffect(() => {
+    if (currentSchedule === null && defaultScheduleId) {
+      setCurrentSchedule(defaultScheduleId);
+    }
+  }, [currentSchedule, defaultScheduleId]);
+
+  // Validate current schedule exists
+  useEffect(() => {
+    if (currentSchedule && !timetableMap[currentSchedule]) {
+      setCurrentSchedule(defaultScheduleId);
+    }
+  }, [currentSchedule, defaultScheduleId, timetableMap]);
+
+  useEffect(() => {
+    setScheduleGroups((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const timetable of timetables) {
+        if (!next[timetable.id]) {
+          next[timetable.id] = buildDefaultGroupsForTimetable(timetable);
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [timetables]);
 
   // Get current schedule's data - memoized to prevent infinite loops
   const currentTimetable = useMemo(
-    () => timetableMap[currentSchedule] || allTimetables[0],
-    [currentSchedule],
+    () => timetableMap[currentSchedule] || timetables[0],
+    [currentSchedule, timetableMap, timetables],
   );
 
   const defaultGroups = useMemo(
@@ -85,6 +131,8 @@ export function useScheduleManager(savedSettings) {
   }, []);
 
   return {
+    timetables,
+    timetablesLoading,
     currentSchedule,
     scheduleGroups,
     studentGroups,

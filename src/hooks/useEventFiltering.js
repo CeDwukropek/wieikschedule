@@ -5,6 +5,21 @@ import { isLecture } from "../utils/dateUtils";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
 
+function weekStartKeyFromDate(dateString) {
+  if (!dateString) return "";
+  const date = new Date(`${dateString}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+
+  const y = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${y}-${mm}-${dd}`;
+}
+
 export function useEventFiltering(
   schedule,
   studentGroups,
@@ -23,12 +38,15 @@ export function useEventFiltering(
     schedule,
     groups,
     hideLectures,
-    parity, // "odd" | "even" | "all"
+    parity, // "odd" | "even" | "all" | "YYYY-MM-DD"
     showAll,
   ) {
+    const isDateWeekFilter = /^\d{4}-\d{2}-\d{2}$/.test(String(parity || ""));
+
     // 1) Predykat parzystości skompilowany raz
-    const passParity =
-      parity === "odd"
+    const passParity = isDateWeekFilter
+      ? (e) => weekStartKeyFromDate(e.date) === parity
+      : parity === "odd"
         ? (e) => e.weeks !== "even"
         : parity === "even"
           ? (e) => e.weeks !== "odd"

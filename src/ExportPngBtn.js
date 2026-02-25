@@ -8,6 +8,7 @@ export function ExportPngBtn({
   currentRange,
   nextRange,
   nextParity,
+  activeWeekRange,
   selection,
   combinedOptions,
 }) {
@@ -25,11 +26,12 @@ export function ExportPngBtn({
     if (viewMode === "week") {
       // weź czytelny zakres aktywnego tygodnia
       const range =
-        weekParity === currentParity
+        activeWeekRange ||
+        (weekParity === currentParity
           ? currentRange
           : weekParity === nextParity
             ? nextRange
-            : currentRange; // fallback
+            : currentRange); // fallback
 
       const label = `Tydzień_${range.replaceAll(" ", "")}}`;
       return sanitizeFileName(label) + ".png";

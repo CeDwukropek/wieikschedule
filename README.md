@@ -1,5 +1,104 @@
 # Getting Started with Create React App
 
+## Firebase timetable integration
+
+The app now supports loading timetables from Firestore (with local static fallback).
+
+### 1) Configure environment variables
+
+Create `.env.local` in the project root:
+
+```
+REACT_APP_FIREBASE_API_KEY=...
+REACT_APP_FIREBASE_AUTH_DOMAIN=...
+REACT_APP_FIREBASE_PROJECT_ID=...
+REACT_APP_FIREBASE_STORAGE_BUCKET=...
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=...
+REACT_APP_FIREBASE_APP_ID=...
+REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION=schedules
+REACT_APP_FIREBASE_SCHEDULE_COLLECTIONS=AwP4.0s1,AwP4.0s2
+```
+
+`REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION` is a metadata collection used to auto-discover schedules.
+`REACT_APP_FIREBASE_SCHEDULE_COLLECTIONS` stays as fallback (comma-separated list).
+
+If Firebase config is missing, the app automatically uses local files from `src/timetables`.
+
+### 2) Firestore shape (one collection = one schedule)
+
+#### 2a) Metadata collection (recommended)
+
+Collection: `schedules` (or value from `REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION`)
+
+Each document should include at least:
+
+```json
+{
+  "collectionId": "AwP4.0s1",
+  "name": "Automatyka i Robotyka P4 s1"
+}
+```
+
+The app reads this collection and shows these schedules in the selector.
+
+#### 2b) Event collection (per schedule)
+
+Collection example: `AwP4.0s1`
+
+**Recurring event format (recommended):**
+
+```json
+{
+  "startDate": "2026-02-24T00:00:00.000Z",
+  "endDate": "2026-06-16T00:00:00.000Z",
+  "startTime": "14:30",
+  "durationMin": 90,
+  "intervalWeeks": 2,
+  "excludedDates": "[]",
+  "overrides": "{\"2026-03-10\":{\"durationMin\":45}}",
+  "faculty": "IwIKs4",
+  "group": "P4",
+  "room": "201",
+  "subject": "Programowanie w języku JAVA",
+  "teacher": "dr inż. S. Bąk",
+  "type": "Laboratorium"
+}
+```
+
+Fields:
+
+- `startDate` / `endDate`: Firestore timestamps defining the recurrence range
+- `startTime`: "HH:MM" string (e.g., "14:30")
+- `durationMin`: duration in minutes
+- `intervalWeeks`: 1 = weekly, 2 = bi-weekly, etc.
+- `excludedDates`: JSON array of dates to skip (e.g., `["2026-03-17"]`)
+- `overrides`: JSON object with date-specific changes (e.g., `{"2026-03-10":{"durationMin":45,"_add":false}}`)
+- `group`: group identifier (e.g., "P4", "Lek1"). "W" is filtered out from group inputs.
+
+**Legacy single-event format (still supported):**
+
+```json
+{
+  "duration": 90,
+  "faculty": "AwP4.0s1",
+  "group": "Lek1",
+  "isoStart": "2026-06-11T10:45:00.000Z",
+  "room": "139SJO",
+  "subject": "Język angielski",
+  "teacher": "mgr J. Firganek",
+  "type": "Laboratorium"
+}
+```
+
+Notes:
+
+- `isoStart` + `duration` are converted to `start` / `end` automatically.
+- Schedule discovery order: metadata collection -> env collection list -> legacy `timetables`.
+- Weeks are derived from real dates, so navigation works from first week to last week.
+- Mobile week mode has 3 controls: previous week, current week, next week.
+- Legacy parity (`weeks: "odd" | "even"`) still works for static data.
+- ICS export uses one-time events for date-based data and recurring events only for legacy parity data.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
