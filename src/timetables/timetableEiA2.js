@@ -3,6 +3,7 @@ export const timetableData = {
   GROUPS: [
     { type: "C", prefix: "Ć", label: "Ćwiczenia" },
     { type: "L", prefix: "L", label: "Laboratoria" },
+    { type: "Lf", prefix: "Lf", label: "Lab. fiz." },
     { type: "Lek", prefix: "Lek", label: "Lektorat" },
     { type: "Lk", prefix: "Lk", label: "Lab. komp." },
     { type: "P", prefix: "P", label: "Projekt" },
@@ -865,9 +866,9 @@ export const timetableData = {
     {
       id: 1671,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "K. Suchanek (op)",
-      groups: ["L1"],
+      groups: ["Lf1"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -877,9 +878,9 @@ export const timetableData = {
     {
       id: 1672,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "J. Kurzyk",
-      groups: ["L2"],
+      groups: ["Lf2"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -889,9 +890,9 @@ export const timetableData = {
     {
       id: 1673,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "W. Chajec",
-      groups: ["L3"],
+      groups: ["Lf3"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -899,13 +900,13 @@ export const timetableData = {
       weeks: "odd",
     },
 
-    // Blok ranny 08:15 - 10:30 (Tygodnie PARZYSTE)
+    // Blok ranny (Tygodnie PARZYSTE)
     {
       id: 1681,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "K. Suchanek (op)",
-      groups: ["L4"],
+      groups: ["Lf4"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -915,9 +916,9 @@ export const timetableData = {
     {
       id: 1682,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "J. Kurzyk",
-      groups: ["L5"],
+      groups: ["Lf5"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -927,9 +928,9 @@ export const timetableData = {
     {
       id: 1683,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lf",
       teacher: "W. Chajec",
-      groups: ["L6"],
+      groups: ["Lf6"],
       day: 4,
       start: "08:15",
       end: "10:30",
@@ -937,7 +938,6 @@ export const timetableData = {
       weeks: "even",
     },
 
-    // Wykład wspólny
     {
       id: 169,
       subj: "FIZ01",
@@ -951,7 +951,6 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // Ćwiczenia (12:45 - 13:30)
     {
       id: 170,
       subj: "FIZ01",
@@ -976,8 +975,6 @@ export const timetableData = {
       room: "F204",
       weeks: "both",
     },
-
-    // Ćwiczenia (13:45 - 14:30)
     {
       id: 172,
       subj: "FIZ01",
@@ -991,13 +988,13 @@ export const timetableData = {
       weeks: "both",
     },
 
-    // Blok popołudniowy 13:45 - 16:00 (Tygodnie NIEPARZYSTE)
+    // Blok popołudniowy (Tygodnie NIEPARZYSTE)
     {
       id: 1731,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lab. fiz.",
       teacher: "B. Burtan-Gwizdała (op)",
-      groups: ["L7"],
+      groups: ["Lf7"],
       day: 4,
       start: "13:45",
       end: "16:00",
@@ -1007,9 +1004,9 @@ export const timetableData = {
     {
       id: 1732,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lab. fiz.",
       teacher: "M. Duras",
-      groups: ["L8"],
+      groups: ["Lf8"],
       day: 4,
       start: "13:45",
       end: "16:00",
@@ -1019,9 +1016,9 @@ export const timetableData = {
     {
       id: 1733,
       subj: "FIZ01",
-      type: "Laboratorium",
+      type: "Lab. fiz.",
       teacher: "E. Borsuk",
-      groups: ["L9"],
+      groups: ["Lf9"],
       day: 4,
       start: "13:45",
       end: "16:00",
