@@ -1,4 +1,5 @@
-import { MapPin, Users, Tag, Clock } from "lucide-react";
+import { MapPin, Users, Tag, Clock, UserRound } from "lucide-react";
+import { splitTeacherDisplay } from "./utils";
 
 export default function EventCard({ ev, subjects = {} }) {
   const subj = subjects[ev.subj] ||
@@ -7,6 +8,7 @@ export default function EventCard({ ev, subjects = {} }) {
       color: "bg-gray-600",
     };
 
+  const teacherLines = splitTeacherDisplay(ev?.teacher);
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");
 
@@ -32,6 +34,17 @@ export default function EventCard({ ev, subjects = {} }) {
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 opacity-80" />
               <span>{ev.room}</span>
+            </div>
+          ) : null}
+
+          {teacherLines.length ? (
+            <div className="flex items-start gap-1">
+              <UserRound className="w-3 h-3 opacity-80" />
+              <span className="flex flex-col leading-tight">
+                {teacherLines.map((teacherLine) => (
+                  <span key={teacherLine}>{teacherLine}</span>
+                ))}
+              </span>
             </div>
           ) : null}
 
