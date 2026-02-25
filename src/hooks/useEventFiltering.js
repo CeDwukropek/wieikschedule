@@ -78,9 +78,23 @@ export function useEventFiltering(
       if (!isLecture(ev)) {
         // jeśli nie "pokaż wszystko", filtruj po grupach
         if (!showAll) {
-          const matchesGroup =
-            Array.isArray(ev.groups) && ev.groups.some((g) => groupSet.has(g));
-          if (!matchesGroup) continue;
+          const groups = Array.isArray(ev.groups) ? ev.groups : [];
+          const hasWildcardGroup = groups.some(
+            (g) => String(g).trim().toUpperCase() === "W",
+          );
+
+          if (!hasWildcardGroup) {
+            if (groups.length === 0) {
+              if (groupSet.size === 0) {
+                // No groups defined or selected: keep events with no groups.
+              } else {
+                continue;
+              }
+            } else {
+              const matchesGroup = groups.some((g) => groupSet.has(g));
+              if (!matchesGroup) continue;
+            }
+          }
         }
       }
 

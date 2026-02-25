@@ -123,6 +123,39 @@ function parseJsonField(value) {
   }
 }
 
+function expandExcludedDateRanges(docs) {
+  const allDates = new Set();
+
+  for (const doc of docs) {
+    const data = doc.data() || {};
+    
+    // Handle date range (from/to)
+    const fromValue = data?.from;
+    const toValue = data?.to;
+    
+    if (fromValue && toValue) {
+      const fromDate = fromValue?.toDate ? fromValue.toDate() : new Date(fromValue);
+      const toDate = toValue?.toDate ? toValue.toDate() : new Date(toValue);
+      
+      if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+        const current = new Date(fromDate);
+        while (current <= toDate) {
+          const dateKey = normalizeDateString(current);
+          if (dateKey) allDates.add(dateKey);
+          current.setDate(current.getDate() + 1);
+        }
+        continue;
+      }
+    }
+    
+    // Handle single date
+    const singleDate = normalizeDateString(data?.date || data?.data || doc.id);
+    if (singleDate) allDates.add(singleDate);
+  }
+
+  return Array.from(allDates);
+}
+
 function expandRecurringEvent(docId, data, globalExcludedDates = []) {
   const startDateValue = data?.startDate;
   const endDateValue = data?.endDate;
@@ -348,6 +381,9 @@ function normalizeLegacyTimetable(docId, data) {
 export function useFirebaseTimetables(selectedScheduleId = null) {
   const [scheduleList, setScheduleList] = useState([]);
   const [timetables, setTimetables] = useState([]);
+  const [fetchedCache, setFetchedCache] = useState(new Map()); // Cache of all fetched schedules
+  const rawDocsCacheRef = useRef(new Map()); // Cache raw Firestore docs for re-expansion (using Ref to avoid dependency issues)
+  const [excludedDatesCount, setExcludedDatesCount] = useState(0); // Track when excluded dates change
   const [loading, setLoading] = useState(firebaseEnabled);
   const [error, setError] = useState(null);
   const globalExcludedDatesRef = useRef([]);
@@ -424,15 +460,27 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           (snapshot) => {
             if (cancelled) return;
 
-            stateByCollection.set(
+            // Store raw docs for re-expansion when excluded dates change
+            rawDocsCacheRef.current.set(entry.collectionId, {
+              docs: snapshot.docs,
+              name: entry.name,
+            });
+
+            const timetable = buildTimetableFromCollection(
               entry.collectionId,
-              buildTimetableFromCollection(
-                entry.collectionId,
-                snapshot.docs,
-                entry.name,
-                globalExcludedDatesRef.current,
-              ),
+              snapshot.docs,
+              entry.name,
+              globalExcludedDatesRef.current,
             );
+
+            stateByCollection.set(entry.collectionId, timetable);
+
+            // Update cache with this fetched schedule
+            setFetchedCache((prevCache) => {
+              const newCache = new Map(prevCache);
+              newCache.set(entry.collectionId, timetable);
+              return newCache;
+            });
 
             const next = validEntries
               .map((item) => stateByCollection.get(item.collectionId))
@@ -487,13 +535,9 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
         collection(db, holidaysCollectionName),
         (snapshot) => {
           if (cancelled) return;
-          const dates = snapshot.docs
-            .map((doc) => {
-              const data = doc.data();
-              return normalizeDateString(data?.date || data?.data || doc.id);
-            })
-            .filter(Boolean);
+          const dates = expandExcludedDateRanges(snapshot.docs);
           globalExcludedDatesRef.current = dates;
+          setExcludedDatesCount(dates.length); // Trigger re-expansion of cached schedules
         },
         () => {
           // Silently ignore errors from holidays collection
@@ -558,5 +602,31 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     selectedScheduleId,
   ]);
 
-  return { timetables, scheduleList, loading, error };
+  // When excluded dates change (dni_wolne loads), re-expand all cached schedules
+  useEffect(() => {
+    if (excludedDatesCount === 0 || rawDocsCacheRef.current.size === 0) return; // Nothing to rebuild yet
+    if (!selectedScheduleId) return;
+
+    const rawData = rawDocsCacheRef.current.get(selectedScheduleId);
+    if (!rawData) return;
+
+    const rebuiltTimetable = buildTimetableFromCollection(
+      selectedScheduleId,
+      rawData.docs,
+      rawData.name,
+      globalExcludedDatesRef.current, // Use current excluded dates
+    );
+
+    // Update cache with re-expanded schedule
+    setFetchedCache((prev) => {
+      const next = new Map(prev);
+      next.set(selectedScheduleId, rebuiltTimetable);
+      return next;
+    });
+
+    // Update displayed timetables with the re-expanded schedule
+    setTimetables([rebuiltTimetable]);
+  }, [excludedDatesCount, selectedScheduleId]);
+
+  return { timetables, scheduleList, fetchedCache, loading, error };
 }

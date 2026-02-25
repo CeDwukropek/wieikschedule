@@ -42,6 +42,7 @@ export default function Timetable() {
   // Schedule and group management
   const {
     timetables,
+    scheduleList,
     currentSchedule,
     scheduleGroups,
     studentGroups,
@@ -187,11 +188,17 @@ export default function Timetable() {
           onChange={(e) => handleScheduleChange(e.target.value)}
           className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
         >
-          {timetables.map((tt) => (
-            <option key={tt.id} value={tt.id}>
-              {tt.name}
-            </option>
-          ))}
+          {scheduleList && scheduleList.length > 0
+            ? scheduleList.map((item) => (
+                <option key={item.collectionId} value={item.collectionId}>
+                  {item.name || item.collectionId}
+                </option>
+              ))
+            : timetables.map((tt) => (
+                <option key={tt.id} value={tt.id}>
+                  {tt.name}
+                </option>
+              ))}
         </select>
         <button
           onClick={() => setViewMode("week")}
@@ -352,7 +359,7 @@ export default function Timetable() {
         SCHEDULE={schedule}
         currentSchedule={currentSchedule}
         onScheduleChange={handleScheduleChange}
-        allTimetables={timetables}
+        allTimetables={scheduleList && scheduleList.length > 0 ? scheduleList : timetables}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
