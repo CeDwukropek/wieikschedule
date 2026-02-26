@@ -359,7 +359,9 @@ export default function Timetable() {
         SCHEDULE={schedule}
         currentSchedule={currentSchedule}
         onScheduleChange={handleScheduleChange}
-        allTimetables={scheduleList && scheduleList.length > 0 ? scheduleList : timetables}
+        allTimetables={
+          scheduleList && scheduleList.length > 0 ? scheduleList : timetables
+        }
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (

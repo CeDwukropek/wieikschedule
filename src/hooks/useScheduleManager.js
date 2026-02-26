@@ -27,39 +27,39 @@ export function useScheduleManager(savedSettings) {
     loading: timetablesLoading,
   } = useFirebaseTimetables(currentSchedule);
 
+  console.log("useScheduleManager - scheduleList:", scheduleList);
+
   // If Firebase is enabled and we have a schedule list, use Firebase data exclusively.
   // Otherwise fall back to local timetables if Firebase is disabled.
-  const hasDynamicSchedules = firebaseEnabled && scheduleList && scheduleList.length > 0;
-  
-  const timetables = useMemo(
-    () => {
-      // If Firebase is available with schedules, use only Firebase data
-      if (hasDynamicSchedules) {
-        return remoteTimetables && remoteTimetables.length > 0
-          ? remoteTimetables
-          : []; // Empty while loading from Firebase
-      }
-      // If Firebase is disabled or schedule list is empty, use local timetables
-      return localTimetables;
-    },
-    [remoteTimetables, hasDynamicSchedules],
-  );
+  const hasDynamicSchedules =
+    firebaseEnabled && scheduleList && scheduleList.length > 0;
+
+  const timetables = useMemo(() => {
+    // If Firebase is available with schedules, use only Firebase data
+    if (hasDynamicSchedules) {
+      return remoteTimetables && remoteTimetables.length > 0
+        ? remoteTimetables
+        : []; // Empty while loading from Firebase
+    }
+    // If Firebase is disabled or schedule list is empty, use local timetables
+    return localTimetables;
+  }, [remoteTimetables, hasDynamicSchedules]);
 
   const timetableMap = useMemo(() => {
     const map = {};
-    
+
     // Add all cached schedules to the map so we can look them up later
     if (fetchedCache && fetchedCache.size > 0) {
       for (const [, tt] of fetchedCache) {
         if (tt) map[tt.id] = tt;
       }
     }
-    
+
     // Also add current timetables (in case they're not in cache for some reason)
     for (const tt of timetables) {
       if (tt) map[tt.id] = tt;
     }
-    
+
     return map;
   }, [fetchedCache, timetables]);
 
@@ -117,7 +117,10 @@ export function useScheduleManager(savedSettings) {
     [scheduleGroups, currentSchedule, defaultGroups],
   );
 
-  const schedule = useMemo(() => currentTimetable?.schedule || [], [currentTimetable]);
+  const schedule = useMemo(
+    () => currentTimetable?.schedule || [],
+    [currentTimetable],
+  );
 
   const subjects = useMemo(
     () => currentTimetable?.subjects || {},
@@ -154,7 +157,7 @@ export function useScheduleManager(savedSettings) {
   }, []);
 
   return {
-    timetables: remoteTimetables,
+    timetables,
     scheduleList,
     timetablesLoading,
     currentSchedule,
