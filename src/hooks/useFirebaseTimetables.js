@@ -18,13 +18,6 @@ const SUBJECT_COLORS = [
   "bg-fuchsia-700",
 ];
 
-const FIREBASE_DEBUG = process.env.NODE_ENV !== "production";
-
-function debugFirebaseLog(scope, payload) {
-  if (!FIREBASE_DEBUG) return;
-  console.log(`[useFirebaseTimetables] ${scope}`, payload);
-}
-
 function normalizeDateString(value) {
   if (!value) return "";
   if (typeof value === "string") {
@@ -418,11 +411,23 @@ function buildTimetableFromCollection(
   displayName,
   globalExcludedDates = [],
 ) {
+  const excludedSet = new Set(
+    (globalExcludedDates || [])
+      .map((value) => normalizeDateString(value))
+      .filter(Boolean),
+  );
+
   const schedule = docs
     .flatMap((doc) =>
       normalizeCollectionEvent(doc.id, doc.data(), globalExcludedDates),
     )
-    .filter((event) => event.date && event.start && event.end)
+    .filter(
+      (event) =>
+        event.date &&
+        event.start &&
+        event.end &&
+        !excludedSet.has(normalizeDateString(event.date)),
+    )
     .sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return String(a.start).localeCompare(String(b.start));
@@ -442,29 +447,12 @@ function buildTimetableFromCollection(
   };
 }
 
-function parseScheduleIndexEntry(doc) {
+function parseCollectionEntry(doc) {
   const data = doc.data() || {};
   const collectionId = String(
     data.collectionId || data.scheduleId || data.id || doc.id || "",
   ).trim();
 
-  if (!collectionId) return null;
-
-  const name = String(data.name || data.label || data.faculty || collectionId)
-    .trim()
-    .replace(/\s+/g, " ");
-
-  return {
-    collectionId,
-    name: name || collectionId,
-  };
-}
-
-function parseFacultyMetadataEntry(doc) {
-  const data = doc.data() || {};
-  const collectionId = String(
-    data.collectionId || data.scheduleId || data.id || doc.id || "",
-  ).trim();
   if (!collectionId) return null;
 
   const name = String(data.name || data.label || data.faculty || collectionId)
@@ -517,8 +505,9 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
   const [scheduleList, setScheduleList] = useState([]);
   const [timetables, setTimetables] = useState([]);
   const [fetchedCache, setFetchedCache] = useState(new Map()); // Cache of all fetched schedules
+  const fetchedCacheRef = useRef(new Map()); // Ref mirror for synchronous cache reads
   const rawDocsCacheRef = useRef(new Map()); // Cache raw Firestore docs for re-expansion (using Ref to avoid dependency issues)
-  const [excludedDatesCount, setExcludedDatesCount] = useState(0); // Track when excluded dates change
+  const [excludedDatesKey, setExcludedDatesKey] = useState(""); // Track when excluded dates change
   const [loading, setLoading] = useState(firebaseEnabled);
   const [error, setError] = useState(null);
   const globalExcludedDatesRef = useRef([]);
@@ -587,22 +576,10 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
       stopFacultyMetadataSubscription = null;
     };
 
-    const updateScheduleList = (reason, entries) => {
+    const updateScheduleList = (entries) => {
       setScheduleList((prev) => {
         const nextEntries = Array.isArray(entries) ? entries : [];
-        const next = areScheduleEntriesEqual(prev, nextEntries)
-          ? prev
-          : nextEntries;
-
-        debugFirebaseLog("scheduleList set", {
-          reason,
-          prevCount: prev.length,
-          nextCount: next.length,
-          changed: next !== prev,
-          entries: next.map((item) => item.collectionId),
-        });
-
-        return next;
+        return areScheduleEntriesEqual(prev, nextEntries) ? prev : nextEntries;
       });
     };
 
@@ -617,26 +594,18 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           if (cancelled) return;
 
           const metadataEntries = snapshot.docs
-            .map(parseFacultyMetadataEntry)
+            .map(parseCollectionEntry)
             .filter(Boolean);
 
           facultyMetadataEntriesRef.current = metadataEntries;
-          debugFirebaseLog("faculty_metadata snapshot", {
-            collection: facultyMetadataCollectionName,
-            docsCount: snapshot.docs.length,
-            parsedEntries: metadataEntries.map((entry) => entry.collectionId),
-          });
 
           if (metadataEntries.length > 0) {
-            updateScheduleList("faculty_metadata snapshot", metadataEntries);
+            updateScheduleList(metadataEntries);
           }
         },
         () => {
           if (cancelled) return;
           facultyMetadataEntriesRef.current = [];
-          debugFirebaseLog("faculty_metadata error", {
-            collection: facultyMetadataCollectionName,
-          });
         },
       );
     };
@@ -655,7 +624,7 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
 
       // Keep selector list stable to avoid unnecessary rerenders
       if (!options.enableFacultySplit) {
-        updateScheduleList("subscribeToCollections non-faculty", validEntries);
+        updateScheduleList(validEntries);
       }
 
       // If a specific schedule is selected, only fetch that one
@@ -663,6 +632,9 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
         validEntries = validEntries.filter(
           (entry) => entry.collectionId === selectedScheduleId,
         );
+      } else if (!options.enableFacultySplit && validEntries.length > 1) {
+        // No explicit selection yet: subscribe only to the first schedule to avoid fetching everything
+        validEntries = [validEntries[0]];
       }
 
       if (validEntries.length === 0) {
@@ -671,7 +643,22 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
         return;
       }
 
-      setLoading(true);
+      let hasWarmCache = false;
+
+      // Cache-first: render selected/default schedule immediately if already fetched
+      if (!options.enableFacultySplit) {
+        const activeId = selectedScheduleId || validEntries[0]?.collectionId;
+        const cachedTimetable = activeId
+          ? fetchedCacheRef.current.get(activeId)
+          : null;
+        if (cachedTimetable) {
+          setTimetables([cachedTimetable]);
+          hasWarmCache = true;
+          setLoading(false);
+        }
+      }
+
+      if (!hasWarmCache) setLoading(true);
       const stateByCollection = new Map();
       const unsubscribers = validEntries.map((entry) =>
         onSnapshot(
@@ -679,16 +666,9 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           (snapshot) => {
             if (cancelled) return;
 
-            debugFirebaseLog("events snapshot", {
-              collection: entry.collectionId,
-              docsCount: snapshot.docs.length,
-              selectedScheduleId,
-              facultySplit: Boolean(options.enableFacultySplit),
-            });
-
             if (options.enableFacultySplit && snapshot.docs.length === 0) {
               if (facultyMetadataEntriesRef.current.length === 0) {
-                updateScheduleList("faculty-split empty snapshot", []);
+                updateScheduleList([]);
               }
               setTimetables([]);
               setLoading(false);
@@ -731,6 +711,7 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
               for (const timetable of builtTimetables) {
                 newCache.set(timetable.id, timetable);
               }
+              fetchedCacheRef.current = newCache;
               return newCache;
             });
 
@@ -740,28 +721,12 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
                   ? facultyMetadataEntriesRef.current
                   : facultyEntries;
 
-              updateScheduleList(
-                "faculty-split preferred entries",
-                preferredEntries,
-              );
-
-              debugFirebaseLog("scheduleList resolved", {
-                source:
-                  facultyMetadataEntriesRef.current.length > 0
-                    ? "faculty_metadata"
-                    : "faculty_events",
-                entries: preferredEntries.map((item) => item.collectionId),
-              });
+              updateScheduleList(preferredEntries);
             }
 
             const next = validEntries
               .flatMap((item) => stateByCollection.get(item.collectionId) || [])
               .filter(Boolean);
-
-            debugFirebaseLog("timetables resolved", {
-              count: next.length,
-              ids: next.map((tt) => tt.id),
-            });
 
             setTimetables(next);
             setError(null);
@@ -769,10 +734,6 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           },
           (snapshotError) => {
             if (cancelled) return;
-            debugFirebaseLog("events snapshot error", {
-              collection: entry.collectionId,
-              message: snapshotError?.message,
-            });
             setError(snapshotError);
             setLoading(false);
           },
@@ -830,12 +791,20 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
         (snapshot) => {
           if (cancelled) return;
           const dates = expandExcludedDateRanges(snapshot.docs);
+          const normalizedDates = dates
+            .map((value) => normalizeDateString(value))
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
+
           globalExcludedDatesRef.current = dates;
-          setExcludedDatesCount(dates.length); // Trigger re-expansion of cached schedules
+          setExcludedDatesKey(normalizedDates.join("|")); // Trigger re-expansion of cached schedules
         },
         () => {
           // Silently ignore errors from holidays collection
-          if (!cancelled) globalExcludedDatesRef.current = [];
+          if (!cancelled) {
+            globalExcludedDatesRef.current = [];
+            setExcludedDatesKey("");
+          }
         },
       );
     }
@@ -848,7 +817,7 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
             if (cancelled) return;
 
             const indexEntries = snapshot.docs
-              .map(parseScheduleIndexEntry)
+              .map(parseCollectionEntry)
               .filter(Boolean);
 
             if (indexEntries.length > 0) {
@@ -894,26 +863,17 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           if (cancelled) return;
 
           const metadataEntries = metadataSnapshot.docs
-            .map(parseFacultyMetadataEntry)
+            .map(parseCollectionEntry)
             .filter(Boolean);
-
-          debugFirebaseLog("faculty_metadata bootstrap", {
-            collection: facultyMetadataCollectionName,
-            docsCount: metadataSnapshot.docs.length,
-            parsedEntries: metadataEntries.map((entry) => entry.collectionId),
-          });
 
           if (metadataEntries.length > 0) {
             facultyMetadataEntriesRef.current = metadataEntries;
-            updateScheduleList("bootstrap metadata", metadataEntries);
+            updateScheduleList(metadataEntries);
             subscribeToCollections(metadataEntries);
             return;
           }
         } catch {
           if (cancelled) return;
-          debugFirebaseLog("faculty_metadata bootstrap error", {
-            collection: facultyMetadataCollectionName,
-          });
         }
       }
 
@@ -942,7 +902,7 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
 
   // When excluded dates change (dni_wolne loads), re-expand all cached schedules
   useEffect(() => {
-    if (excludedDatesCount === 0 || rawDocsCacheRef.current.size === 0) return; // Nothing to rebuild yet
+    if (!excludedDatesKey || rawDocsCacheRef.current.size === 0) return; // Nothing to rebuild yet
     if (!selectedScheduleId) return;
 
     const rawData = rawDocsCacheRef.current.get(selectedScheduleId);
@@ -959,12 +919,13 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     setFetchedCache((prev) => {
       const next = new Map(prev);
       next.set(selectedScheduleId, rebuiltTimetable);
+      fetchedCacheRef.current = next;
       return next;
     });
 
     // Update displayed timetables with the re-expanded schedule
     setTimetables([rebuiltTimetable]);
-  }, [excludedDatesCount, selectedScheduleId]);
-  console.log("scheduleList useFirebase", scheduleList);
+  }, [excludedDatesKey, selectedScheduleId]);
+
   return { timetables, scheduleList, fetchedCache, loading, error };
 }
