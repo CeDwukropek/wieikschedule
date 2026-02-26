@@ -17,10 +17,14 @@ REACT_APP_FIREBASE_MESSAGING_SENDER_ID=...
 REACT_APP_FIREBASE_APP_ID=...
 REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION=schedules
 REACT_APP_FIREBASE_SCHEDULE_COLLECTIONS=AwP4.0s1,AwP4.0s2
+REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION=faculty
+REACT_APP_FIREBASE_FACULTY_METADATA_COLLECTION=faculty_metadata
 ```
 
 `REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION` is a metadata collection used to auto-discover schedules.
 `REACT_APP_FIREBASE_SCHEDULE_COLLECTIONS` stays as fallback (comma-separated list).
+`REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION` is a fallback single collection with mixed faculties.
+`REACT_APP_FIREBASE_FACULTY_METADATA_COLLECTION` is used to populate schedule selector entries in faculty-split mode.
 
 If Firebase config is missing, the app automatically uses local files from `src/timetables`.
 
@@ -90,10 +94,54 @@ Fields:
 }
 ```
 
+#### 2c) Single collection with mixed faculties (new fallback)
+
+Collection: `faculty` (or value from `REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION`)
+
+Each document is one event and must include `faculty`. The app auto-splits this one collection into schedules by faculty.
+
+```json
+{
+  "date": "2026-02-27T00:00:00.000Z",
+  "startTime": "08:15",
+  "durationMin": 135,
+  "faculty": "EiAs2",
+  "group": "L1 / L2 / L3",
+  "instructor": "K. Suchanek (op), J. Kurzyk, W. Chajec",
+  "room": "F115",
+  "status": "aktywne",
+  "subject": "Fizyka",
+  "type": "laboratoria"
+}
+```
+
+Notes for this format:
+
+- `startTime` + `durationMin` are used to compute `start` / `end` for rendering.
+- `instructor` is accepted as alias for `teacher`.
+- `group` can be a single value or combined values like `L1 / L2 / L3`.
+
+#### 2d) Faculty metadata collection (optional, recommended with 2c)
+
+Collection: `faculty_metadata` (or value from `REACT_APP_FIREBASE_FACULTY_METADATA_COLLECTION`)
+
+Each document should include at least `faculty`:
+
+```json
+{
+  "faculty": "EiAs2",
+  "groups": ["L1", "L2", "L3"],
+  "subjects": ["Fizyka"],
+  "updatedAt": "2026-02-26T09:30:00.000Z"
+}
+```
+
+The app uses this collection to render `<select>` schedule options faster, without deriving faculties from all event documents first.
+
 Notes:
 
 - `isoStart` + `duration` are converted to `start` / `end` automatically.
-- Schedule discovery order: metadata collection -> env collection list -> legacy `timetables`.
+- Schedule discovery order: `faculty_metadata` (if non-empty, faculty mode is preferred) -> metadata collection -> env collection list -> single `faculty` collection -> legacy `timetables`.
 - Weeks are derived from real dates, so navigation works from first week to last week.
 - Mobile week mode has 3 controls: previous week, current week, next week.
 - Legacy parity (`weeks: "odd" | "even"`) still works for static data.

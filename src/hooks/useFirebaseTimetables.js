@@ -52,6 +52,41 @@ function toTimeHm(value) {
   return `${hh}:${mm}`;
 }
 
+function normalizeHm(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return "";
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return "";
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+function addMinutesToHm(startHm, durationMinutes) {
+  const start = normalizeHm(startHm);
+  if (!start) return "";
+  const [hh, mm] = start.split(":").map(Number);
+  const baseMinutes = hh * 60 + mm;
+  const duration = Number.isFinite(durationMinutes)
+    ? Number(durationMinutes)
+    : Number(durationMinutes || 0);
+  const effectiveDuration = duration > 0 ? duration : 90;
+  const endMinutes = (baseMinutes + effectiveDuration) % (24 * 60);
+  const endHour = Math.floor(endMinutes / 60);
+  const endMin = endMinutes % 60;
+  return `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+}
+
+function parseGroups(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+
+  return raw
+    .split(/\s*[/,;|]\s*/)
+    .map((group) => group.trim())
+    .filter(Boolean);
+}
+
 function buildEndTime(isoStart, durationMinutes) {
   const startDate = isoStart?.toDate ? isoStart.toDate() : new Date(isoStart);
   if (Number.isNaN(startDate.getTime())) return "";
@@ -128,16 +163,21 @@ function expandExcludedDateRanges(docs) {
 
   for (const doc of docs) {
     const data = doc.data() || {};
-    
+
     // Handle date range (from/to)
     const fromValue = data?.from;
     const toValue = data?.to;
-    
+
     if (fromValue && toValue) {
-      const fromDate = fromValue?.toDate ? fromValue.toDate() : new Date(fromValue);
+      const fromDate = fromValue?.toDate
+        ? fromValue.toDate()
+        : new Date(fromValue);
       const toDate = toValue?.toDate ? toValue.toDate() : new Date(toValue);
-      
-      if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+
+      if (
+        !Number.isNaN(fromDate.getTime()) &&
+        !Number.isNaN(toDate.getTime())
+      ) {
         const current = new Date(fromDate);
         while (current <= toDate) {
           const dateKey = normalizeDateString(current);
@@ -147,7 +187,7 @@ function expandExcludedDateRanges(docs) {
         continue;
       }
     }
-    
+
     // Handle single date
     const singleDate = normalizeDateString(data?.date || data?.data || doc.id);
     if (singleDate) allDates.add(singleDate);
@@ -167,6 +207,7 @@ function expandRecurringEvent(docId, data, globalExcludedDates = []) {
   const group = String(data?.group || "").trim();
   const subjectName = String(data?.subject || data?.subj || "Przedmiot").trim();
   const subjectKey = makeSubjectKey(subjectName);
+  const groups = parseGroups(group);
 
   if (!startDateValue || !endDateValue) return [];
 
@@ -214,9 +255,15 @@ function expandRecurringEvent(docId, data, globalExcludedDates = []) {
         occurrences.push({
           id: `${docId}-${index}`,
           subj: subjectKey,
+          title: subjectName,
           subjectName,
           type: override.type || data?.type || "",
-          teacher: override.teacher || data?.teacher || "",
+          teacher:
+            override.teacher ||
+            override.instructor ||
+            data?.teacher ||
+            data?.instructor ||
+            "",
           room: override.room || data?.room || "",
           date: dateKey,
           day: dayIndexFromDate(dateKey) ?? 0,
@@ -224,7 +271,7 @@ function expandRecurringEvent(docId, data, globalExcludedDates = []) {
           end,
           weeks: "both",
           faculty: data?.faculty || "",
-          groups: group ? [group] : [],
+          groups,
         });
       }
     }
@@ -245,9 +292,14 @@ function normalizeCollectionEvent(docId, data, globalExcludedDates = []) {
   // Legacy schema: single event with isoStart
   const startValue = data?.isoStart || data?.startDate || data?.date;
   const date = normalizeDateString(startValue);
-  const start = data?.start || toTimeHm(startValue);
-  const end = data?.end || buildEndTime(startValue, data?.duration);
-  const group = String(data?.group || "").trim();
+  const start =
+    normalizeHm(data?.start || data?.startTime) || toTimeHm(startValue);
+  const duration = data?.durationMin ?? data?.duration;
+  const end =
+    data?.end ||
+    addMinutesToHm(start, duration) ||
+    buildEndTime(startValue, duration);
+  const groups = parseGroups(data?.group);
   const subjectName = String(data?.subject || data?.subj || "Przedmiot").trim();
   const subjectKey = makeSubjectKey(subjectName);
 
@@ -255,9 +307,10 @@ function normalizeCollectionEvent(docId, data, globalExcludedDates = []) {
     {
       id: data?.id ?? docId,
       subj: subjectKey,
+      title: subjectName,
       subjectName,
       type: data?.type || "",
-      teacher: data?.teacher || "",
+      teacher: data?.teacher || data?.instructor || "",
       room: data?.room || "",
       date,
       day: dayIndexFromDate(date) ?? 0,
@@ -265,9 +318,67 @@ function normalizeCollectionEvent(docId, data, globalExcludedDates = []) {
       end,
       weeks: "both",
       faculty: data?.faculty || "",
-      groups: group ? [group] : [],
+      groups,
     },
   ];
+}
+
+function buildTimetablesFromFacultyEventsCollection(
+  collectionId,
+  docs,
+  selectedScheduleId,
+  globalExcludedDates = [],
+) {
+  const docsByFaculty = new Map();
+
+  for (const doc of docs) {
+    const data = doc.data() || {};
+    const faculty = String(data?.faculty || "").trim() || "unknown";
+    if (!docsByFaculty.has(faculty)) docsByFaculty.set(faculty, []);
+    docsByFaculty.get(faculty).push(doc);
+  }
+
+  let faculties = Array.from(docsByFaculty.keys()).sort((a, b) =>
+    a.localeCompare(b),
+  );
+
+  if (selectedScheduleId) {
+    faculties = faculties.filter((faculty) => faculty === selectedScheduleId);
+  }
+
+  return faculties.map((faculty) =>
+    buildTimetableFromCollection(
+      faculty,
+      docsByFaculty.get(faculty) || [],
+      faculty,
+      globalExcludedDates,
+    ),
+  );
+}
+
+function extractFacultyScheduleEntries(docs = []) {
+  const faculties = new Set();
+  for (const doc of docs) {
+    const data = doc.data() || {};
+    const faculty = String(data?.faculty || "").trim();
+    if (faculty) faculties.add(faculty);
+  }
+
+  return Array.from(faculties)
+    .sort((a, b) => a.localeCompare(b))
+    .map((faculty) => ({
+      collectionId: faculty,
+      name: faculty,
+    }));
+}
+
+function areScheduleEntriesEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]?.collectionId !== b[i]?.collectionId) return false;
+    if (a[i]?.name !== b[i]?.name) return false;
+  }
+  return true;
 }
 
 function buildSubjectsFromEvents(events) {
@@ -300,11 +411,23 @@ function buildTimetableFromCollection(
   displayName,
   globalExcludedDates = [],
 ) {
+  const excludedSet = new Set(
+    (globalExcludedDates || [])
+      .map((value) => normalizeDateString(value))
+      .filter(Boolean),
+  );
+
   const schedule = docs
     .flatMap((doc) =>
       normalizeCollectionEvent(doc.id, doc.data(), globalExcludedDates),
     )
-    .filter((event) => event.date && event.start && event.end)
+    .filter(
+      (event) =>
+        event.date &&
+        event.start &&
+        event.end &&
+        !excludedSet.has(normalizeDateString(event.date)),
+    )
     .sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return String(a.start).localeCompare(String(b.start));
@@ -324,7 +447,7 @@ function buildTimetableFromCollection(
   };
 }
 
-function parseScheduleIndexEntry(doc) {
+function parseCollectionEntry(doc) {
   const data = doc.data() || {};
   const collectionId = String(
     data.collectionId || data.scheduleId || data.id || doc.id || "",
@@ -382,11 +505,13 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
   const [scheduleList, setScheduleList] = useState([]);
   const [timetables, setTimetables] = useState([]);
   const [fetchedCache, setFetchedCache] = useState(new Map()); // Cache of all fetched schedules
+  const fetchedCacheRef = useRef(new Map()); // Ref mirror for synchronous cache reads
   const rawDocsCacheRef = useRef(new Map()); // Cache raw Firestore docs for re-expansion (using Ref to avoid dependency issues)
-  const [excludedDatesCount, setExcludedDatesCount] = useState(0); // Track when excluded dates change
+  const [excludedDatesKey, setExcludedDatesKey] = useState(""); // Track when excluded dates change
   const [loading, setLoading] = useState(firebaseEnabled);
   const [error, setError] = useState(null);
   const globalExcludedDatesRef = useRef([]);
+  const facultyMetadataEntriesRef = useRef([]);
 
   const configuredCollections = useMemo(
     () =>
@@ -413,6 +538,18 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     [],
   );
 
+  const facultyEventsCollectionName = useMemo(
+    () => process.env.REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION || "faculty",
+    [],
+  );
+
+  const facultyMetadataCollectionName = useMemo(
+    () =>
+      process.env.REACT_APP_FIREBASE_FACULTY_METADATA_COLLECTION ||
+      "faculty_metadata",
+    [],
+  );
+
   useEffect(() => {
     if (!firebaseEnabled || !db) {
       setLoading(false);
@@ -423,6 +560,7 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     let stopIndexSubscription = null;
     let stopScheduleSubscriptions = null;
     let stopHolidaysSubscription = null;
+    let stopFacultyMetadataSubscription = null;
 
     const clearScheduleSubscriptions = () => {
       if (typeof stopScheduleSubscriptions === "function") {
@@ -431,28 +569,96 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
       stopScheduleSubscriptions = null;
     };
 
-    const subscribeToCollections = (entries) => {
+    const clearFacultyMetadataSubscription = () => {
+      if (typeof stopFacultyMetadataSubscription === "function") {
+        stopFacultyMetadataSubscription();
+      }
+      stopFacultyMetadataSubscription = null;
+    };
+
+    const updateScheduleList = (entries) => {
+      setScheduleList((prev) => {
+        const nextEntries = Array.isArray(entries) ? entries : [];
+        return areScheduleEntriesEqual(prev, nextEntries) ? prev : nextEntries;
+      });
+    };
+
+    const subscribeFacultyMetadata = () => {
+      if (!facultyMetadataCollectionName || stopFacultyMetadataSubscription) {
+        return;
+      }
+
+      stopFacultyMetadataSubscription = onSnapshot(
+        collection(db, facultyMetadataCollectionName),
+        (snapshot) => {
+          if (cancelled) return;
+
+          const metadataEntries = snapshot.docs
+            .map(parseCollectionEntry)
+            .filter(Boolean);
+
+          facultyMetadataEntriesRef.current = metadataEntries;
+
+          if (metadataEntries.length > 0) {
+            updateScheduleList(metadataEntries);
+          }
+        },
+        () => {
+          if (cancelled) return;
+          facultyMetadataEntriesRef.current = [];
+        },
+      );
+    };
+
+    const subscribeToCollections = (entries, options = {}) => {
       clearScheduleSubscriptions();
 
+      if (options.enableFacultySplit) {
+        subscribeFacultyMetadata();
+      } else {
+        clearFacultyMetadataSubscription();
+        facultyMetadataEntriesRef.current = [];
+      }
+
       let validEntries = entries.filter((entry) => entry?.collectionId);
-      
-      // Store the full list for schedule selection
-      setScheduleList(validEntries);
-      
+
+      // Keep selector list stable to avoid unnecessary rerenders
+      if (!options.enableFacultySplit) {
+        updateScheduleList(validEntries);
+      }
+
       // If a specific schedule is selected, only fetch that one
-      if (selectedScheduleId) {
+      if (selectedScheduleId && !options.enableFacultySplit) {
         validEntries = validEntries.filter(
           (entry) => entry.collectionId === selectedScheduleId,
         );
+      } else if (!options.enableFacultySplit && validEntries.length > 1) {
+        // No explicit selection yet: subscribe only to the first schedule to avoid fetching everything
+        validEntries = [validEntries[0]];
       }
-      
+
       if (validEntries.length === 0) {
         setTimetables([]);
         setLoading(false);
         return;
       }
 
-      setLoading(true);
+      let hasWarmCache = false;
+
+      // Cache-first: render selected/default schedule immediately if already fetched
+      if (!options.enableFacultySplit) {
+        const activeId = selectedScheduleId || validEntries[0]?.collectionId;
+        const cachedTimetable = activeId
+          ? fetchedCacheRef.current.get(activeId)
+          : null;
+        if (cachedTimetable) {
+          setTimetables([cachedTimetable]);
+          hasWarmCache = true;
+          setLoading(false);
+        }
+      }
+
+      if (!hasWarmCache) setLoading(true);
       const stateByCollection = new Map();
       const unsubscribers = validEntries.map((entry) =>
         onSnapshot(
@@ -460,30 +666,66 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
           (snapshot) => {
             if (cancelled) return;
 
+            if (options.enableFacultySplit && snapshot.docs.length === 0) {
+              if (facultyMetadataEntriesRef.current.length === 0) {
+                updateScheduleList([]);
+              }
+              setTimetables([]);
+              setLoading(false);
+              loadLegacyTimetables();
+              return;
+            }
+
             // Store raw docs for re-expansion when excluded dates change
             rawDocsCacheRef.current.set(entry.collectionId, {
               docs: snapshot.docs,
               name: entry.name,
             });
 
-            const timetable = buildTimetableFromCollection(
-              entry.collectionId,
-              snapshot.docs,
-              entry.name,
-              globalExcludedDatesRef.current,
-            );
+            const facultyEntries = options.enableFacultySplit
+              ? extractFacultyScheduleEntries(snapshot.docs)
+              : [];
 
-            stateByCollection.set(entry.collectionId, timetable);
+            const builtTimetables =
+              options.enableFacultySplit && facultyEntries.length > 0
+                ? buildTimetablesFromFacultyEventsCollection(
+                    entry.collectionId,
+                    snapshot.docs,
+                    selectedScheduleId,
+                    globalExcludedDatesRef.current,
+                  )
+                : [
+                    buildTimetableFromCollection(
+                      entry.collectionId,
+                      snapshot.docs,
+                      entry.name,
+                      globalExcludedDatesRef.current,
+                    ),
+                  ];
 
-            // Update cache with this fetched schedule
+            stateByCollection.set(entry.collectionId, builtTimetables);
+
+            // Update cache with fetched schedules
             setFetchedCache((prevCache) => {
               const newCache = new Map(prevCache);
-              newCache.set(entry.collectionId, timetable);
+              for (const timetable of builtTimetables) {
+                newCache.set(timetable.id, timetable);
+              }
+              fetchedCacheRef.current = newCache;
               return newCache;
             });
 
+            if (options.enableFacultySplit) {
+              const preferredEntries =
+                facultyMetadataEntriesRef.current.length > 0
+                  ? facultyMetadataEntriesRef.current
+                  : facultyEntries;
+
+              updateScheduleList(preferredEntries);
+            }
+
             const next = validEntries
-              .map((item) => stateByCollection.get(item.collectionId))
+              .flatMap((item) => stateByCollection.get(item.collectionId) || [])
               .filter(Boolean);
 
             setTimetables(next);
@@ -529,6 +771,19 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
       name: collectionId,
     }));
 
+    const subscribeFacultyEventsCollection = () => {
+      clearScheduleSubscriptions();
+      subscribeToCollections(
+        [
+          {
+            collectionId: facultyEventsCollectionName,
+            name: facultyEventsCollectionName,
+          },
+        ],
+        { enableFacultySplit: true },
+      );
+    };
+
     // Subscribe to holidays/free days collection
     if (holidaysCollectionName) {
       stopHolidaysSubscription = onSnapshot(
@@ -536,62 +791,103 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
         (snapshot) => {
           if (cancelled) return;
           const dates = expandExcludedDateRanges(snapshot.docs);
+          const normalizedDates = dates
+            .map((value) => normalizeDateString(value))
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
+
           globalExcludedDatesRef.current = dates;
-          setExcludedDatesCount(dates.length); // Trigger re-expansion of cached schedules
+          setExcludedDatesKey(normalizedDates.join("|")); // Trigger re-expansion of cached schedules
         },
         () => {
           // Silently ignore errors from holidays collection
-          if (!cancelled) globalExcludedDatesRef.current = [];
+          if (!cancelled) {
+            globalExcludedDatesRef.current = [];
+            setExcludedDatesKey("");
+          }
         },
       );
     }
 
-    if (scheduleIndexCollectionName) {
-      stopIndexSubscription = onSnapshot(
-        collection(db, scheduleIndexCollectionName),
-        (snapshot) => {
+    const startLegacyDiscovery = () => {
+      if (scheduleIndexCollectionName) {
+        stopIndexSubscription = onSnapshot(
+          collection(db, scheduleIndexCollectionName),
+          (snapshot) => {
+            if (cancelled) return;
+
+            const indexEntries = snapshot.docs
+              .map(parseCollectionEntry)
+              .filter(Boolean);
+
+            if (indexEntries.length > 0) {
+              subscribeToCollections(indexEntries);
+              return;
+            }
+
+            if (configuredEntries.length > 0) {
+              subscribeToCollections(configuredEntries);
+              return;
+            }
+
+            subscribeFacultyEventsCollection();
+          },
+          () => {
+            if (cancelled) return;
+
+            if (configuredEntries.length > 0) {
+              subscribeToCollections(configuredEntries);
+              return;
+            }
+
+            subscribeFacultyEventsCollection();
+          },
+        );
+        return;
+      }
+
+      if (configuredEntries.length > 0) {
+        subscribeToCollections(configuredEntries);
+        return;
+      }
+
+      subscribeFacultyEventsCollection();
+    };
+
+    const bootstrap = async () => {
+      if (facultyMetadataCollectionName) {
+        try {
+          const metadataSnapshot = await getDocs(
+            collection(db, facultyMetadataCollectionName),
+          );
           if (cancelled) return;
 
-          const indexEntries = snapshot.docs
-            .map(parseScheduleIndexEntry)
+          const metadataEntries = metadataSnapshot.docs
+            .map(parseCollectionEntry)
             .filter(Boolean);
 
-          if (indexEntries.length > 0) {
-            subscribeToCollections(indexEntries);
+          if (metadataEntries.length > 0) {
+            facultyMetadataEntriesRef.current = metadataEntries;
+            updateScheduleList(metadataEntries);
+            subscribeToCollections(metadataEntries);
             return;
           }
-
-          if (configuredEntries.length > 0) {
-            subscribeToCollections(configuredEntries);
-            return;
-          }
-
-          clearScheduleSubscriptions();
-          loadLegacyTimetables();
-        },
-        () => {
+        } catch {
           if (cancelled) return;
+        }
+      }
 
-          if (configuredEntries.length > 0) {
-            subscribeToCollections(configuredEntries);
-            return;
-          }
+      startLegacyDiscovery();
+    };
 
-          clearScheduleSubscriptions();
-          loadLegacyTimetables();
-        },
-      );
-    } else if (configuredEntries.length > 0) {
-      subscribeToCollections(configuredEntries);
-    } else {
-      loadLegacyTimetables();
-    }
+    bootstrap();
 
     return () => {
       cancelled = true;
       if (typeof stopIndexSubscription === "function") stopIndexSubscription();
       if (typeof stopHolidaysSubscription === "function")
         stopHolidaysSubscription();
+      clearFacultyMetadataSubscription();
       clearScheduleSubscriptions();
     };
   }, [
@@ -599,12 +895,14 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     legacyCollectionName,
     scheduleIndexCollectionName,
     holidaysCollectionName,
+    facultyEventsCollectionName,
+    facultyMetadataCollectionName,
     selectedScheduleId,
   ]);
 
   // When excluded dates change (dni_wolne loads), re-expand all cached schedules
   useEffect(() => {
-    if (excludedDatesCount === 0 || rawDocsCacheRef.current.size === 0) return; // Nothing to rebuild yet
+    if (!excludedDatesKey || rawDocsCacheRef.current.size === 0) return; // Nothing to rebuild yet
     if (!selectedScheduleId) return;
 
     const rawData = rawDocsCacheRef.current.get(selectedScheduleId);
@@ -621,12 +919,13 @@ export function useFirebaseTimetables(selectedScheduleId = null) {
     setFetchedCache((prev) => {
       const next = new Map(prev);
       next.set(selectedScheduleId, rebuiltTimetable);
+      fetchedCacheRef.current = next;
       return next;
     });
 
     // Update displayed timetables with the re-expanded schedule
     setTimetables([rebuiltTimetable]);
-  }, [excludedDatesCount, selectedScheduleId]);
+  }, [excludedDatesKey, selectedScheduleId]);
 
   return { timetables, scheduleList, fetchedCache, loading, error };
 }
