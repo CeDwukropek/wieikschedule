@@ -21,6 +21,8 @@ REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION=faculty
 REACT_APP_FIREBASE_FACULTY_METADATA_COLLECTION=faculty_metadata
 ```
 
+For Vercel with Create React App (`react-scripts`), set `REACT_APP_*` variables in Project Settings and redeploy.
+
 `REACT_APP_FIREBASE_SCHEDULE_INDEX_COLLECTION` is a metadata collection used to auto-discover schedules.
 `REACT_APP_FIREBASE_SCHEDULE_COLLECTIONS` stays as fallback (comma-separated list).
 `REACT_APP_FIREBASE_FACULTY_EVENTS_COLLECTION` is a fallback single collection with mixed faculties.
