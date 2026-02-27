@@ -22,7 +22,13 @@ export default function FloatingMenu({
   options = [],
   selection,
   onChange,
-  activeParity,
+  onPrevWeek,
+  onResetWeek,
+  onNextWeek,
+  viewedWeekRange,
+  isCurrentWeek,
+  canGoPrevWeek,
+  canGoNextWeek,
   currentParity,
   currentRange,
   nextRange,
@@ -66,12 +72,13 @@ export default function FloatingMenu({
         {viewMode === "week" && (
           <WeekMenu
             events={filtered}
-            activeParity={activeParity}
-            setWeekParity={setWeekParity}
-            currentParity={currentParity}
-            nextParity={nextParity}
-            currentRange={currentRange}
-            nextRange={nextRange}
+            onPrevWeek={onPrevWeek}
+            onResetWeek={onResetWeek}
+            onNextWeek={onNextWeek}
+            viewedRange={viewedWeekRange}
+            isCurrentWeek={isCurrentWeek}
+            canGoPrevWeek={canGoPrevWeek}
+            canGoNextWeek={canGoNextWeek}
             open={open}
           />
         )}

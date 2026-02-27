@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { allTimetables } from "./timetables";
 import GroupInput from "./GroupInput";
@@ -38,6 +44,7 @@ export default function Timetable() {
     schedule,
     subjects,
     groupConfigs,
+    currentTimetable,
     handleGroupChange,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
@@ -48,9 +55,88 @@ export default function Timetable() {
     nextParity,
     currentRange,
     nextRange,
+    getRangeByOffset,
+    getWeekStartByOffset,
+    getOffsetForDate,
     combinedOptions,
     defaultDayIndex,
   } = useDateHelpers();
+
+  const minAllowedOffset = useMemo(() => {
+    const value = getOffsetForDate(currentTimetable?.minDate);
+    return value == null ? Number.NEGATIVE_INFINITY : value;
+  }, [currentTimetable, getOffsetForDate]);
+
+  const maxAllowedOffset = useMemo(() => {
+    const value = getOffsetForDate(currentTimetable?.maxDate);
+    return value == null ? Number.POSITIVE_INFINITY : value;
+  }, [currentTimetable, getOffsetForDate]);
+
+  const [weekOffset, setWeekOffset] = useState(
+    Number.isFinite(savedSettings?.weekOffset)
+      ? Number(savedSettings.weekOffset)
+      : savedSettings?.activeWeekKey === "prev"
+        ? -1
+        : savedSettings?.activeWeekKey === "next"
+          ? 1
+          : 0,
+  );
+
+  const parityForOffset = useCallback(
+    (offset) => {
+      const normalizedOffset = Math.abs(Number(offset || 0));
+      if (normalizedOffset % 2 === 0) return currentParity;
+      return currentParity === "even" ? "odd" : "even";
+    },
+    [currentParity],
+  );
+
+  const viewedWeekRange = useMemo(
+    () => getRangeByOffset(weekOffset),
+    [getRangeByOffset, weekOffset],
+  );
+
+  const viewedWeekStart = useMemo(
+    () => getWeekStartByOffset(weekOffset),
+    [getWeekStartByOffset, weekOffset],
+  );
+
+  const canGoPrevWeek = weekOffset > minAllowedOffset;
+  const canGoNextWeek = weekOffset < maxAllowedOffset;
+
+  useEffect(() => {
+    const clamped = Math.min(
+      Math.max(weekOffset, minAllowedOffset),
+      maxAllowedOffset,
+    );
+    if (clamped !== weekOffset) {
+      setWeekOffset(clamped);
+      setWeekParity(parityForOffset(clamped));
+    }
+  }, [weekOffset, minAllowedOffset, maxAllowedOffset, parityForOffset]);
+
+  const goToPrevWeek = () => {
+    if (!canGoPrevWeek) return;
+    setWeekOffset((prev) => {
+      const nextOffset = Math.max(prev - 1, minAllowedOffset);
+      setWeekParity(parityForOffset(nextOffset));
+      return nextOffset;
+    });
+  };
+
+  const goToNextWeek = () => {
+    if (!canGoNextWeek) return;
+    setWeekOffset((prev) => {
+      const nextOffset = Math.min(prev + 1, maxAllowedOffset);
+      setWeekParity(parityForOffset(nextOffset));
+      return nextOffset;
+    });
+  };
+
+  const resetToCurrentWeek = () => {
+    setWeekOffset(0);
+    setWeekParity(currentParity);
+  };
 
   // Event filtering with caching
   const { filtered, computeFiltered } = useEventFiltering(
@@ -59,12 +145,14 @@ export default function Timetable() {
     hideLectures,
     weekParity,
     showAll,
+    viewedWeekStart,
   );
 
   // Persist all settings
   useSettings({
     viewMode,
     weekParity,
+    weekOffset,
     hideLectures,
     showAll,
     currentSchedule,
@@ -79,6 +167,8 @@ export default function Timetable() {
     try {
       const parts = (selection || "current:0").split(":");
       const selParityToken = parts[0];
+      const selectedOffset = selParityToken === "next" ? 1 : 0;
+      const selectedWeekStart = getWeekStartByOffset(selectedOffset);
       const parityToUse =
         selParityToken === "current" ? currentParity : nextParity;
       return computeFiltered(
@@ -87,6 +177,7 @@ export default function Timetable() {
         hideLectures,
         parityToUse,
         showAll,
+        selectedWeekStart,
       );
     } catch (e) {
       return filtered;
@@ -99,6 +190,7 @@ export default function Timetable() {
     showAll,
     currentParity,
     nextParity,
+    getWeekStartByOffset,
     filtered,
     schedule,
   ]);
@@ -203,29 +295,42 @@ export default function Timetable() {
 
       <div className="hidden sm:block gap-3 items-center mb-4 ">
         {viewMode === "week" ? (
-          <>
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setWeekParity(currentParity)}
+              onClick={goToPrevWeek}
+              disabled={!canGoPrevWeek}
               className={`px-3 py-1 rounded text-sm ${
-                weekParity === currentParity
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
+                canGoPrevWeek
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
               }`}
             >
-              {currentRange}
+              Prev
             </button>
 
             <button
-              onClick={() => setWeekParity(nextParity)}
+              onClick={resetToCurrentWeek}
               className={`px-3 ml-3 py-1 rounded text-sm ${
-                weekParity === nextParity
+                weekOffset === 0
                   ? "bg-neutral-800"
                   : "bg-neutral-900 text-gray-300"
               }`}
             >
-              {nextRange}
+              {viewedWeekRange}
             </button>
-          </>
+
+            <button
+              onClick={goToNextWeek}
+              disabled={!canGoNextWeek}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                canGoNextWeek
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              Next
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -242,7 +347,13 @@ export default function Timetable() {
         studentGroups={studentGroups}
         groupConfigs={groupConfigs}
         handleGroupChange={handleGroupChange}
-        activeParity={weekParity}
+        onPrevWeek={goToPrevWeek}
+        onResetWeek={resetToCurrentWeek}
+        onNextWeek={goToNextWeek}
+        viewedWeekRange={viewedWeekRange}
+        isCurrentWeek={weekOffset === 0}
+        canGoPrevWeek={canGoPrevWeek}
+        canGoNextWeek={canGoNextWeek}
         currentParity={currentParity}
         currentRange={currentRange}
         nextRange={nextRange}

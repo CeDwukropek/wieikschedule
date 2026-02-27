@@ -1,5 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
-import { allTimetables, timetableMap } from "../timetables";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import {
+  allTimetables,
+  defaultTimetable,
+  getCachedTimetableById,
+  loadTimetableById,
+} from "../timetables";
 
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
@@ -13,30 +18,67 @@ function buildDefaultGroupsForTimetable(timetable) {
 }
 
 export function useScheduleManager(savedSettings) {
-  const defaultScheduleId = allTimetables[0]?.id || "eia2";
-
-  // Build initial groups for all schedules
-  const initialScheduleGroups = useMemo(
-    () =>
-      allTimetables.reduce((acc, tt) => {
-        acc[tt.id] = buildDefaultGroupsForTimetable(tt);
-        return acc;
-      }, {}),
-    [],
-  );
+  const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
 
   const [currentSchedule, setCurrentSchedule] = useState(
     savedSettings?.currentSchedule ?? defaultScheduleId,
   );
 
   const [scheduleGroups, setScheduleGroups] = useState(
-    savedSettings?.scheduleGroups ?? initialScheduleGroups,
+    savedSettings?.scheduleGroups ?? {},
   );
+
+  const [loadedTimetables, setLoadedTimetables] = useState(() => {
+    const initial = {};
+    const initialId = savedSettings?.currentSchedule ?? defaultScheduleId;
+    if (initialId) {
+      const cached = getCachedTimetableById(initialId);
+      if (cached) initial[initialId] = cached;
+    }
+    return initial;
+  });
+
+  const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const targetId = currentSchedule || defaultScheduleId;
+    if (!targetId) return () => {};
+
+    if (loadedTimetables[targetId]) return () => {};
+
+    setIsScheduleLoading(true);
+    loadTimetableById(targetId)
+      .then((timetable) => {
+        if (!active || !timetable) return;
+        setLoadedTimetables((prev) => {
+          if (prev[targetId]) return prev;
+          return { ...prev, [targetId]: timetable };
+        });
+      })
+      .finally(() => {
+        if (active) setIsScheduleLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentSchedule, defaultScheduleId, loadedTimetables]);
 
   // Get current schedule's data - memoized to prevent infinite loops
   const currentTimetable = useMemo(
-    () => timetableMap[currentSchedule] || allTimetables[0],
-    [currentSchedule],
+    () =>
+      loadedTimetables[currentSchedule] ||
+      loadedTimetables[defaultScheduleId] || {
+        id: currentSchedule || defaultScheduleId,
+        name: currentSchedule || defaultScheduleId,
+        schedule: [],
+        subjects: {},
+        groups: [],
+        minDate: null,
+        maxDate: null,
+      },
+    [loadedTimetables, currentSchedule, defaultScheduleId],
   );
 
   const defaultGroups = useMemo(
@@ -61,6 +103,17 @@ export function useScheduleManager(savedSettings) {
     () => currentTimetable.groups || [],
     [currentTimetable],
   );
+
+  useEffect(() => {
+    if (!currentSchedule || !currentTimetable?.groups?.length) return;
+    setScheduleGroups((prev) => {
+      if (prev[currentSchedule]) return prev;
+      return {
+        ...prev,
+        [currentSchedule]: buildDefaultGroupsForTimetable(currentTimetable),
+      };
+    });
+  }, [currentSchedule, currentTimetable]);
 
   const handleGroupChange = useCallback(
     (type, number) => {
@@ -91,6 +144,8 @@ export function useScheduleManager(savedSettings) {
     schedule,
     subjects,
     groupConfigs,
+    currentTimetable,
+    isScheduleLoading,
     handleGroupChange,
     handleScheduleChange,
   };

@@ -1,8 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { getWeekStart, formatDate, getCurrentParity } from "../utils/dateUtils";
 
 export function useDateHelpers() {
   const today = useMemo(() => new Date(), []);
+
+  const prevWeekStart = useMemo(() => {
+    const date = getWeekStart(today);
+    date.setDate(date.getDate() - 7);
+    return date;
+  }, [today]);
+
+  const prevWeekEnd = useMemo(() => {
+    const date = new Date(prevWeekStart);
+    date.setDate(date.getDate() + 6);
+    return date;
+  }, [prevWeekStart]);
 
   const thisWeekStart = useMemo(() => getWeekStart(today), [today]);
   const thisWeekEnd = useMemo(() => {
@@ -24,9 +36,18 @@ export function useDateHelpers() {
   }, [nextWeekStart]);
 
   const currentParity = useMemo(() => getCurrentParity(today), [today]);
+  const prevParity = useMemo(
+    () => (currentParity === "even" ? "odd" : "even"),
+    [currentParity],
+  );
   const nextParity = useMemo(
     () => (currentParity === "even" ? "odd" : "even"),
     [currentParity],
+  );
+
+  const prevRange = useMemo(
+    () => `${formatDate(prevWeekStart)} - ${formatDate(prevWeekEnd)}`,
+    [prevWeekStart, prevWeekEnd],
   );
 
   const currentRange = useMemo(
@@ -37,6 +58,39 @@ export function useDateHelpers() {
   const nextRange = useMemo(
     () => `${formatDate(nextWeekStart)} - ${formatDate(nextWeekEnd)}`,
     [nextWeekStart, nextWeekEnd],
+  );
+
+  const getRangeByOffset = useCallback(
+    (offset = 0) => {
+      const start = new Date(thisWeekStart);
+      start.setDate(start.getDate() + Number(offset || 0) * 7);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return `${formatDate(start)} - ${formatDate(end)}`;
+    },
+    [thisWeekStart],
+  );
+
+  const getWeekStartByOffset = useCallback(
+    (offset = 0) => {
+      const start = new Date(thisWeekStart);
+      start.setDate(start.getDate() + Number(offset || 0) * 7);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    },
+    [thisWeekStart],
+  );
+
+  const getOffsetForDate = useCallback(
+    (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(`${String(dateValue).slice(0, 10)}T12:00:00`);
+      if (Number.isNaN(date.getTime())) return null;
+      const weekStart = getWeekStart(date);
+      const diffMs = weekStart.getTime() - thisWeekStart.getTime();
+      return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+    },
+    [thisWeekStart],
   );
 
   // Build combined options used by DayView and BottomDayNav
@@ -64,10 +118,15 @@ export function useDateHelpers() {
 
   return {
     today,
+    prevParity,
     currentParity,
     nextParity,
+    prevRange,
     currentRange,
     nextRange,
+    getRangeByOffset,
+    getWeekStartByOffset,
+    getOffsetForDate,
     combinedOptions,
     defaultDayIndex,
   };

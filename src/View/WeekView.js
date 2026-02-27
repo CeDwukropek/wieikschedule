@@ -11,7 +11,7 @@ import "./ViewStyles.css";
 
 const WeekView = forwardRef(function WeekView({ events, subjects = {} }, ref) {
   const startHour = 7;
-  const endHour = 20;
+  const endHour = 22;
   const slotMinutes = 15;
 
   const slotsPerHour = 60 / slotMinutes;

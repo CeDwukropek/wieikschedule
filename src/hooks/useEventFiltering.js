@@ -11,6 +11,7 @@ export function useEventFiltering(
   hideLectures,
   weekParity,
   showAll,
+  viewedWeekStart,
 ) {
   const userId = useUserId();
 
@@ -25,19 +26,12 @@ export function useEventFiltering(
     hideLectures,
     parity, // "odd" | "even" | "all"
     showAll,
+    weekStartDate,
   ) {
-    // 1) Predykat parzystości skompilowany raz
-    const passParity =
-      parity === "odd"
-        ? (e) => e.weeks !== "even"
-        : parity === "even"
-          ? (e) => e.weeks !== "odd"
-          : () => true; // "all" → nic nie odrzucamy
-
-    // 2) Zestaw wybranych grup (O(1) membership)
+    // 1) Zestaw wybranych grup (O(1) membership)
     const groupSet = new Set(Object.values(groups || {}).filter(Boolean));
 
-    // 3) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
+    // 2) Cache na zamianę "HH:MM" → minuty (unikamy powtórzeń)
     const minutesCache = new Map();
     const getMin = (hhmm) => {
       let v = minutesCache.get(hhmm);
@@ -48,10 +42,45 @@ export function useEventFiltering(
       return v;
     };
 
-    // 4) Jedno przejście: filtrujemy i zbieramy w tablicę
+    const normalizeIso = (dateValue) => {
+      const date =
+        dateValue instanceof Date ? new Date(dateValue) : new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return "";
+      const y = String(date.getFullYear());
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
+
+    const hasExactWeekContext =
+      weekStartDate instanceof Date && !Number.isNaN(weekStartDate.getTime());
+
+    // Predykat parzystości stosujemy tylko gdy nie mamy kontekstu dokładnego tygodnia.
+    // Gdy mamy konkretny tydzień + daty eventu, daty są źródłem prawdy.
+    const passParity =
+      hasExactWeekContext || parity === "all"
+        ? () => true
+        : parity === "odd"
+          ? (e) => e.weeks !== "even"
+          : (e) => e.weeks !== "odd";
+
+    // 3) Jedno przejście: filtrujemy i zbieramy w tablicę
     const out = [];
     for (const ev of schedule) {
       if (!passParity(ev)) continue;
+
+      if (
+        hasExactWeekContext &&
+        Array.isArray(ev.dates) &&
+        ev.dates.length > 0
+      ) {
+        const eventDay = Number(ev.day);
+        const dayOffset = Number.isFinite(eventDay) ? eventDay : 0;
+        const targetDate = new Date(weekStartDate);
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const targetIso = normalizeIso(targetDate);
+        if (!targetIso || !ev.dates.includes(targetIso)) continue;
+      }
 
       // ukryj wykłady, jeśli proszono
       if (hideLectures && isLecture(ev)) continue;
@@ -60,8 +89,31 @@ export function useEventFiltering(
       if (!isLecture(ev)) {
         // jeśli nie "pokaż wszystko", filtruj po grupach
         if (!showAll) {
+          const isDayOff =
+            String(ev?.status || "")
+              .trim()
+              .toLowerCase() === "wolne";
+          if (ev.appliesToAllGroups || isDayOff) {
+            out.push(ev);
+            continue;
+          }
           const matchesGroup =
-            Array.isArray(ev.groups) && ev.groups.some((g) => groupSet.has(g));
+            Array.isArray(ev.groups) &&
+            ev.groups.some((eventGroup) => {
+              const normalizedEventGroup = String(eventGroup || "").trim();
+              if (!normalizedEventGroup) return false;
+
+              if (groupSet.has(normalizedEventGroup)) return true;
+
+              const eventHasNumber = /\d/.test(normalizedEventGroup);
+              if (eventHasNumber) return false;
+
+              return Array.from(groupSet).some((selectedGroup) =>
+                String(selectedGroup || "")
+                  .trim()
+                  .startsWith(normalizedEventGroup),
+              );
+            });
           if (!matchesGroup) continue;
         }
       }
@@ -100,6 +152,7 @@ export function useEventFiltering(
       hideLectures,
       weekParity,
       showAll,
+      viewedWeekStart,
     );
   });
 
@@ -110,6 +163,7 @@ export function useEventFiltering(
       hideLectures,
       weekParity,
       showAll,
+      viewedWeekStart,
     );
     setFiltered(res);
     try {
@@ -124,6 +178,7 @@ export function useEventFiltering(
     hideLectures,
     weekParity,
     showAll,
+    viewedWeekStart,
     computeFiltered,
     CACHE_KEY,
   ]);
