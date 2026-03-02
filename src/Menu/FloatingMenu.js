@@ -114,16 +114,11 @@ export default function FloatingMenu({
               onChange={(e) => onScheduleChange(e.target.value)}
               className="w-full px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
             >
-              {allTimetables && allTimetables.length > 0
-                ? allTimetables.map((item) => (
-                    <option
-                      key={item.collectionId || item.id}
-                      value={item.collectionId || item.id}
-                    >
-                      {item.name || item.collectionId || item.id}
-                    </option>
-                  ))
-                : null}
+              {allTimetables.map((tt) => (
+                <option key={tt.id} value={tt.id}>
+                  {tt.name}
+                </option>
+              ))}
             </select>
           </div>
 

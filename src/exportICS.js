@@ -51,19 +51,8 @@ function icsEscape(text = "") {
 
 // UID dość stabilny: id_zajec + subject + stały sufiks
 function makeUid(e) {
-  const base = `${e.id || "ev"}-${e.subj || "subj"}-${e.date || ""}-${e.start || ""}`;
+  const base = `${e.id || "ev"}-${e.subj || "subj"}`;
   return `${base}@wieikschedule`;
-}
-
-function parseDateInput(dateValue) {
-  if (!dateValue) return null;
-  const match = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    return new Date(`${match[1]}-${match[2]}-${match[3]}T12:00:00`);
-  }
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
 }
 
 // --- Główny eksport -----------------------------------------------------------
@@ -73,23 +62,19 @@ export function exportICS(events) {
     return;
   }
 
-  const allDateBased = events.every((event) => Boolean(event?.date));
+  // Pytamy o datę końca (RRULE:UNTIL) — format YYYY-MM-DD
+  const untilInput = prompt(
+    "Podaj datę końca powtarzania zajęć (RRULE) w formacie RRRR-MM-DD:",
+    "2026-02-28"
+  );
+  if (!untilInput) return;
 
-  let untilLocal = "";
-  if (!allDateBased) {
-    // Pytamy o datę końca (RRULE:UNTIL) — format YYYY-MM-DD
-    const untilInput = prompt(
-      "Podaj datę końca powtarzania zajęć (RRULE) w formacie RRRR-MM-DD:",
-      "2026-02-28",
-    );
-    if (!untilInput) return;
-
-    try {
-      untilLocal = toICSUntilLocalInclusive(untilInput);
-    } catch {
-      alert("Nieprawidłowy format daty. Użyj formatu RRRR-MM-DD.");
-      return;
-    }
+  let untilLocal;
+  try {
+    untilLocal = toICSUntilLocalInclusive(untilInput);
+  } catch {
+    alert("Nieprawidłowy format daty. Użyj formatu RRRR-MM-DD.");
+    return;
   }
 
   // Poniedziałek „bazowego” tygodnia i jego parzystość
@@ -106,26 +91,18 @@ export function exportICS(events) {
     ].join("\r\n") + "\r\n";
   // Każde zajęcia → VEVENT
   events.forEach((e) => {
-    // Wylicz datę zajęć
-    const eventDate = (() => {
-      if (e.date) {
-        const parsed = parseDateInput(e.date);
-        if (parsed) return parsed;
-      }
+    // Wylicz datę konkretnego dnia w bazowym tygodniu
+    const eventDate = new Date(baseMonday);
+    const offsetDays = Number(e.day) || 0; // 0..6 (u Ciebie 0..4)
+    eventDate.setDate(eventDate.getDate() + offsetDays);
 
-      const legacyDate = new Date(baseMonday);
-      const offsetDays = Number(e.day) || 0; // 0..6 (u Ciebie 0..4)
-      legacyDate.setDate(legacyDate.getDate() + offsetDays);
-
-      // Jeśli parzystość zajęć ≠ parzystość bazowego tygodnia → przesuń start o tydzień
-      if (e.weeks === "odd" && baseParity === "even") {
-        legacyDate.setDate(legacyDate.getDate() + 7);
-      }
-      if (e.weeks === "even" && baseParity === "odd") {
-        legacyDate.setDate(legacyDate.getDate() + 7);
-      }
-      return legacyDate;
-    })();
+    // Jeśli parzystość zajęć ≠ parzystość bazowego tygodnia → przesuń start o tydzień
+    if (e.weeks === "odd" && baseParity === "even") {
+      eventDate.setDate(eventDate.getDate() + 7);
+    }
+    if (e.weeks === "even" && baseParity === "odd") {
+      eventDate.setDate(eventDate.getDate() + 7);
+    }
 
     // Godziny
     const [sh, sm] = (e.start || "00:00").split(":").map((n) => Number(n) || 0);
@@ -139,7 +116,7 @@ export function exportICS(events) {
     const dtStart = toICSDateLocal(eventStart);
     const dtEnd = toICSDateLocal(eventEnd);
 
-    // RRULE tylko dla legacy eventów bez konkretnej daty
+    // RRULE: odd/even → co 2 tyg., wszystko inne (undefined, null, "all") → co tydzień
     const isBiweekly = e.weeks === "odd" || e.weeks === "even";
     const interval = isBiweekly ? 2 : 1;
     const rrule = `RRULE:FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${untilLocal}`;
@@ -149,7 +126,7 @@ export function exportICS(events) {
     const desc = icsEscape(
       [e.type, Array.isArray(e.groups) ? e.groups.join(", ") : ""]
         .filter(Boolean)
-        .join(" "),
+        .join(" ")
     );
     const location = icsEscape(e.room || "");
 
@@ -162,7 +139,7 @@ export function exportICS(events) {
         `DTSTART:${dtStart}`,
         `DTEND:${dtEnd}`,
         location ? `LOCATION:${location}` : "LOCATION:",
-        ...(e.date ? [] : [rrule]),
+        rrule,
         "END:VEVENT",
       ].join("\r\n") + "\r\n";
   });

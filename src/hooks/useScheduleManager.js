@@ -9,10 +9,9 @@ import {
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
   const groups = {};
-  if (!timetable) return groups;
   if (timetable.groups && Array.isArray(timetable.groups)) {
     timetable.groups.forEach((g) => {
-      groups[g.type] = g.defaultValue || `${g.prefix}1`;
+      groups[g.type] = `${g.prefix}1`;
     });
   }
   return groups;
@@ -49,7 +48,7 @@ export function useScheduleManager(savedSettings) {
   const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
 
   const [currentSchedule, setCurrentSchedule] = useState(
-    savedSettings?.currentSchedule ?? null,
+    savedSettings?.currentSchedule ?? defaultScheduleId,
   );
 
   const [scheduleGroupSets, setScheduleGroupSets] = useState(() =>
@@ -155,13 +154,13 @@ export function useScheduleManager(savedSettings) {
   const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
 
   const subjects = useMemo(
-    () => currentTimetable?.subjects || {},
+    () => currentTimetable.subjects || {},
     [currentTimetable],
   );
 
   // Get group configs for the current schedule
   const groupConfigs = useMemo(
-    () => currentTimetable?.groups || [],
+    () => currentTimetable.groups || [],
     [currentTimetable],
   );
 
@@ -194,7 +193,6 @@ export function useScheduleManager(savedSettings) {
 
   const handleGroupChange = useCallback(
     (type, number) => {
-      if (!currentSchedule) return;
       const digits = (number ?? "").toString().replace(/\D/g, "");
       // Find the prefix for this type
       const groupConfig = groupConfigs.find((g) => g.type === type);
@@ -301,9 +299,6 @@ export function useScheduleManager(savedSettings) {
   }, []);
 
   return {
-    timetables,
-    scheduleList,
-    timetablesLoading,
     currentSchedule,
     scheduleGroupSets,
     activeGroupSetBySchedule,
