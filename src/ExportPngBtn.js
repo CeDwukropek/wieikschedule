@@ -3,12 +3,7 @@ import { toPng /*, toJpeg */ } from "html-to-image";
 export function ExportPngBtn({
   viewMode,
   exportRef,
-  weekParity,
-  currentParity,
-  currentRange,
-  nextRange,
-  nextParity,
-  activeWeekRange,
+  viewedWeekRange,
   selection,
   combinedOptions,
 }) {
@@ -24,16 +19,8 @@ export function ExportPngBtn({
   // generuje nazwę pliku na podstawie widoku i zakresu
   const getExportFilename = () => {
     if (viewMode === "week") {
-      // weź czytelny zakres aktywnego tygodnia
-      const range =
-        activeWeekRange ||
-        (weekParity === currentParity
-          ? currentRange
-          : weekParity === nextParity
-            ? nextRange
-            : currentRange); // fallback
-
-      const label = `Tydzień_${range.replaceAll(" ", "")}}`;
+      const range = viewedWeekRange || "Tydzień";
+      const label = `Tydzień_${range.replaceAll(" ", "")}`;
       return sanitizeFileName(label) + ".png";
     } else {
       // dla dnia: "Poniedziałek_06.10"
@@ -59,7 +46,7 @@ export function ExportPngBtn({
         a.download = getExportFilename();
         a.click();
       }}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+      className="w-full px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded transition-colors text-sm"
     >
       Eksport PNG
     </button>
