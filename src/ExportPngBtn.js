@@ -46,7 +46,7 @@ export function ExportPngBtn({
         a.download = getExportFilename();
         a.click();
       }}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+      className="w-full px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded transition-colors text-sm"
     >
       Eksport PNG
     </button>

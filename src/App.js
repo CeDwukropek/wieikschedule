@@ -1,13 +1,11 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
-import { Calendar, List, Eye, EyeOff } from "lucide-react";
+import { Menu } from "lucide-react";
 import { allTimetables } from "./timetables";
-import GroupInput from "./GroupInput";
+import ControlsPanel from "./ControlsPanel";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
 import FAQ from "./FAQ";
-import { exportICS } from "./exportICS";
-import { ExportPngBtn } from "./ExportPngBtn";
 import { useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
@@ -16,6 +14,7 @@ import { useDateHelpers } from "./hooks/useDateHelpers";
 export default function Timetable() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const [isControlsPanelOpen, setIsControlsPanelOpen] = useState(false);
 
   // Load saved settings from localStorage
   const savedSettings = useSettings({});
@@ -36,6 +35,7 @@ export default function Timetable() {
     scheduleGroupSets,
     activeGroupSetBySchedule,
     activeGroupSetId,
+    activeGroupSetName,
     groupSetOptions,
     scheduleGroups,
     studentGroups,
@@ -45,7 +45,10 @@ export default function Timetable() {
     currentTimetable,
     handleGroupChange,
     handleGroupSetChange,
-    handleSaveCurrentAsNewSet,
+    handleCreateGroupSet,
+    handleUpdateActiveGroupSet,
+    handleRenameActiveGroupSet,
+    handleDeleteActiveGroupSet,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
 
@@ -127,12 +130,8 @@ export default function Timetable() {
       .sort((a, b) => a.label.localeCompare(b.label, "pl"));
   }, [schedule, subjects]);
 
-  const selectedLectoratSubject =
-    selectedLectoratBySchedule[currentSchedule] || "";
-  const shouldShowLectoratSelect =
-    !showAll &&
-    !String(studentGroups?.Lek || "").trim() &&
-    lektoratOptions.length > 1;
+  const selectedLectoratSubject = "";
+  const shouldShowLectoratSelect = false;
 
   useEffect(() => {
     if (!currentSchedule || !lektoratOptions.length) return;
@@ -237,131 +236,46 @@ export default function Timetable() {
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
-      <div className="hidden sm:flex flex-wrap items-center gap-3 mb-6">
-        {/* Schedule selector */}
-        <select
-          value={currentSchedule}
-          onChange={(e) => handleScheduleChange(e.target.value)}
-          className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
-        >
-          {allTimetables.map((tt) => (
-            <option key={tt.id} value={tt.id}>
-              {tt.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={activeGroupSetId}
-          onChange={(e) => handleGroupSetChange(e.target.value)}
-          className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
-        >
-          {groupSetOptions.map((set) => (
-            <option key={set.id} value={set.id}>
-              {set.name}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={handleSaveCurrentAsNewSet}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-        >
-          Zapisz nowy zestaw
-        </button>
-        <button
-          onClick={() => setViewMode("week")}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-            viewMode === "week"
-              ? "bg-neutral-800 text-white"
-              : "bg-neutral-900 text-gray-400"
-          }`}
-        >
-          <Calendar className="w-4 h-4" /> Tydzień
-        </button>
-        <button
-          onClick={() => setViewMode("day")}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-            viewMode === "day"
-              ? "bg-neutral-800 text-white"
-              : "bg-neutral-900 text-gray-400"
-          }`}
-        >
-          <List className="w-4 h-4" /> Dzień
-        </button>
+      <ControlsPanel
+        isOpen={isControlsPanelOpen}
+        onToggle={() => setIsControlsPanelOpen(!isControlsPanelOpen)}
+        currentSchedule={currentSchedule}
+        onScheduleChange={handleScheduleChange}
+        allTimetables={allTimetables}
+        activeGroupSetId={activeGroupSetId}
+        activeGroupSetName={activeGroupSetName}
+        groupSetOptions={groupSetOptions}
+        onGroupSetChange={handleGroupSetChange}
+        onCreateGroupSet={handleCreateGroupSet}
+        onRenameActiveGroupSet={handleRenameActiveGroupSet}
+        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
+        viewMode={viewMode}
+        onViewModeToggle={() =>
+          setViewMode((prev) => (prev === "week" ? "day" : "week"))
+        }
+        hideLectures={hideLectures}
+        onToggleHideLectures={() => setHideLectures(!hideLectures)}
+        showAll={showAll}
+        onToggleShowAll={() => setShowAll(!showAll)}
+        schedule={schedule}
+        studentGroups={studentGroups}
+        viewedWeekStart={viewedWeekStart}
+        selectedLectoratSubject={selectedLectoratSubject}
+        exportRef={exportRef}
+        viewedWeekRange={viewedWeekRange}
+        selection={selection}
+        combinedOptions={combinedOptions}
+        computeFiltered={computeFiltered}
+        groupConfigs={groupConfigs}
+        onGroupChange={handleGroupChange}
+        shouldShowLectoratSelect={shouldShowLectoratSelect}
+        onLectoratChange={handleLectoratChange}
+        lektoratOptions={lektoratOptions}
+      />
 
-        <button
-          onClick={() => setHideLectures(!hideLectures)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-        >
-          {hideLectures ? (
-            <EyeOff className="w-4 h-4" />
-          ) : (
-            <Eye className="w-4 h-4" />
-          )}
-          {hideLectures ? "Pokaż wykłady" : "Ukryj wykłady"}
-        </button>
-
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-        >
-          {showAll ? "Twój plan" : "Pokaż cały plan"}
-        </button>
-        <button
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
-          onClick={() => {
-            const dataForICS = computeFiltered(
-              schedule,
-              studentGroups,
-              hideLectures,
-              showAll,
-              viewedWeekStart,
-              selectedLectoratSubject,
-            );
-            exportICS(dataForICS);
-          }}
-        >
-          Export ICS
-        </button>
-        <ExportPngBtn
-          viewMode={viewMode}
-          exportRef={exportRef}
-          viewedWeekRange={viewedWeekRange}
-          selection={selection}
-          combinedOptions={combinedOptions}
-        />
-      </div>
-
-      {/* --- Wybór grup --- hidden on mobile, visible on sm+ */}
-      <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {groupConfigs.map((groupConfig) => (
-          <GroupInput
-            key={groupConfig.type}
-            label={groupConfig.label}
-            type={groupConfig.type}
-            value={studentGroups[groupConfig.type] || ""}
-            onChange={handleGroupChange}
-          />
-        ))}
-      </div>
-      {shouldShowLectoratSelect ? (
-        <div className="hidden sm:flex items-center gap-2 mb-4">
-          <span className="text-sm text-gray-400">Język lektoratu:</span>
-          <select
-            value={selectedLectoratSubject}
-            onChange={(e) => handleLectoratChange(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
-          >
-            {lektoratOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
       {/* --- Current period bar: auto parity + next week --- */}
 
-      <div className="hidden sm:block gap-3 items-center mb-4 ">
+      <div className="hidden sm:flex gap-3 items-center justify-between mb-4 ">
         {viewMode === "week" ? (
           <div className="flex items-center gap-3">
             <button
@@ -400,6 +314,15 @@ export default function Timetable() {
             </button>
           </div>
         ) : null}
+
+        {/* Menu button */}
+        <button
+          onClick={() => setIsControlsPanelOpen(!isControlsPanelOpen)}
+          className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-neutral-900 text-gray-300 hover:bg-neutral-800 transition-colors rounded"
+          title="Pokaż opcje"
+        >
+          <Menu size={18} />
+        </button>
       </div>
 
       {/* Floating menu / settings (bottom-right) */}
@@ -439,7 +362,12 @@ export default function Timetable() {
         activeGroupSetId={activeGroupSetId}
         groupSetOptions={groupSetOptions}
         onGroupSetChange={handleGroupSetChange}
-        onSaveGroupSet={handleSaveCurrentAsNewSet}
+        onSaveGroupSet={handleCreateGroupSet}
+        onCreateGroupSet={handleCreateGroupSet}
+        onUpdateActiveGroupSet={handleUpdateActiveGroupSet}
+        onRenameActiveGroupSet={handleRenameActiveGroupSet}
+        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
+        activeGroupSetName={activeGroupSetName}
         lektoratOptions={lektoratOptions}
         selectedLectoratSubject={selectedLectoratSubject}
         onLectoratChange={handleLectoratChange}
@@ -449,7 +377,12 @@ export default function Timetable() {
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
-        <WeekView events={filtered} subjects={subjects} ref={exportRef} />
+        <WeekView
+          events={filtered}
+          subjects={subjects}
+          weekStartDate={viewedWeekStart}
+          ref={exportRef}
+        />
       ) : (
         <DayView
           key={`day-${selection}`}

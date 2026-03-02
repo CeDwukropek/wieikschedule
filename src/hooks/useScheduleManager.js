@@ -44,6 +44,15 @@ function buildInitialScheduleGroupSets(savedSettings) {
   return migrated;
 }
 
+function sanitizeGroupSetName(name, fallback = "Nowy zestaw") {
+  const value = String(name || "").trim();
+  return value || fallback;
+}
+
+function buildNextDefaultSetName(sets) {
+  return `Zestaw ${Number(sets?.length || 0) + 1}`;
+}
+
 export function useScheduleManager(savedSettings) {
   const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
 
@@ -135,6 +144,11 @@ export function useScheduleManager(savedSettings) {
     [currentGroupSets, activeGroupSetId],
   );
 
+  const activeGroupSetName = useMemo(
+    () => activeGroupSet?.name || "Zestaw 1",
+    [activeGroupSet],
+  );
+
   const studentGroups = useMemo(
     () => activeGroupSet?.groups || defaultGroups,
     [activeGroupSet, defaultGroups],
@@ -193,10 +207,27 @@ export function useScheduleManager(savedSettings) {
 
   const handleGroupChange = useCallback(
     (type, number) => {
-      const digits = (number ?? "").toString().replace(/\D/g, "");
+      const rawValue = (number ?? "").toString().trim();
+      const rawUpper = rawValue.toUpperCase().replace(/\s+/g, "");
+      const lekToken = rawUpper.startsWith("LEK")
+        ? rawUpper.slice(3)
+        : rawUpper;
+      const digits = rawValue.replace(/\D/g, "");
       // Find the prefix for this type
       const groupConfig = groupConfigs.find((g) => g.type === type);
       const prefix = groupConfig ? groupConfig.prefix : type;
+
+      let normalizedGroupValue = "";
+      if (type === "Lek") {
+        if (lekToken === "N" || lekToken === "F") {
+          normalizedGroupValue = `Lek${lekToken}`;
+        } else {
+          const lekDigits = lekToken.replace(/\D/g, "");
+          normalizedGroupValue = lekDigits ? `${prefix}${lekDigits}` : "";
+        }
+      } else {
+        normalizedGroupValue = digits ? `${prefix}${digits}` : "";
+      }
 
       setScheduleGroupSets((prev) => {
         const existingConfig = prev[currentSchedule] || {
@@ -228,7 +259,7 @@ export function useScheduleManager(savedSettings) {
             ...set,
             groups: {
               ...(set.groups || {}),
-              [type]: digits ? prefix + digits : "",
+              [type]: normalizedGroupValue,
             },
           };
         });
@@ -255,39 +286,126 @@ export function useScheduleManager(savedSettings) {
     [currentSchedule],
   );
 
-  const handleSaveCurrentAsNewSet = useCallback(() => {
-    const nextId = `set-${Date.now()}`;
+  const handleCreateGroupSet = useCallback(
+    (name) => {
+      const nextId = `set-${Date.now()}`;
 
+      setScheduleGroupSets((prev) => {
+        const existingConfig = prev[currentSchedule] || { sets: [] };
+        const sets = existingConfig.sets || [];
+        const sourceSet =
+          sets.find((set) => set.id === activeGroupSetId) || sets[0] || null;
+
+        const clonedGroups = {
+          ...(sourceSet?.groups || defaultGroups),
+        };
+
+        const fallbackName = buildNextDefaultSetName(sets);
+        const newSetName = sanitizeGroupSetName(name, fallbackName);
+
+        const newSet = {
+          id: nextId,
+          name: newSetName,
+          groups: clonedGroups,
+        };
+
+        return {
+          ...prev,
+          [currentSchedule]: {
+            ...existingConfig,
+            sets: [...sets, newSet],
+          },
+        };
+      });
+
+      setActiveGroupSetBySchedule((prev) => ({
+        ...prev,
+        [currentSchedule]: nextId,
+      }));
+    },
+    [currentSchedule, activeGroupSetId, defaultGroups],
+  );
+
+  const handleUpdateActiveGroupSet = useCallback(() => {
     setScheduleGroupSets((prev) => {
-      const existingConfig = prev[currentSchedule] || { sets: [] };
-      const sets = existingConfig.sets || [];
-      const sourceSet =
-        sets.find((set) => set.id === activeGroupSetId) || sets[0] || null;
+      const existingConfig = prev[currentSchedule];
+      if (!existingConfig?.sets?.length) return prev;
 
-      const clonedGroups = {
-        ...(sourceSet?.groups || defaultGroups),
-      };
-
-      const newSet = {
-        id: nextId,
-        name: `Zestaw ${sets.length + 1}`,
-        groups: clonedGroups,
-      };
+      const nextSets = existingConfig.sets.map((set) => {
+        if (set.id !== activeGroupSetId) return set;
+        return {
+          ...set,
+          groups: { ...studentGroups },
+        };
+      });
 
       return {
         ...prev,
         [currentSchedule]: {
           ...existingConfig,
-          sets: [...sets, newSet],
+          sets: nextSets,
+        },
+      };
+    });
+  }, [currentSchedule, activeGroupSetId, studentGroups]);
+
+  const handleRenameActiveGroupSet = useCallback(
+    (name) => {
+      const targetName = sanitizeGroupSetName(name, activeGroupSetName);
+
+      setScheduleGroupSets((prev) => {
+        const existingConfig = prev[currentSchedule];
+        if (!existingConfig?.sets?.length) return prev;
+
+        const nextSets = existingConfig.sets.map((set) => {
+          if (set.id !== activeGroupSetId) return set;
+          return {
+            ...set,
+            name: targetName,
+          };
+        });
+
+        return {
+          ...prev,
+          [currentSchedule]: {
+            ...existingConfig,
+            sets: nextSets,
+          },
+        };
+      });
+    },
+    [currentSchedule, activeGroupSetId, activeGroupSetName],
+  );
+
+  const handleDeleteActiveGroupSet = useCallback(() => {
+    let nextActiveId = activeGroupSetId;
+
+    setScheduleGroupSets((prev) => {
+      const existingConfig = prev[currentSchedule];
+      if (!existingConfig?.sets?.length) return prev;
+      if (existingConfig.sets.length <= 1) return prev;
+
+      const remainingSets = existingConfig.sets.filter(
+        (set) => set.id !== activeGroupSetId,
+      );
+      nextActiveId = remainingSets[0]?.id || activeGroupSetId;
+
+      return {
+        ...prev,
+        [currentSchedule]: {
+          ...existingConfig,
+          sets: remainingSets,
         },
       };
     });
 
-    setActiveGroupSetBySchedule((prev) => ({
-      ...prev,
-      [currentSchedule]: nextId,
-    }));
-  }, [currentSchedule, activeGroupSetId, defaultGroups]);
+    setActiveGroupSetBySchedule((prev) => {
+      return {
+        ...prev,
+        [currentSchedule]: nextActiveId,
+      };
+    });
+  }, [currentSchedule, activeGroupSetId]);
 
   const groupSetOptions = useMemo(
     () => currentGroupSets.map((set) => ({ id: set.id, name: set.name })),
@@ -304,6 +422,7 @@ export function useScheduleManager(savedSettings) {
     activeGroupSetBySchedule,
     activeGroupSetId,
     groupSetOptions,
+    activeGroupSetName,
     scheduleGroups,
     studentGroups,
     schedule,
@@ -313,7 +432,11 @@ export function useScheduleManager(savedSettings) {
     isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
-    handleSaveCurrentAsNewSet,
+    handleSaveCurrentAsNewSet: handleCreateGroupSet,
+    handleCreateGroupSet,
+    handleUpdateActiveGroupSet,
+    handleRenameActiveGroupSet,
+    handleDeleteActiveGroupSet,
     handleScheduleChange,
   };
 }

@@ -1,5 +1,6 @@
 import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
 import GroupInput from "../GroupInput";
+import GroupSetManager from "../GroupSetManager";
 import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
 import { WeekMenu } from "./WeekMenu";
@@ -36,9 +37,14 @@ export default function FloatingMenu({
   SCHEDULE,
   currentSchedule,
   activeGroupSetId,
+  activeGroupSetName,
   groupSetOptions = [],
   onGroupSetChange,
   onSaveGroupSet,
+  onCreateGroupSet,
+  onUpdateActiveGroupSet,
+  onRenameActiveGroupSet,
+  onDeleteActiveGroupSet,
   lektoratOptions = [],
   selectedLectoratSubject,
   onLectoratChange,
@@ -124,25 +130,16 @@ export default function FloatingMenu({
 
           <div className="space-y-2">
             <div className="text-xs text-gray-400">Zestaw grup</div>
-            <div className="flex gap-2">
-              <select
-                value={activeGroupSetId}
-                onChange={(e) => onGroupSetChange?.(e.target.value)}
-                className="flex-1 px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
-              >
-                {groupSetOptions.map((set) => (
-                  <option key={set.id} value={set.id}>
-                    {set.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => onSaveGroupSet?.()}
-                className="px-3 py-2 rounded bg-neutral-800 text-white whitespace-nowrap"
-              >
-                Zapisz
-              </button>
-            </div>
+            <GroupSetManager
+              compact
+              activeGroupSetId={activeGroupSetId}
+              activeGroupSetName={activeGroupSetName}
+              groupSetOptions={groupSetOptions}
+              onGroupSetChange={onGroupSetChange}
+              onCreateGroupSet={onCreateGroupSet || onSaveGroupSet}
+              onRenameActiveGroupSet={onRenameActiveGroupSet}
+              onDeleteActiveGroupSet={onDeleteActiveGroupSet}
+            />
           </div>
 
           <div className="space-y-2">

@@ -63,8 +63,21 @@ export function useEventFiltering(
         .replace(/[\u0300-\u036f]/g, "");
 
     const selectedLekGroup = String(groups?.Lek || "").trim();
+    const selectedLekToken = selectedLekGroup
+      .toUpperCase()
+      .replace(/\s+/g, "")
+      .replace(/^LEK/, "");
     const selectedLectoratRaw = String(preferredLectorat || "").trim();
     const selectedLectoratNormalized = normalizeText(selectedLectoratRaw);
+
+    const selectedLekLanguageCode =
+      selectedLekToken === "N"
+        ? "de"
+        : selectedLekToken === "F"
+          ? "fr"
+          : selectedLekToken
+            ? "en"
+            : "";
 
     const isLectoratEvent = (ev) => {
       const eventType = normalizeText(ev?.type);
@@ -93,9 +106,14 @@ export function useEventFiltering(
       );
     };
 
-    const isEnglishLectoratEvent = (ev) => {
-      const eventSubj = String(ev?.subj || "").trim();
-      return eventSubj === "Język angielski" || normalizeText(ev?.title || "").includes("angielski");
+    const matchesLectoratLanguage = (ev, languageCode) => {
+      if (!languageCode) return true;
+      const source = normalizeText(
+        `${ev?.subj || ""} ${ev?.title || ""} ${ev?.subjectName || ""}`,
+      );
+      if (languageCode === "de") return source.includes("niemiecki");
+      if (languageCode === "fr") return source.includes("francuski");
+      return source.includes("angielski");
     };
 
     // 3) Jedno przejście: filtrujemy i zbieramy w tablicę
@@ -119,10 +137,16 @@ export function useEventFiltering(
 
       // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
       if (!isLecture(ev)) {
-        // When Lek group is selected, only show English lectorat events
-        if (selectedLekGroup && isLectoratEvent(ev)) {
-          if (!isEnglishLectoratEvent(ev)) continue;
+        // Lek selection supports numeric groups (Lek1...) and language shortcuts (LekN, LekF)
+        if (selectedLekLanguageCode && isLectoratEvent(ev)) {
+          if (!matchesLectoratLanguage(ev, selectedLekLanguageCode)) continue;
         }
+
+        const shouldFilterLectoratByLanguageOnly =
+          !showAll &&
+          isLectoratEvent(ev) &&
+          (selectedLekLanguageCode === "de" ||
+            selectedLekLanguageCode === "fr");
 
         const shouldFilterLectoratBySubjectOnly =
           !showAll &&
@@ -140,7 +164,10 @@ export function useEventFiltering(
             out.push(ev);
             continue;
           }
-          if (!shouldFilterLectoratBySubjectOnly) {
+          if (
+            !shouldFilterLectoratBySubjectOnly &&
+            !shouldFilterLectoratByLanguageOnly
+          ) {
             const matchesGroup =
               Array.isArray(ev.groups) &&
               ev.groups.some((eventGroup) => {
