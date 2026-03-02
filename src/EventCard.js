@@ -1,4 +1,4 @@
-import { MapPin, Users, Clock, UserRound } from "lucide-react";
+import { MapPin, Users, Tag, Clock, UserRound } from "lucide-react";
 import { splitTeacherDisplay } from "./utils";
 
 export default function EventCard({ ev, subjects = {} }) {
@@ -55,12 +55,12 @@ export default function EventCard({ ev, subjects = {} }) {
             </div>
           ) : null}
 
-          {/*           {ev.type ? (
+          {ev.type ? (
             <div className="flex items-center gap-1">
               <Tag className="w-3 h-3 opacity-80" />
               <span>{ev.type}</span>
             </div>
-          ) : null} */}
+          ) : null}
         </div>
       </div>
     </div>

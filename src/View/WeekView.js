@@ -86,6 +86,8 @@ const WeekView = forwardRef(function WeekView({ events, subjects = {} }, ref) {
           const occupiedSlots = new Set();
 
           return timeSlots.map((slot) => {
+            if (occupiedSlots.has(slot.index)) return null;
+
             const slotEvents = getEventsForSlot(
               dayEvents,
               slot.slotStart,
@@ -107,10 +109,6 @@ const WeekView = forwardRef(function WeekView({ events, subjects = {} }, ref) {
               }
               return false;
             });
-
-            if (occupiedSlots.has(slot.index) && newEvents.length === 0) {
-              return null;
-            }
 
             const maxSpan =
               newEvents.length > 0

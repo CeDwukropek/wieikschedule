@@ -1,115 +1,110 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  allTimetables,
-  defaultTimetable,
-  getCachedTimetableById,
-  loadTimetableById,
-} from "../timetables";
+import { allTimetables as localTimetables } from "../timetables";
+import { useFirebaseTimetables } from "./useFirebaseTimetables";
+import { firebaseEnabled } from "../firebase/client";
 
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
   const groups = {};
+  if (!timetable) return groups;
   if (timetable.groups && Array.isArray(timetable.groups)) {
     timetable.groups.forEach((g) => {
-      groups[g.type] = `${g.prefix}1`;
+      groups[g.type] = g.defaultValue || `${g.prefix}1`;
     });
   }
   return groups;
 }
 
-function buildInitialScheduleGroupSets(savedSettings) {
-  const modern = savedSettings?.scheduleGroupSets;
-  if (modern && typeof modern === "object") {
-    return modern;
-  }
-
-  const legacy = savedSettings?.scheduleGroups;
-  if (!legacy || typeof legacy !== "object") {
-    return {};
-  }
-
-  const migrated = {};
-  Object.entries(legacy).forEach(([scheduleId, groups]) => {
-    migrated[scheduleId] = {
-      sets: [
-        {
-          id: "set-1",
-          name: "Zestaw 1",
-          groups: groups || {},
-        },
-      ],
-    };
-  });
-
-  return migrated;
-}
-
 export function useScheduleManager(savedSettings) {
-  const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
-
   const [currentSchedule, setCurrentSchedule] = useState(
-    savedSettings?.currentSchedule ?? defaultScheduleId,
+    savedSettings?.currentSchedule ?? null,
   );
 
-  const [scheduleGroupSets, setScheduleGroupSets] = useState(() =>
-    buildInitialScheduleGroupSets(savedSettings),
-  );
+  const {
+    timetables: remoteTimetables,
+    scheduleList,
+    fetchedCache,
+    loading: timetablesLoading,
+  } = useFirebaseTimetables(currentSchedule);
 
-  const [activeGroupSetBySchedule, setActiveGroupSetBySchedule] = useState(
-    savedSettings?.activeGroupSetBySchedule ?? {},
-  );
+  console.log("useScheduleManager - scheduleList:", scheduleList);
 
-  const [loadedTimetables, setLoadedTimetables] = useState(() => {
-    const initial = {};
-    const initialId = savedSettings?.currentSchedule ?? defaultScheduleId;
-    if (initialId) {
-      const cached = getCachedTimetableById(initialId);
-      if (cached) initial[initialId] = cached;
+  // If Firebase is enabled and we have a schedule list, use Firebase data exclusively.
+  // Otherwise fall back to local timetables if Firebase is disabled.
+  const hasDynamicSchedules =
+    firebaseEnabled && scheduleList && scheduleList.length > 0;
+
+  const timetables = useMemo(() => {
+    // If Firebase is available with schedules, use only Firebase data
+    if (hasDynamicSchedules) {
+      return remoteTimetables && remoteTimetables.length > 0
+        ? remoteTimetables
+        : []; // Empty while loading from Firebase
     }
-    return initial;
-  });
+    // If Firebase is disabled or schedule list is empty, use local timetables
+    return localTimetables;
+  }, [remoteTimetables, hasDynamicSchedules]);
 
-  const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+  const timetableMap = useMemo(() => {
+    const map = {};
+
+    // Add all cached schedules to the map so we can look them up later
+    if (fetchedCache && fetchedCache.size > 0) {
+      for (const [, tt] of fetchedCache) {
+        if (tt) map[tt.id] = tt;
+      }
+    }
+
+    // Also add current timetables (in case they're not in cache for some reason)
+    for (const tt of timetables) {
+      if (tt) map[tt.id] = tt;
+    }
+
+    return map;
+  }, [fetchedCache, timetables]);
+
+  const defaultScheduleId = useMemo(() => {
+    if (scheduleList && scheduleList.length > 0) {
+      return scheduleList[0].collectionId;
+    }
+    if (hasDynamicSchedules) {
+      // Firebase is enabled but no schedules loaded yet
+      return null;
+    }
+    return timetables[0]?.id || "eia2";
+  }, [scheduleList, timetables, hasDynamicSchedules]);
+
+  const [scheduleGroups, setScheduleGroups] = useState(
+    savedSettings?.scheduleGroups ?? {},
+  );
+
+  // Initialize currentSchedule on first load
+  useEffect(() => {
+    if (currentSchedule === null && defaultScheduleId) {
+      setCurrentSchedule(defaultScheduleId);
+    }
+  }, [currentSchedule, defaultScheduleId]);
 
   useEffect(() => {
-    let active = true;
-    const targetId = currentSchedule || defaultScheduleId;
-    if (!targetId) return () => {};
+    setScheduleGroups((prev) => {
+      const next = { ...prev };
+      let changed = false;
 
-    if (loadedTimetables[targetId]) return () => {};
+      for (const timetable of timetables) {
+        if (!next[timetable.id]) {
+          next[timetable.id] = buildDefaultGroupsForTimetable(timetable);
+          changed = true;
+        }
+      }
 
-    setIsScheduleLoading(true);
-    loadTimetableById(targetId)
-      .then((timetable) => {
-        if (!active || !timetable) return;
-        setLoadedTimetables((prev) => {
-          if (prev[targetId]) return prev;
-          return { ...prev, [targetId]: timetable };
-        });
-      })
-      .finally(() => {
-        if (active) setIsScheduleLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [currentSchedule, defaultScheduleId, loadedTimetables]);
+      return changed ? next : prev;
+    });
+  }, [timetables]);
 
   // Get current schedule's data - memoized to prevent infinite loops
   const currentTimetable = useMemo(
-    () =>
-      loadedTimetables[currentSchedule] ||
-      loadedTimetables[defaultScheduleId] || {
-        id: currentSchedule || defaultScheduleId,
-        name: currentSchedule || defaultScheduleId,
-        schedule: [],
-        subjects: {},
-        groups: [],
-        minDate: null,
-        maxDate: null,
-      },
-    [loadedTimetables, currentSchedule, defaultScheduleId],
+    () => timetableMap[currentSchedule] || timetables[0],
+    [currentSchedule, timetableMap, timetables],
   );
 
   const defaultGroups = useMemo(
@@ -117,181 +112,44 @@ export function useScheduleManager(savedSettings) {
     [currentTimetable],
   );
 
-  const currentGroupSets = useMemo(
-    () => scheduleGroupSets[currentSchedule]?.sets || [],
-    [scheduleGroupSets, currentSchedule],
-  );
-
-  const activeGroupSetId = useMemo(() => {
-    return (
-      activeGroupSetBySchedule[currentSchedule] ||
-      currentGroupSets[0]?.id ||
-      "set-1"
-    );
-  }, [activeGroupSetBySchedule, currentSchedule, currentGroupSets]);
-
-  const activeGroupSet = useMemo(
-    () => currentGroupSets.find((set) => set.id === activeGroupSetId),
-    [currentGroupSets, activeGroupSetId],
-  );
-
   const studentGroups = useMemo(
-    () => activeGroupSet?.groups || defaultGroups,
-    [activeGroupSet, defaultGroups],
+    () => scheduleGroups[currentSchedule] || defaultGroups,
+    [scheduleGroups, currentSchedule, defaultGroups],
   );
 
-  const scheduleGroups = useMemo(() => {
-    const mapped = {};
-    Object.entries(scheduleGroupSets).forEach(([scheduleId, config]) => {
-      const sets = config?.sets || [];
-      const activeId = activeGroupSetBySchedule[scheduleId] || sets[0]?.id;
-      const activeSet = sets.find((set) => set.id === activeId) || sets[0];
-      mapped[scheduleId] = activeSet?.groups || {};
-    });
-    return mapped;
-  }, [scheduleGroupSets, activeGroupSetBySchedule]);
-
-  const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
+  const schedule = useMemo(
+    () => currentTimetable?.schedule || [],
+    [currentTimetable],
+  );
 
   const subjects = useMemo(
-    () => currentTimetable.subjects || {},
+    () => currentTimetable?.subjects || {},
     [currentTimetable],
   );
 
   // Get group configs for the current schedule
   const groupConfigs = useMemo(
-    () => currentTimetable.groups || [],
+    () => currentTimetable?.groups || [],
     [currentTimetable],
   );
 
-  useEffect(() => {
-    if (!currentSchedule || !currentTimetable?.groups?.length) return;
-    setScheduleGroupSets((prev) => {
-      if (prev[currentSchedule]?.sets?.length) return prev;
-      return {
-        ...prev,
-        [currentSchedule]: {
-          sets: [
-            {
-              id: "set-1",
-              name: "Zestaw 1",
-              groups: buildDefaultGroupsForTimetable(currentTimetable),
-            },
-          ],
-        },
-      };
-    });
-
-    setActiveGroupSetBySchedule((prev) => {
-      if (prev[currentSchedule]) return prev;
-      return {
-        ...prev,
-        [currentSchedule]: "set-1",
-      };
-    });
-  }, [currentSchedule, currentTimetable]);
-
   const handleGroupChange = useCallback(
     (type, number) => {
+      if (!currentSchedule) return;
       const digits = (number ?? "").toString().replace(/\D/g, "");
       // Find the prefix for this type
       const groupConfig = groupConfigs.find((g) => g.type === type);
       const prefix = groupConfig ? groupConfig.prefix : type;
 
-      setScheduleGroupSets((prev) => {
-        const existingConfig = prev[currentSchedule] || {
-          sets: [
-            {
-              id: "set-1",
-              name: "Zestaw 1",
-              groups: defaultGroups,
-            },
-          ],
-        };
-
-        const sets = existingConfig.sets?.length
-          ? existingConfig.sets
-          : [
-              {
-                id: "set-1",
-                name: "Zestaw 1",
-                groups: defaultGroups,
-              },
-            ];
-
-        const activeId =
-          activeGroupSetBySchedule[currentSchedule] || sets[0]?.id || "set-1";
-
-        const updatedSets = sets.map((set) => {
-          if (set.id !== activeId) return set;
-          return {
-            ...set,
-            groups: {
-              ...(set.groups || {}),
-              [type]: digits ? prefix + digits : "",
-            },
-          };
-        });
-
-        return {
-          ...prev,
-          [currentSchedule]: {
-            ...existingConfig,
-            sets: updatedSets,
-          },
-        };
-      });
-    },
-    [currentSchedule, groupConfigs, defaultGroups, activeGroupSetBySchedule],
-  );
-
-  const handleGroupSetChange = useCallback(
-    (setId) => {
-      setActiveGroupSetBySchedule((prev) => ({
-        ...prev,
-        [currentSchedule]: setId,
-      }));
-    },
-    [currentSchedule],
-  );
-
-  const handleSaveCurrentAsNewSet = useCallback(() => {
-    const nextId = `set-${Date.now()}`;
-
-    setScheduleGroupSets((prev) => {
-      const existingConfig = prev[currentSchedule] || { sets: [] };
-      const sets = existingConfig.sets || [];
-      const sourceSet =
-        sets.find((set) => set.id === activeGroupSetId) || sets[0] || null;
-
-      const clonedGroups = {
-        ...(sourceSet?.groups || defaultGroups),
-      };
-
-      const newSet = {
-        id: nextId,
-        name: `Zestaw ${sets.length + 1}`,
-        groups: clonedGroups,
-      };
-
-      return {
+      setScheduleGroups((prev) => ({
         ...prev,
         [currentSchedule]: {
-          ...existingConfig,
-          sets: [...sets, newSet],
+          ...prev[currentSchedule],
+          [type]: digits ? prefix + digits : "",
         },
-      };
-    });
-
-    setActiveGroupSetBySchedule((prev) => ({
-      ...prev,
-      [currentSchedule]: nextId,
-    }));
-  }, [currentSchedule, activeGroupSetId, defaultGroups]);
-
-  const groupSetOptions = useMemo(
-    () => currentGroupSets.map((set) => ({ id: set.id, name: set.name })),
-    [currentGroupSets],
+      }));
+    },
+    [currentSchedule, groupConfigs],
   );
 
   const handleScheduleChange = useCallback((scheduleId) => {
@@ -299,21 +157,16 @@ export function useScheduleManager(savedSettings) {
   }, []);
 
   return {
+    timetables,
+    scheduleList,
+    timetablesLoading,
     currentSchedule,
-    scheduleGroupSets,
-    activeGroupSetBySchedule,
-    activeGroupSetId,
-    groupSetOptions,
     scheduleGroups,
     studentGroups,
     schedule,
     subjects,
     groupConfigs,
-    currentTimetable,
-    isScheduleLoading,
     handleGroupChange,
-    handleGroupSetChange,
-    handleSaveCurrentAsNewSet,
     handleScheduleChange,
   };
 }

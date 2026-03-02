@@ -1,11 +1,9 @@
 import React from "react";
 
 export default function GroupInput({ label, type, value, onChange }) {
-  const displayLabel = String(label || type || "Grupa");
-
   return (
     <div>
-      <label className="block text-xs text-gray-400 mb-1">{displayLabel}</label>
+      <label className="block text-xs text-gray-400 mb-1">{label}</label>
       <input
         type="number"
         min={type === "Lek" ? "0" : "1"}
