@@ -173,6 +173,23 @@ function makeSubjectCode(name) {
   return normalized || "SUBJECT";
 }
 
+function makeGroupLabel(prefix) {
+  const value = String(prefix || "").trim();
+  if (!value) return "Grupa";
+
+  const map = {
+    Ć: "Ćwiczenia",
+    C: "Ćwiczenia",
+    L: "Laboratoria",
+    Lf: "Laboratoria",
+    Lek: "Lektorat",
+    Lk: "Laboratoria",
+    P: "Projekt",
+  };
+
+  return map[value] || value;
+}
+
 function buildGroups(normalizedEvents) {
   const defaults = new Map();
 
@@ -198,7 +215,7 @@ function buildGroups(normalizedEvents) {
     .map((prefix) => ({
       type: prefix,
       prefix,
-      //label: makeGroupLabel(prefix),
+      label: makeGroupLabel(prefix),
       defaultValue: defaults.get(prefix),
     }));
 }

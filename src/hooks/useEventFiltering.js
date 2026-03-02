@@ -93,6 +93,11 @@ export function useEventFiltering(
       );
     };
 
+    const isEnglishLectoratEvent = (ev) => {
+      const eventSubj = String(ev?.subj || "").trim();
+      return eventSubj === "Język angielski" || normalizeText(ev?.title || "").includes("angielski");
+    };
+
     // 3) Jedno przejście: filtrujemy i zbieramy w tablicę
     const out = [];
     for (const ev of schedule) {
@@ -114,6 +119,11 @@ export function useEventFiltering(
 
       // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
       if (!isLecture(ev)) {
+        // When Lek group is selected, only show English lectorat events
+        if (selectedLekGroup && isLectoratEvent(ev)) {
+          if (!isEnglishLectoratEvent(ev)) continue;
+        }
+
         const shouldFilterLectoratBySubjectOnly =
           !showAll &&
           !selectedLekGroup &&
