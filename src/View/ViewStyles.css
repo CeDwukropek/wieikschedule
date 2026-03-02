@@ -80,42 +80,23 @@
 }
 
 /* Week View Styles */
-.week-scroll {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y;
-}
-
 .week-grid {
   display: grid;
   position: relative;
-  background-color: #171717;
+  overflow: hidden;
   color: #e5e7eb;
   border-left: 1px solid rgba(148, 163, 184, 0.08);
   border-right: 1px solid rgba(148, 163, 184, 0.08);
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(2, 6, 23, 0.6);
+  overflow-y: auto;
 }
 
 .week-header {
-  background-color: rgba(23, 23, 23, 0.95);
   backdrop-filter: saturate(180%) blur(8px);
-  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  background-color: var(--ds-surface);
   opacity: 0.95;
-}
-
-@media (max-width: 768px) {
-  /* Android Chrome: sticky + backdrop blur can cause tiles/chunks disappearing */
-  .week-header {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    opacity: 1;
-  }
-
-  .week-grid {
-    -webkit-overflow-scrolling: touch;
-  }
 }
 
 /* Day View Styles */
