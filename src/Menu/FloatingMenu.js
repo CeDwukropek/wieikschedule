@@ -1,6 +1,5 @@
 import { Menu, X, Calendar, List, Eye, EyeOff } from "lucide-react";
 import GroupInput from "../GroupInput";
-import GroupSetManager from "../GroupSetManager";
 import { exportICS } from "../exportICS";
 import { DayMenu } from "./DayMenu";
 import { WeekMenu } from "./WeekMenu";
@@ -9,6 +8,7 @@ import { ExportPngBtn } from "../ExportPngBtn";
 export default function FloatingMenu({
   viewMode,
   setViewMode,
+  setWeekParity,
   hideLectures,
   setHideLectures,
   showAll,
@@ -22,37 +22,27 @@ export default function FloatingMenu({
   options = [],
   selection,
   onChange,
-  onPrevWeek,
-  onResetWeek,
-  onNextWeek,
-  viewedWeekRange,
-  viewedWeekStart,
-  isCurrentWeek,
-  canGoPrevWeek,
-  canGoNextWeek,
+  activeParity,
   currentParity,
   currentRange,
+  nextRange,
+  nextParity,
+  activeWeekRange,
+  onPrevWeek,
+  onCurrentWeek,
+  onNextWeek,
+  disablePrevWeek,
+  disableNextWeek,
   ref,
+  weekParity,
   computeFiltered,
   SCHEDULE,
   currentSchedule,
-  activeGroupSetId,
-  activeGroupSetName,
-  groupSetOptions = [],
-  onGroupSetChange,
-  onSaveGroupSet,
-  onCreateGroupSet,
-  onUpdateActiveGroupSet,
-  onRenameActiveGroupSet,
-  onDeleteActiveGroupSet,
-  lektoratOptions = [],
-  selectedLectoratSubject,
-  onLectoratChange,
-  shouldShowLectoratSelect,
   onScheduleChange,
   allTimetables = [],
 }) {
   function clearFilters() {
+    setWeekParity("all");
     setHideLectures(false);
     setShowAll(false);
   }
@@ -82,13 +72,17 @@ export default function FloatingMenu({
         {viewMode === "week" && (
           <WeekMenu
             events={filtered}
+            activeParity={activeParity}
+            setWeekParity={setWeekParity}
+            currentParity={currentParity}
+            nextParity={nextParity}
+            currentRange={currentRange}
+            nextRange={nextRange}
             onPrevWeek={onPrevWeek}
-            onResetWeek={onResetWeek}
+            onCurrentWeek={onCurrentWeek}
             onNextWeek={onNextWeek}
-            viewedRange={viewedWeekRange}
-            isCurrentWeek={isCurrentWeek}
-            canGoPrevWeek={canGoPrevWeek}
-            canGoNextWeek={canGoNextWeek}
+            disablePrevWeek={disablePrevWeek}
+            disableNextWeek={disableNextWeek}
             open={open}
           />
         )}
@@ -120,26 +114,17 @@ export default function FloatingMenu({
               onChange={(e) => onScheduleChange(e.target.value)}
               className="w-full px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
             >
-              {allTimetables.map((tt) => (
-                <option key={tt.id} value={tt.id}>
-                  {tt.name}
-                </option>
-              ))}
+              {allTimetables && allTimetables.length > 0
+                ? allTimetables.map((item) => (
+                    <option
+                      key={item.collectionId || item.id}
+                      value={item.collectionId || item.id}
+                    >
+                      {item.name || item.collectionId || item.id}
+                    </option>
+                  ))
+                : null}
             </select>
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-xs text-gray-400">Zestaw grup</div>
-            <GroupSetManager
-              compact
-              activeGroupSetId={activeGroupSetId}
-              activeGroupSetName={activeGroupSetName}
-              groupSetOptions={groupSetOptions}
-              onGroupSetChange={onGroupSetChange}
-              onCreateGroupSet={onCreateGroupSet || onSaveGroupSet}
-              onRenameActiveGroupSet={onRenameActiveGroupSet}
-              onDeleteActiveGroupSet={onDeleteActiveGroupSet}
-            />
           </div>
 
           <div className="space-y-2">
@@ -204,23 +189,6 @@ export default function FloatingMenu({
             </div>
           </div>
 
-          {shouldShowLectoratSelect ? (
-            <div className="border-t border-neutral-800 pt-3 space-y-2">
-              <div className="text-xs text-gray-400">Język lektoratu</div>
-              <select
-                value={selectedLectoratSubject}
-                onChange={(e) => onLectoratChange?.(e.target.value)}
-                className="w-full px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
-              >
-                {lektoratOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
           <div className="pt-3 border-t border-neutral-800 flex gap-2">
             <button
               onClick={clearFilters}
@@ -237,9 +205,8 @@ export default function FloatingMenu({
                   SCHEDULE,
                   studentGroups,
                   hideLectures,
+                  "all", // ⬅️ klucz: ignorujemy parzystość
                   showAll,
-                  viewedWeekStart,
-                  selectedLectoratSubject,
                 );
                 exportICS(dataForICS);
               }}
@@ -249,7 +216,12 @@ export default function FloatingMenu({
             <ExportPngBtn
               viewMode={viewMode}
               exportRef={ref}
-              viewedWeekRange={viewedWeekRange}
+              weekParity={weekParity}
+              currentParity={currentParity}
+              currentRange={currentRange}
+              nextRange={nextRange}
+              nextParity={nextParity}
+              activeWeekRange={activeWeekRange}
               selection={selection}
               combinedOptions={options}
             />
