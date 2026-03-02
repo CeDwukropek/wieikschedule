@@ -5,6 +5,21 @@ import { isLecture } from "../utils/dateUtils";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24 * 60; // 60 days in ms
 
+function weekStartKeyFromDate(dateString) {
+  if (!dateString) return "";
+  const date = new Date(`${dateString}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+
+  const y = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${y}-${mm}-${dd}`;
+}
+
 export function useEventFiltering(
   schedule,
   studentGroups,

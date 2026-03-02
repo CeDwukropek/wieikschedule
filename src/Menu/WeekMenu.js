@@ -14,6 +14,27 @@ export function WeekMenu({
           if (onPrevWeek) {
             onPrevWeek();
           }
+          if (setWeekParity) setWeekParity(currentParity);
+        }}
+        disabled={Boolean(disablePrevWeek)}
+        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
+          disablePrevWeek
+            ? "bg-neutral-900 text-gray-500 cursor-not-allowed"
+            : "bg-neutral-900 text-gray-300"
+        }`}
+      >
+        Prev
+        <br></br>
+        <span className="text-[0.75rem]">week</span>
+      </button>
+
+      <button
+        onClick={() => {
+          if (onCurrentWeek) {
+            onCurrentWeek();
+            return;
+          }
+          if (setWeekParity) setWeekParity(currentParity);
         }}
         disabled={!canGoPrevWeek}
         className={`flex-1 text-sm px-2 py-2 rounded truncate ${
@@ -30,6 +51,7 @@ export function WeekMenu({
           if (onResetWeek) {
             onResetWeek();
           }
+          if (setWeekParity) setWeekParity(nextParity);
         }}
         className={`flex-1 text-sm px-2 py-2 rounded truncate ${
           isCurrentWeek
