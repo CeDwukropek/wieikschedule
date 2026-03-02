@@ -70,24 +70,21 @@ export default function EventTooltipWrapper({ ev, children }) {
   const groups = Array.isArray(ev.groups) ? ev.groups.join(", ") : ev.groups;
   const teacherLines = splitTeacherDisplay(ev?.teacher);
   const transform = `translate(${offsetX}px, ${pos === "top" ? (visible ? "calc(-100% - 6px)" : "-100%") : visible ? "6px" : "0"})`;
-  const isTouchDevice =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(hover: none), (pointer: coarse)")?.matches;
 
   return (
     <div
       ref={wrapperRef}
       className="event-wrapper"
-      tabIndex={isTouchDevice ? -1 : 0}
+      tabIndex={0}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}
       onFocus={onFocus}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
-      onTouchStart={isTouchDevice ? undefined : onTouchStart}
-      onTouchEnd={isTouchDevice ? undefined : onTouchEnd}
-      onTouchMove={isTouchDevice ? undefined : onTouchMove}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchMove={onTouchMove}
     >
       {children}
       <div
