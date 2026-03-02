@@ -181,9 +181,8 @@ function makeGroupLabel(prefix) {
     Ć: "Ćwiczenia",
     C: "Ćwiczenia",
     L: "Laboratoria",
-    Lf: "Laboratoria",
     Lek: "Lektorat",
-    Lk: "Laboratoria",
+    Lk: "Laboratoria komputerowe",
     P: "Projekt",
   };
 
