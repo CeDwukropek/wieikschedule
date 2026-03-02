@@ -26,6 +26,9 @@ export default function Timetable() {
     savedSettings?.hideLectures ?? false,
   );
   const [showAll, setShowAll] = useState(savedSettings?.showAll ?? false);
+  const [selectedLectoratBySchedule, setSelectedLectoratBySchedule] = useState(
+    savedSettings?.selectedLectoratBySchedule ?? {},
+  );
 
   // Schedule and group management
   const {
@@ -92,6 +95,64 @@ export default function Timetable() {
   const canGoPrevWeek = weekOffset > minAllowedOffset;
   const canGoNextWeek = weekOffset < maxAllowedOffset;
 
+  const lektoratOptions = useMemo(() => {
+    const normalizeText = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const isLectorat = (ev) => {
+      const eventType = normalizeText(ev?.type);
+      if (eventType.includes("lekt")) return true;
+      if (!Array.isArray(ev?.groups)) return false;
+      return ev.groups.some((group) => normalizeText(group).startsWith("lek"));
+    };
+
+    const map = new Map();
+    (schedule || []).forEach((ev) => {
+      if (!isLectorat(ev)) return;
+      const key = String(ev?.subj || ev?.title || "").trim();
+      if (!key || map.has(key)) return;
+      const label =
+        String(
+          subjects?.[ev?.subj]?.name || ev?.title || ev?.subj || "",
+        ).trim() || key;
+      map.set(key, label);
+    });
+
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pl"));
+  }, [schedule, subjects]);
+
+  const selectedLectoratSubject =
+    selectedLectoratBySchedule[currentSchedule] || "";
+  const shouldShowLectoratSelect =
+    !showAll &&
+    !String(studentGroups?.Lek || "").trim() &&
+    lektoratOptions.length > 1;
+
+  useEffect(() => {
+    if (!currentSchedule || !lektoratOptions.length) return;
+    const current = selectedLectoratBySchedule[currentSchedule];
+    const exists = lektoratOptions.some((option) => option.value === current);
+    if (exists) return;
+
+    setSelectedLectoratBySchedule((prev) => ({
+      ...prev,
+      [currentSchedule]: lektoratOptions[0].value,
+    }));
+  }, [currentSchedule, lektoratOptions, selectedLectoratBySchedule]);
+
+  const handleLectoratChange = (value) => {
+    setSelectedLectoratBySchedule((prev) => ({
+      ...prev,
+      [currentSchedule]: value,
+    }));
+  };
+
   useEffect(() => {
     const clamped = Math.min(
       Math.max(weekOffset, minAllowedOffset),
@@ -123,6 +184,7 @@ export default function Timetable() {
     hideLectures,
     showAll,
     viewedWeekStart,
+    selectedLectoratSubject,
   );
 
   // Persist all settings
@@ -134,6 +196,7 @@ export default function Timetable() {
     currentSchedule,
     scheduleGroupSets,
     activeGroupSetBySchedule,
+    selectedLectoratBySchedule,
     scheduleGroups,
   });
 
@@ -153,6 +216,7 @@ export default function Timetable() {
         hideLectures,
         showAll,
         selectedWeekStart,
+        selectedLectoratSubject,
       );
     } catch (e) {
       return filtered;
@@ -163,6 +227,7 @@ export default function Timetable() {
     studentGroups,
     hideLectures,
     showAll,
+    selectedLectoratSubject,
     getWeekStartByOffset,
     filtered,
     schedule,
@@ -250,6 +315,7 @@ export default function Timetable() {
               hideLectures,
               showAll,
               viewedWeekStart,
+              selectedLectoratSubject,
             );
             exportICS(dataForICS);
           }}
@@ -277,6 +343,22 @@ export default function Timetable() {
           />
         ))}
       </div>
+      {shouldShowLectoratSelect ? (
+        <div className="hidden sm:flex items-center gap-2 mb-4">
+          <span className="text-sm text-gray-400">Język lektoratu:</span>
+          <select
+            value={selectedLectoratSubject}
+            onChange={(e) => handleLectoratChange(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
+          >
+            {lektoratOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
       {/* --- Current period bar: auto parity + next week --- */}
 
       <div className="hidden sm:block gap-3 items-center mb-4 ">
@@ -358,6 +440,10 @@ export default function Timetable() {
         groupSetOptions={groupSetOptions}
         onGroupSetChange={handleGroupSetChange}
         onSaveGroupSet={handleSaveCurrentAsNewSet}
+        lektoratOptions={lektoratOptions}
+        selectedLectoratSubject={selectedLectoratSubject}
+        onLectoratChange={handleLectoratChange}
+        shouldShowLectoratSelect={shouldShowLectoratSelect}
         onScheduleChange={handleScheduleChange}
         allTimetables={allTimetables}
       />

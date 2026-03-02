@@ -51,8 +51,8 @@ export function useScheduleManager(savedSettings) {
     savedSettings?.currentSchedule ?? defaultScheduleId,
   );
 
-  const [scheduleGroupSets, setScheduleGroupSets] = useState(
-    () => buildInitialScheduleGroupSets(savedSettings),
+  const [scheduleGroupSets, setScheduleGroupSets] = useState(() =>
+    buildInitialScheduleGroupSets(savedSettings),
   );
 
   const [activeGroupSetBySchedule, setActiveGroupSetBySchedule] = useState(
@@ -242,20 +242,18 @@ export function useScheduleManager(savedSettings) {
         };
       });
     },
-    [
-      currentSchedule,
-      groupConfigs,
-      defaultGroups,
-      activeGroupSetBySchedule,
-    ],
+    [currentSchedule, groupConfigs, defaultGroups, activeGroupSetBySchedule],
   );
 
-  const handleGroupSetChange = useCallback((setId) => {
-    setActiveGroupSetBySchedule((prev) => ({
-      ...prev,
-      [currentSchedule]: setId,
-    }));
-  }, [currentSchedule]);
+  const handleGroupSetChange = useCallback(
+    (setId) => {
+      setActiveGroupSetBySchedule((prev) => ({
+        ...prev,
+        [currentSchedule]: setId,
+      }));
+    },
+    [currentSchedule],
+  );
 
   const handleSaveCurrentAsNewSet = useCallback(() => {
     const nextId = `set-${Date.now()}`;

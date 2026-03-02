@@ -57,17 +57,8 @@ function getWeekInfo(dateValue) {
   const jsDay = date.getDay();
   const day = (jsDay + 6) % 7;
 
-  const utc = new Date(
-    Date.UTC(parts.year, parts.month - 1, parts.day, 12, 0, 0, 0),
-  );
-  const dayNum = utc.getUTCDay() || 7;
-  utc.setUTCDate(utc.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-  const weekNumber = Math.ceil(((utc - yearStart) / 86400000 + 1) / 7);
-
   return {
     day,
-    parity: weekNumber % 2 === 0 ? "even" : "odd",
   };
 }
 
@@ -182,16 +173,6 @@ function makeSubjectCode(name) {
   return normalized || "SUBJECT";
 }
 
-function makeGroupLabel(prefix) {
-  if (prefix === "Ć" || prefix === "C") return "Ćwiczenia";
-  if (prefix === "L") return "Laboratoria";
-  if (prefix === "Lf") return "Lab. fiz.";
-  if (prefix === "Lek") return "Lektorat";
-  if (prefix === "Lk") return "Lab. komp.";
-  if (prefix === "P") return "Projekt";
-  return `Grupa ${prefix}`;
-}
-
 function buildGroups(normalizedEvents) {
   const defaults = new Map();
 
@@ -217,7 +198,7 @@ function buildGroups(normalizedEvents) {
     .map((prefix) => ({
       type: prefix,
       prefix,
-      label: makeGroupLabel(prefix),
+      //label: makeGroupLabel(prefix),
       defaultValue: defaults.get(prefix),
     }));
 }
@@ -318,11 +299,9 @@ function buildTimetableFromSemesterJson(fileId, json) {
         start,
         end,
         room,
-        _parities: new Set([weekInfo.parity]),
         _dates: new Set(eventDateIso ? [eventDateIso] : []),
       });
     } else {
-      merged.get(eventKey)._parities.add(weekInfo.parity);
       if (eventDateIso) {
         merged.get(eventKey)._dates.add(eventDateIso);
       }
@@ -331,18 +310,10 @@ function buildTimetableFromSemesterJson(fileId, json) {
 
   const schedule = Array.from(merged.values())
     .map((event, index) => {
-      const parityCount = event._parities.size;
-      const weeks =
-        parityCount === 2
-          ? "both"
-          : event._parities.has("even")
-            ? "even"
-            : "odd";
-      const { _parities, _dates, ...clean } = event;
+      const { _dates, ...clean } = event;
       return {
         ...clean,
         id: index + 1,
-        weeks,
         dates: Array.from(_dates || []).sort(),
       };
     })

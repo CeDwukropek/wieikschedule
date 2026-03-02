@@ -11,6 +11,7 @@ export function useEventFiltering(
   hideLectures,
   showAll,
   viewedWeekStart,
+  selectedLectoratSubject,
 ) {
   const userId = useUserId();
 
@@ -25,6 +26,7 @@ export function useEventFiltering(
     hideLectures,
     showAll,
     weekStartDate,
+    preferredLectorat,
   ) {
     // 1) Zestaw wybranych grup (O(1) membership)
     const groupSet = new Set(Object.values(groups || {}).filter(Boolean));
@@ -53,6 +55,44 @@ export function useEventFiltering(
     const hasExactWeekContext =
       weekStartDate instanceof Date && !Number.isNaN(weekStartDate.getTime());
 
+    const normalizeText = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const selectedLekGroup = String(groups?.Lek || "").trim();
+    const selectedLectoratRaw = String(preferredLectorat || "").trim();
+    const selectedLectoratNormalized = normalizeText(selectedLectoratRaw);
+
+    const isLectoratEvent = (ev) => {
+      const eventType = normalizeText(ev?.type);
+      if (eventType.includes("lekt")) return true;
+      if (!Array.isArray(ev?.groups)) return false;
+      return ev.groups.some((group) => normalizeText(group).startsWith("lek"));
+    };
+
+    const matchesSelectedLectorat = (ev) => {
+      const eventSubj = String(ev?.subj || "").trim();
+      if (
+        selectedLectoratRaw &&
+        eventSubj &&
+        eventSubj === selectedLectoratRaw
+      ) {
+        return true;
+      }
+
+      const eventTitleNormalized = normalizeText(
+        ev?.title || ev?.subjectName || "",
+      );
+      return Boolean(
+        selectedLectoratNormalized &&
+        eventTitleNormalized &&
+        eventTitleNormalized === selectedLectoratNormalized,
+      );
+    };
+
     // 3) Jedno przejście: filtrujemy i zbieramy w tablicę
     const out = [];
     for (const ev of schedule) {
@@ -74,6 +114,12 @@ export function useEventFiltering(
 
       // wykłady zawsze przepuszczamy (jeśli nie są ukryte)
       if (!isLecture(ev)) {
+        const shouldFilterLectoratBySubjectOnly =
+          !showAll &&
+          !selectedLekGroup &&
+          selectedLectoratNormalized &&
+          isLectoratEvent(ev);
+
         // jeśli nie "pokaż wszystko", filtruj po grupach
         if (!showAll) {
           const isDayOff =
@@ -84,24 +130,30 @@ export function useEventFiltering(
             out.push(ev);
             continue;
           }
-          const matchesGroup =
-            Array.isArray(ev.groups) &&
-            ev.groups.some((eventGroup) => {
-              const normalizedEventGroup = String(eventGroup || "").trim();
-              if (!normalizedEventGroup) return false;
+          if (!shouldFilterLectoratBySubjectOnly) {
+            const matchesGroup =
+              Array.isArray(ev.groups) &&
+              ev.groups.some((eventGroup) => {
+                const normalizedEventGroup = String(eventGroup || "").trim();
+                if (!normalizedEventGroup) return false;
 
-              if (groupSet.has(normalizedEventGroup)) return true;
+                if (groupSet.has(normalizedEventGroup)) return true;
 
-              const eventHasNumber = /\d/.test(normalizedEventGroup);
-              if (eventHasNumber) return false;
+                const eventHasNumber = /\d/.test(normalizedEventGroup);
+                if (eventHasNumber) return false;
 
-              return Array.from(groupSet).some((selectedGroup) =>
-                String(selectedGroup || "")
-                  .trim()
-                  .startsWith(normalizedEventGroup),
-              );
-            });
-          if (!matchesGroup) continue;
+                return Array.from(groupSet).some((selectedGroup) =>
+                  String(selectedGroup || "")
+                    .trim()
+                    .startsWith(normalizedEventGroup),
+                );
+              });
+            if (!matchesGroup) continue;
+          }
+        }
+
+        if (shouldFilterLectoratBySubjectOnly) {
+          if (!matchesSelectedLectorat(ev)) continue;
         }
       }
 
@@ -139,6 +191,7 @@ export function useEventFiltering(
       hideLectures,
       showAll,
       viewedWeekStart,
+      selectedLectoratSubject,
     );
   });
 
@@ -149,6 +202,7 @@ export function useEventFiltering(
       hideLectures,
       showAll,
       viewedWeekStart,
+      selectedLectoratSubject,
     );
     setFiltered(res);
     try {
@@ -163,6 +217,7 @@ export function useEventFiltering(
     hideLectures,
     showAll,
     viewedWeekStart,
+    selectedLectoratSubject,
     computeFiltered,
     CACHE_KEY,
   ]);

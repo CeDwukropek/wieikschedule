@@ -99,11 +99,11 @@ export default function EventTooltipWrapper({ ev, children }) {
             <span className="label">Przedmiot:</span> <span>{title}</span>
           </div>
         ) : null}
-        {ev.type ? (
+        {/*         {ev.type ? (
           <div className="row">
             <span className="label">Typ:</span> <span>{ev.type}</span>
           </div>
-        ) : null}
+        ) : null} */}
         {ev.start && ev.end ? (
           <div className="row">
             <span className="label">Czas:</span>{" "}
