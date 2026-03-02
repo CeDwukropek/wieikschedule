@@ -9,7 +9,6 @@ export function useEventFiltering(
   schedule,
   studentGroups,
   hideLectures,
-  weekParity,
   showAll,
   viewedWeekStart,
 ) {
@@ -24,7 +23,6 @@ export function useEventFiltering(
     schedule,
     groups,
     hideLectures,
-    parity, // "odd" | "even" | "all"
     showAll,
     weekStartDate,
   ) {
@@ -55,20 +53,9 @@ export function useEventFiltering(
     const hasExactWeekContext =
       weekStartDate instanceof Date && !Number.isNaN(weekStartDate.getTime());
 
-    // Predykat parzystości stosujemy tylko gdy nie mamy kontekstu dokładnego tygodnia.
-    // Gdy mamy konkretny tydzień + daty eventu, daty są źródłem prawdy.
-    const passParity =
-      hasExactWeekContext || parity === "all"
-        ? () => true
-        : parity === "odd"
-          ? (e) => e.weeks !== "even"
-          : (e) => e.weeks !== "odd";
-
     // 3) Jedno przejście: filtrujemy i zbieramy w tablicę
     const out = [];
     for (const ev of schedule) {
-      if (!passParity(ev)) continue;
-
       if (
         hasExactWeekContext &&
         Array.isArray(ev.dates) &&
@@ -150,7 +137,6 @@ export function useEventFiltering(
       schedule,
       studentGroups,
       hideLectures,
-      weekParity,
       showAll,
       viewedWeekStart,
     );
@@ -161,7 +147,6 @@ export function useEventFiltering(
       schedule,
       studentGroups,
       hideLectures,
-      weekParity,
       showAll,
       viewedWeekStart,
     );
@@ -176,7 +161,6 @@ export function useEventFiltering(
     schedule,
     studentGroups,
     hideLectures,
-    weekParity,
     showAll,
     viewedWeekStart,
     computeFiltered,

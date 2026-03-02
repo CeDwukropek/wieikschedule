@@ -17,6 +17,33 @@ function buildDefaultGroupsForTimetable(timetable) {
   return groups;
 }
 
+function buildInitialScheduleGroupSets(savedSettings) {
+  const modern = savedSettings?.scheduleGroupSets;
+  if (modern && typeof modern === "object") {
+    return modern;
+  }
+
+  const legacy = savedSettings?.scheduleGroups;
+  if (!legacy || typeof legacy !== "object") {
+    return {};
+  }
+
+  const migrated = {};
+  Object.entries(legacy).forEach(([scheduleId, groups]) => {
+    migrated[scheduleId] = {
+      sets: [
+        {
+          id: "set-1",
+          name: "Zestaw 1",
+          groups: groups || {},
+        },
+      ],
+    };
+  });
+
+  return migrated;
+}
+
 export function useScheduleManager(savedSettings) {
   const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
 
@@ -24,8 +51,12 @@ export function useScheduleManager(savedSettings) {
     savedSettings?.currentSchedule ?? defaultScheduleId,
   );
 
-  const [scheduleGroups, setScheduleGroups] = useState(
-    savedSettings?.scheduleGroups ?? {},
+  const [scheduleGroupSets, setScheduleGroupSets] = useState(
+    () => buildInitialScheduleGroupSets(savedSettings),
+  );
+
+  const [activeGroupSetBySchedule, setActiveGroupSetBySchedule] = useState(
+    savedSettings?.activeGroupSetBySchedule ?? {},
   );
 
   const [loadedTimetables, setLoadedTimetables] = useState(() => {
@@ -86,10 +117,39 @@ export function useScheduleManager(savedSettings) {
     [currentTimetable],
   );
 
-  const studentGroups = useMemo(
-    () => scheduleGroups[currentSchedule] || defaultGroups,
-    [scheduleGroups, currentSchedule, defaultGroups],
+  const currentGroupSets = useMemo(
+    () => scheduleGroupSets[currentSchedule]?.sets || [],
+    [scheduleGroupSets, currentSchedule],
   );
+
+  const activeGroupSetId = useMemo(() => {
+    return (
+      activeGroupSetBySchedule[currentSchedule] ||
+      currentGroupSets[0]?.id ||
+      "set-1"
+    );
+  }, [activeGroupSetBySchedule, currentSchedule, currentGroupSets]);
+
+  const activeGroupSet = useMemo(
+    () => currentGroupSets.find((set) => set.id === activeGroupSetId),
+    [currentGroupSets, activeGroupSetId],
+  );
+
+  const studentGroups = useMemo(
+    () => activeGroupSet?.groups || defaultGroups,
+    [activeGroupSet, defaultGroups],
+  );
+
+  const scheduleGroups = useMemo(() => {
+    const mapped = {};
+    Object.entries(scheduleGroupSets).forEach(([scheduleId, config]) => {
+      const sets = config?.sets || [];
+      const activeId = activeGroupSetBySchedule[scheduleId] || sets[0]?.id;
+      const activeSet = sets.find((set) => set.id === activeId) || sets[0];
+      mapped[scheduleId] = activeSet?.groups || {};
+    });
+    return mapped;
+  }, [scheduleGroupSets, activeGroupSetBySchedule]);
 
   const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
 
@@ -106,11 +166,27 @@ export function useScheduleManager(savedSettings) {
 
   useEffect(() => {
     if (!currentSchedule || !currentTimetable?.groups?.length) return;
-    setScheduleGroups((prev) => {
+    setScheduleGroupSets((prev) => {
+      if (prev[currentSchedule]?.sets?.length) return prev;
+      return {
+        ...prev,
+        [currentSchedule]: {
+          sets: [
+            {
+              id: "set-1",
+              name: "Zestaw 1",
+              groups: buildDefaultGroupsForTimetable(currentTimetable),
+            },
+          ],
+        },
+      };
+    });
+
+    setActiveGroupSetBySchedule((prev) => {
       if (prev[currentSchedule]) return prev;
       return {
         ...prev,
-        [currentSchedule]: buildDefaultGroupsForTimetable(currentTimetable),
+        [currentSchedule]: "set-1",
       };
     });
   }, [currentSchedule, currentTimetable]);
@@ -122,15 +198,102 @@ export function useScheduleManager(savedSettings) {
       const groupConfig = groupConfigs.find((g) => g.type === type);
       const prefix = groupConfig ? groupConfig.prefix : type;
 
-      setScheduleGroups((prev) => ({
+      setScheduleGroupSets((prev) => {
+        const existingConfig = prev[currentSchedule] || {
+          sets: [
+            {
+              id: "set-1",
+              name: "Zestaw 1",
+              groups: defaultGroups,
+            },
+          ],
+        };
+
+        const sets = existingConfig.sets?.length
+          ? existingConfig.sets
+          : [
+              {
+                id: "set-1",
+                name: "Zestaw 1",
+                groups: defaultGroups,
+              },
+            ];
+
+        const activeId =
+          activeGroupSetBySchedule[currentSchedule] || sets[0]?.id || "set-1";
+
+        const updatedSets = sets.map((set) => {
+          if (set.id !== activeId) return set;
+          return {
+            ...set,
+            groups: {
+              ...(set.groups || {}),
+              [type]: digits ? prefix + digits : "",
+            },
+          };
+        });
+
+        return {
+          ...prev,
+          [currentSchedule]: {
+            ...existingConfig,
+            sets: updatedSets,
+          },
+        };
+      });
+    },
+    [
+      currentSchedule,
+      groupConfigs,
+      defaultGroups,
+      activeGroupSetBySchedule,
+    ],
+  );
+
+  const handleGroupSetChange = useCallback((setId) => {
+    setActiveGroupSetBySchedule((prev) => ({
+      ...prev,
+      [currentSchedule]: setId,
+    }));
+  }, [currentSchedule]);
+
+  const handleSaveCurrentAsNewSet = useCallback(() => {
+    const nextId = `set-${Date.now()}`;
+
+    setScheduleGroupSets((prev) => {
+      const existingConfig = prev[currentSchedule] || { sets: [] };
+      const sets = existingConfig.sets || [];
+      const sourceSet =
+        sets.find((set) => set.id === activeGroupSetId) || sets[0] || null;
+
+      const clonedGroups = {
+        ...(sourceSet?.groups || defaultGroups),
+      };
+
+      const newSet = {
+        id: nextId,
+        name: `Zestaw ${sets.length + 1}`,
+        groups: clonedGroups,
+      };
+
+      return {
         ...prev,
         [currentSchedule]: {
-          ...prev[currentSchedule],
-          [type]: digits ? prefix + digits : "",
+          ...existingConfig,
+          sets: [...sets, newSet],
         },
-      }));
-    },
-    [currentSchedule, groupConfigs],
+      };
+    });
+
+    setActiveGroupSetBySchedule((prev) => ({
+      ...prev,
+      [currentSchedule]: nextId,
+    }));
+  }, [currentSchedule, activeGroupSetId, defaultGroups]);
+
+  const groupSetOptions = useMemo(
+    () => currentGroupSets.map((set) => ({ id: set.id, name: set.name })),
+    [currentGroupSets],
   );
 
   const handleScheduleChange = useCallback((scheduleId) => {
@@ -139,6 +302,10 @@ export function useScheduleManager(savedSettings) {
 
   return {
     currentSchedule,
+    scheduleGroupSets,
+    activeGroupSetBySchedule,
+    activeGroupSetId,
+    groupSetOptions,
     scheduleGroups,
     studentGroups,
     schedule,
@@ -147,6 +314,8 @@ export function useScheduleManager(savedSettings) {
     currentTimetable,
     isScheduleLoading,
     handleGroupChange,
+    handleGroupSetChange,
+    handleSaveCurrentAsNewSet,
     handleScheduleChange,
   };
 }

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { Calendar, List, Eye, EyeOff } from "lucide-react";
 import { allTimetables } from "./timetables";
 import GroupInput from "./GroupInput";
@@ -28,9 +22,6 @@ export default function Timetable() {
 
   // View and filter states
   const [viewMode, setViewMode] = useState(savedSettings?.viewMode ?? "week");
-  const [weekParity, setWeekParity] = useState(
-    savedSettings?.weekParity ?? "all",
-  );
   const [hideLectures, setHideLectures] = useState(
     savedSettings?.hideLectures ?? false,
   );
@@ -39,6 +30,10 @@ export default function Timetable() {
   // Schedule and group management
   const {
     currentSchedule,
+    scheduleGroupSets,
+    activeGroupSetBySchedule,
+    activeGroupSetId,
+    groupSetOptions,
     scheduleGroups,
     studentGroups,
     schedule,
@@ -46,6 +41,8 @@ export default function Timetable() {
     groupConfigs,
     currentTimetable,
     handleGroupChange,
+    handleGroupSetChange,
+    handleSaveCurrentAsNewSet,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
 
@@ -82,15 +79,6 @@ export default function Timetable() {
           : 0,
   );
 
-  const parityForOffset = useCallback(
-    (offset) => {
-      const normalizedOffset = Math.abs(Number(offset || 0));
-      if (normalizedOffset % 2 === 0) return currentParity;
-      return currentParity === "even" ? "odd" : "even";
-    },
-    [currentParity],
-  );
-
   const viewedWeekRange = useMemo(
     () => getRangeByOffset(weekOffset),
     [getRangeByOffset, weekOffset],
@@ -111,31 +99,21 @@ export default function Timetable() {
     );
     if (clamped !== weekOffset) {
       setWeekOffset(clamped);
-      setWeekParity(parityForOffset(clamped));
     }
-  }, [weekOffset, minAllowedOffset, maxAllowedOffset, parityForOffset]);
+  }, [weekOffset, minAllowedOffset, maxAllowedOffset]);
 
   const goToPrevWeek = () => {
     if (!canGoPrevWeek) return;
-    setWeekOffset((prev) => {
-      const nextOffset = Math.max(prev - 1, minAllowedOffset);
-      setWeekParity(parityForOffset(nextOffset));
-      return nextOffset;
-    });
+    setWeekOffset((prev) => Math.max(prev - 1, minAllowedOffset));
   };
 
   const goToNextWeek = () => {
     if (!canGoNextWeek) return;
-    setWeekOffset((prev) => {
-      const nextOffset = Math.min(prev + 1, maxAllowedOffset);
-      setWeekParity(parityForOffset(nextOffset));
-      return nextOffset;
-    });
+    setWeekOffset((prev) => Math.min(prev + 1, maxAllowedOffset));
   };
 
   const resetToCurrentWeek = () => {
     setWeekOffset(0);
-    setWeekParity(currentParity);
   };
 
   // Event filtering with caching
@@ -143,7 +121,6 @@ export default function Timetable() {
     schedule,
     studentGroups,
     hideLectures,
-    weekParity,
     showAll,
     viewedWeekStart,
   );
@@ -151,11 +128,12 @@ export default function Timetable() {
   // Persist all settings
   useSettings({
     viewMode,
-    weekParity,
     weekOffset,
     hideLectures,
     showAll,
     currentSchedule,
+    scheduleGroupSets,
+    activeGroupSetBySchedule,
     scheduleGroups,
   });
 
@@ -169,13 +147,10 @@ export default function Timetable() {
       const selParityToken = parts[0];
       const selectedOffset = selParityToken === "next" ? 1 : 0;
       const selectedWeekStart = getWeekStartByOffset(selectedOffset);
-      const parityToUse =
-        selParityToken === "current" ? currentParity : nextParity;
       return computeFiltered(
         schedule,
         studentGroups,
         hideLectures,
-        parityToUse,
         showAll,
         selectedWeekStart,
       );
@@ -188,8 +163,6 @@ export default function Timetable() {
     studentGroups,
     hideLectures,
     showAll,
-    currentParity,
-    nextParity,
     getWeekStartByOffset,
     filtered,
     schedule,
@@ -212,6 +185,23 @@ export default function Timetable() {
             </option>
           ))}
         </select>
+        <select
+          value={activeGroupSetId}
+          onChange={(e) => handleGroupSetChange(e.target.value)}
+          className="px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300 border border-neutral-800"
+        >
+          {groupSetOptions.map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleSaveCurrentAsNewSet}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+        >
+          Zapisz nowy zestaw
+        </button>
         <button
           onClick={() => setViewMode("week")}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
@@ -258,8 +248,8 @@ export default function Timetable() {
               schedule,
               studentGroups,
               hideLectures,
-              "all", // ⬅️ klucz: ignorujemy parzystość
               showAll,
+              viewedWeekStart,
             );
             exportICS(dataForICS);
           }}
@@ -269,11 +259,7 @@ export default function Timetable() {
         <ExportPngBtn
           viewMode={viewMode}
           exportRef={exportRef}
-          weekParity={weekParity}
-          currentParity={currentParity}
-          currentRange={currentRange}
-          nextRange={nextRange}
-          nextParity={nextParity}
+          viewedWeekRange={viewedWeekRange}
           selection={selection}
           combinedOptions={combinedOptions}
         />
@@ -339,7 +325,6 @@ export default function Timetable() {
       <FloatingMenu
         viewMode={viewMode}
         setViewMode={setViewMode}
-        setWeekParity={setWeekParity}
         hideLectures={hideLectures}
         setHideLectures={setHideLectures}
         showAll={showAll}
@@ -351,6 +336,7 @@ export default function Timetable() {
         onResetWeek={resetToCurrentWeek}
         onNextWeek={goToNextWeek}
         viewedWeekRange={viewedWeekRange}
+        viewedWeekStart={viewedWeekStart}
         isCurrentWeek={weekOffset === 0}
         canGoPrevWeek={canGoPrevWeek}
         canGoNextWeek={canGoNextWeek}
@@ -365,10 +351,13 @@ export default function Timetable() {
         selection={selection}
         onChange={setSelection}
         ref={exportRef}
-        weekParity={weekParity}
         computeFiltered={computeFiltered}
         SCHEDULE={schedule}
         currentSchedule={currentSchedule}
+        activeGroupSetId={activeGroupSetId}
+        groupSetOptions={groupSetOptions}
+        onGroupSetChange={handleGroupSetChange}
+        onSaveGroupSet={handleSaveCurrentAsNewSet}
         onScheduleChange={handleScheduleChange}
         allTimetables={allTimetables}
       />
@@ -385,7 +374,6 @@ export default function Timetable() {
           nextParity={nextParity}
           currentRange={currentRange}
           nextRange={nextRange}
-          setWeekParity={setWeekParity}
           // control selection externally so BottomDayNav drives it
           options={combinedOptions}
           selection={selection}

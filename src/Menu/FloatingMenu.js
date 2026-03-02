@@ -8,7 +8,6 @@ import { ExportPngBtn } from "../ExportPngBtn";
 export default function FloatingMenu({
   viewMode,
   setViewMode,
-  setWeekParity,
   hideLectures,
   setHideLectures,
   showAll,
@@ -26,23 +25,24 @@ export default function FloatingMenu({
   onResetWeek,
   onNextWeek,
   viewedWeekRange,
+  viewedWeekStart,
   isCurrentWeek,
   canGoPrevWeek,
   canGoNextWeek,
   currentParity,
   currentRange,
-  nextRange,
-  nextParity,
   ref,
-  weekParity,
   computeFiltered,
   SCHEDULE,
   currentSchedule,
+  activeGroupSetId,
+  groupSetOptions = [],
+  onGroupSetChange,
+  onSaveGroupSet,
   onScheduleChange,
   allTimetables = [],
 }) {
   function clearFilters() {
-    setWeekParity("all");
     setHideLectures(false);
     setShowAll(false);
   }
@@ -116,6 +116,29 @@ export default function FloatingMenu({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Zestaw grup</div>
+            <div className="flex gap-2">
+              <select
+                value={activeGroupSetId}
+                onChange={(e) => onGroupSetChange?.(e.target.value)}
+                className="flex-1 px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700"
+              >
+                {groupSetOptions.map((set) => (
+                  <option key={set.id} value={set.id}>
+                    {set.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => onSaveGroupSet?.()}
+                className="px-3 py-2 rounded bg-neutral-800 text-white whitespace-nowrap"
+              >
+                Zapisz
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -196,8 +219,8 @@ export default function FloatingMenu({
                   SCHEDULE,
                   studentGroups,
                   hideLectures,
-                  "all", // ⬅️ klucz: ignorujemy parzystość
                   showAll,
+                  viewedWeekStart,
                 );
                 exportICS(dataForICS);
               }}
@@ -207,11 +230,7 @@ export default function FloatingMenu({
             <ExportPngBtn
               viewMode={viewMode}
               exportRef={ref}
-              weekParity={weekParity}
-              currentParity={currentParity}
-              currentRange={currentRange}
-              nextRange={nextRange}
-              nextParity={nextParity}
+              viewedWeekRange={viewedWeekRange}
               selection={selection}
               combinedOptions={options}
             />
