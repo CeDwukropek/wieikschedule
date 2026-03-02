@@ -1,15 +1,11 @@
 export function WeekMenu({
-  activeParity,
-  setWeekParity,
-  currentParity,
-  nextParity,
-  currentRange,
-  nextRange,
   onPrevWeek,
-  onCurrentWeek,
+  onResetWeek,
   onNextWeek,
-  disablePrevWeek,
-  disableNextWeek,
+  viewedRange,
+  isCurrentWeek,
+  canGoPrevWeek,
+  canGoNextWeek,
 }) {
   return (
     <>
@@ -17,59 +13,47 @@ export function WeekMenu({
         onClick={() => {
           if (onPrevWeek) {
             onPrevWeek();
-            return;
           }
-          if (setWeekParity) setWeekParity(currentParity);
         }}
-        disabled={Boolean(disablePrevWeek)}
-        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-          disablePrevWeek
-            ? "bg-neutral-900 text-gray-500 cursor-not-allowed"
-            : "bg-neutral-900 text-gray-300"
+        disabled={!canGoPrevWeek}
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          canGoPrevWeek
+            ? "bg-neutral-900 text-gray-300"
+            : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
         }`}
       >
         Prev
-        <br></br>
-        <span className="text-[0.75rem]">week</span>
       </button>
 
       <button
         onClick={() => {
-          if (onCurrentWeek) {
-            onCurrentWeek();
-            return;
+          if (onResetWeek) {
+            onResetWeek();
           }
-          if (setWeekParity) setWeekParity(currentParity);
         }}
-        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-          activeParity === currentParity
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          isCurrentWeek
             ? "bg-neutral-800 text-white"
             : "bg-neutral-900 text-gray-300"
         }`}
       >
-        Current
-        <br></br>
-        <span className="text-[0.75rem]">{currentRange}</span>
+        <span className="text-[0.75rem]">{viewedRange}</span>
       </button>
 
       <button
         onClick={() => {
           if (onNextWeek) {
             onNextWeek();
-            return;
           }
-          if (setWeekParity) setWeekParity(nextParity);
         }}
-        disabled={Boolean(disableNextWeek)}
-        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-          disableNextWeek
-            ? "bg-neutral-900 text-gray-500 cursor-not-allowed"
-            : "bg-neutral-900 text-gray-300"
+        disabled={!canGoNextWeek}
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          canGoNextWeek
+            ? "bg-neutral-900 text-gray-300"
+            : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
         }`}
       >
         Next
-        <br></br>
-        <span className="text-[0.75rem]">{nextRange}</span>
       </button>
     </>
   );
