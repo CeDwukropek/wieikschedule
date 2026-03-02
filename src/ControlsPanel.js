@@ -40,13 +40,6 @@ export default function ControlsPanel({
   onLectoratChange,
   lektoratOptions,
 }) {
-  const sectionClass =
-    "rounded-xl border border-neutral-800/80 bg-neutral-900/50 p-4 space-y-2";
-  const fieldClass =
-    "w-full px-3 py-2 bg-neutral-900/80 text-gray-200 border border-neutral-700/80 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/60";
-  const actionBtnClass =
-    "w-full flex items-center justify-between px-3 py-2 bg-neutral-900/80 hover:bg-neutral-800 text-gray-200 hover:text-white border border-neutral-700/80 rounded-lg transition-colors text-sm";
-
   const handleExportICS = () => {
     // Export should include ALL events from the schedule with user's group filters applied
     // but without week filtering. We pass null as weekStartDate to bypass week filtering
@@ -65,26 +58,21 @@ export default function ControlsPanel({
     <>
       {/* Side panel backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]"
-          onClick={onToggle}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={onToggle} />
       )}
 
       {/* Side panel */}
       <div
-        className={`fixed right-0 top-0 bottom-0 bg-neutral-950/95 backdrop-blur-xl border-l border-neutral-700/70 shadow-[0_0_30px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out z-50 w-80 flex flex-col ${
+        className={`fixed right-0 top-0 bottom-0 bg-neutral-900 border-l border-neutral-800 shadow-2xl transition-transform duration-300 ease-out z-50 w-80 flex flex-col ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Sticky header */}
-        <div className="sticky top-0 z-10 bg-neutral-950/95 backdrop-blur-xl border-b border-neutral-800 flex items-center justify-between p-5">
-          <h2 className="text-base font-semibold text-white tracking-wide">
-            Opcje
-          </h2>
+        <div className="sticky top-0 z-10 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between p-6">
+          <h2 className="text-lg font-semibold text-white">Opcje</h2>
           <button
             onClick={onToggle}
-            className="p-2 rounded-lg border border-neutral-700/80 bg-neutral-900/70 hover:bg-neutral-800 text-gray-300 hover:text-white transition-colors"
+            className="p-2 rounded hover:bg-neutral-700 text-gray-300 hover:text-white"
             type="button"
           >
             <ChevronRight size={20} />
@@ -93,19 +81,17 @@ export default function ControlsPanel({
 
         {/* Scrollable content */}
         <div
-          className="flex-1 overflow-y-auto scrollbar-hide"
-          style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
+          className="flex-1 overflow-y-auto "
+          style={{ "scrollbar-width": "none" }}
         >
-          <div className="p-5 space-y-4">
+          <div className="p-6 space-y-6 ">
             {/* Schedule selector */}
-            <div className={sectionClass}>
-              <label className="text-xs text-gray-400 uppercase tracking-wide">
-                Plan zajęć
-              </label>
+            <div className="space-y-2">
+              <label className="text-xs text-gray-400">Plan zajęć</label>
               <select
                 value={currentSchedule}
                 onChange={(e) => onScheduleChange(e.target.value)}
-                className={fieldClass}
+                className="w-full px-3 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-sm"
               >
                 {allTimetables.map((tt) => (
                   <option key={tt.id} value={tt.id}>
@@ -116,8 +102,8 @@ export default function ControlsPanel({
             </div>
 
             {/* Group filters */}
-            <div className={sectionClass}>
-              <h3 className="text-sm font-medium text-gray-100">Filtry grup</h3>
+            <div className="space-y-2 pb-4 border-b border-neutral-800">
+              <h3 className="text-sm font-medium text-gray-200">Filtry grup</h3>
               <GroupFiltersPanel
                 groupConfigs={groupConfigs}
                 studentGroups={studentGroups}
@@ -130,7 +116,7 @@ export default function ControlsPanel({
             </div>
 
             {/* Group set manager */}
-            <div className={sectionClass}>
+            <div className="space-y-2">
               <GroupSetManager
                 activeGroupSetId={activeGroupSetId}
                 activeGroupSetName={activeGroupSetName}
@@ -144,15 +130,16 @@ export default function ControlsPanel({
             </div>
 
             {/* View mode switch */}
-            <div className={`${sectionClass} flex flex-col`}>
-              <label className="text-xs text-gray-400 uppercase tracking-wide">
-                Widok
-              </label>
+            <div className="space-y-2 flex flex-col">
+              <label className="text-xs text-gray-400">Widok</label>
               <ViewModeSwitch viewMode={viewMode} onToggle={onViewModeToggle} />
             </div>
 
             {/* Hide lectures toggle */}
-            <button onClick={onToggleHideLectures} className={actionBtnClass}>
+            <button
+              onClick={onToggleHideLectures}
+              className="w-full flex items-center justify-between px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded transition-colors text-sm"
+            >
               <span>{hideLectures ? "Pokaż wykłady" : "Ukryj wykłady"}</span>
               {hideLectures ? (
                 <EyeOff className="w-4 h-4" />
@@ -164,16 +151,16 @@ export default function ControlsPanel({
             {/* Show all toggle */}
             <button
               onClick={onToggleShowAll}
-              className="w-full px-3 py-2 bg-neutral-900/80 hover:bg-neutral-800 text-gray-200 hover:text-white border border-neutral-700/80 rounded-lg transition-colors text-sm"
+              className="w-full px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded transition-colors text-sm"
             >
               {showAll ? "Pokaż twój plan" : "Pokaż cały plan"}
             </button>
 
             {/* Export buttons */}
-            <div className={sectionClass}>
+            <div className="space-y-2 pt-4 border-t border-neutral-800">
               <button
                 onClick={handleExportICS}
-                className="w-full px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                className="w-full px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded transition-colors text-sm"
               >
                 Eksportuj ICS
               </button>

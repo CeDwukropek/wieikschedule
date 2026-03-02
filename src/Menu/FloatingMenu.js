@@ -51,15 +51,16 @@ export default function FloatingMenu({
   shouldShowLectoratSelect,
   onScheduleChange,
   allTimetables = [],
+  isControlsPanelOpen = false,
 }) {
   function clearFilters() {
     setHideLectures(false);
     setShowAll(false);
   }
 
-  // whole floating menu visible only on mobile (hidden on sm and larger)
+  // whole floating menu visible only on mobile (hidden on sm and larger, and when panel is open)
   return (
-    <div className="sm:hidden">
+    <div className={`${isControlsPanelOpen ? "hidden" : ""} sm:hidden`}>
       {/* Floating toggle button (bottom-right) */}
       <div className="sm:hidden fixed left-4 right-4 bottom-4 z-50 flex items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-3 py-2 shadow-lg">
         <button
@@ -109,7 +110,7 @@ export default function FloatingMenu({
         aria-modal="true"
       >
         <div
-          className="p-4 space-y-4 overflow-y-auto"
+          className="p-4 space-y-4 overflow-y-auto pb-14"
           style={{ maxHeight: "calc(100vh - 96px)" }}
         >
           {/* Schedule selector */}
@@ -129,7 +130,6 @@ export default function FloatingMenu({
           </div>
 
           <div className="space-y-2">
-            <div className="text-xs text-gray-400">Zestaw grup</div>
             <GroupSetManager
               compact
               activeGroupSetId={activeGroupSetId}

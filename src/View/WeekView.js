@@ -1,5 +1,5 @@
 import EventCard from "../EventCard";
-import React, { forwardRef, useMemo } from "react";
+import React, { forwardRef } from "react";
 import EventTooltipWrapper from "../EventTooltipWrapper";
 import {
   createTimeSlots,
@@ -9,11 +9,8 @@ import {
 } from "../timeSlotUtils";
 import "./ViewStyles.css";
 
-const DAYS = [0, 1, 2, 3, 4]; // Pon–Pt
-const DAY_NAMES = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
-
 const WeekView = forwardRef(function WeekView(
-  { events, subjects = {}, weekStartDate },
+  { events, subjects = {}, viewedWeekStart },
   ref,
 ) {
   const startHour = 7;
@@ -23,34 +20,39 @@ const WeekView = forwardRef(function WeekView(
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
 
+  const days = [0, 1, 2, 3, 4]; // Pon–Pt
+  const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
+
+  // Get Monday of current week or use passed viewedWeekStart
+  const monday =
+    viewedWeekStart instanceof Date
+      ? new Date(viewedWeekStart)
+      : (() => {
+          const today = new Date();
+          const dayOfWeek = today.getDay();
+          const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+          const m = new Date(today);
+          m.setDate(today.getDate() + mondayOffset);
+          return m;
+        })();
+
+  const getDayDate = (dayOffset) => {
+    const date = new Date(monday);
+    date.setDate(date.getDate() + dayOffset);
+    return date.toLocaleDateString("pl-PL", {
+      month: "numeric",
+      day: "numeric",
+    });
+  };
+
   const timeSlots = createTimeSlots(startHour, endHour, slotMinutes);
 
-  const dayDates = useMemo(() => {
-    const base =
-      weekStartDate instanceof Date && !Number.isNaN(weekStartDate.getTime())
-        ? new Date(weekStartDate)
-        : null;
-
-    return DAYS.map((dayOffset) => {
-      if (!base) return "";
-      const d = new Date(base);
-      d.setDate(d.getDate() + dayOffset);
-      return d.toLocaleDateString("pl-PL", {
-        day: "2-digit",
-        month: "2-digit",
-      });
-    });
-  }, [weekStartDate]);
-
   return (
-    <div
-      className="overflow-x-auto w-full"
-      style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
-    >
+    <div className="week-scroll w-full overflow-auto">
       <style>{`
         .week-grid {
           grid-template-columns: 40px repeat(5, minmax(160px, 1fr));
-          grid-template-rows: auto repeat(${totalSlots}, 1rem);
+          grid-template-rows: auto auto repeat(${totalSlots}, 1rem);
         }
 
         @media (max-width: 768px) {
@@ -66,43 +68,50 @@ const WeekView = forwardRef(function WeekView(
       `}</style>
 
       {/* Jeden scroll-container */}
-      <div
-        className="week-grid overflow-auto scrollbar-hide max-h-[75vh]"
-        style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
-        ref={ref}
-      >
+      <div className="week-grid">
         {/* Header row - Day names */}
-        {DAY_NAMES.map((name, dayIndex) => (
+        {dayNames.map((name, dayIndex) => (
           <div
             key={dayIndex}
-            className="sticky top-0 z-30 py-2 text-center bg-neutral-900 week-header border-b border-neutral-700"
+            className="z-10 py-2 text-center text-sm font-semibold bg-neutral-900 border-b border-neutral-700"
             style={{
               gridColumn: dayIndex + 2,
               gridRow: 1,
             }}
           >
-            <div className="text-sm font-semibold">{name}</div>
-            <div className="text-[0.7rem] text-gray-400 leading-tight mt-0.5">
-              {dayDates[dayIndex]}
-            </div>
+            {name}
+          </div>
+        ))}
+
+        {/* Date row - under day names */}
+        {dayNames.map((name, dayIndex) => (
+          <div
+            key={`date-${dayIndex}`}
+            className="z-10 py-1 text-center text-xs text-gray-400 bg-neutral-900 border-b border-neutral-700"
+            style={{
+              gridColumn: dayIndex + 2,
+              gridRow: 2,
+            }}
+          >
+            {getDayDate(dayIndex)}
           </div>
         ))}
 
         {/* Empty corner above time column */}
         <div
-          className="sticky top-0 left-0 z-40 border-r border-b border-neutral-700 bg-neutral-900 week-header"
-          style={{ gridColumn: 1, gridRow: 1 }}
+          className="z-10 border-r border-neutral-700 bg-neutral-900"
+          style={{ gridColumn: 1, gridRow: 1, gridRowEnd: 3 }}
         />
 
         {/* Time column labels - only on hourly rows */}
         {Array.from({ length: endHour - startHour }, (_, i) => (
           <div
             key={i}
-            className="sticky left-0 z-20 flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900 week-header"
+            className="flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
-              gridRow: i * slotsPerHour + 2,
-              gridRowEnd: (i + 1) * slotsPerHour + 2,
+              gridRow: i * slotsPerHour + 3,
+              gridRowEnd: (i + 1) * slotsPerHour + 3,
             }}
           >
             <span className="mt-[0.25em]">{startHour + i}:00</span>
@@ -110,7 +119,7 @@ const WeekView = forwardRef(function WeekView(
         ))}
 
         {/* Day columns with time slots */}
-        {DAYS.map((day) => {
+        {days.map((day) => {
           const dayEvents = events.filter((e) => e.day === day);
           const renderedEvents = new Set();
           const occupiedSlots = new Set();
@@ -160,7 +169,7 @@ const WeekView = forwardRef(function WeekView(
                 } ${hourBlock % 2 === 0 ? "hour-even" : ""}`}
                 style={{
                   gridColumn: day + 2,
-                  gridRow: slot.index + 2,
+                  gridRow: slot.index + 3,
                   gridRowEnd: `span ${maxSpan}`,
                 }}
               >

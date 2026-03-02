@@ -374,13 +374,14 @@ export default function Timetable() {
         shouldShowLectoratSelect={shouldShowLectoratSelect}
         onScheduleChange={handleScheduleChange}
         allTimetables={allTimetables}
+        isControlsPanelOpen={isControlsPanelOpen}
       />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView
           events={filtered}
           subjects={subjects}
-          weekStartDate={viewedWeekStart}
+          viewedWeekStart={viewedWeekStart}
           ref={exportRef}
         />
       ) : (
