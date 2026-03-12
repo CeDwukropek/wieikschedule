@@ -3,17 +3,16 @@ import GroupInput from "../GroupInput";
 import GroupSetManager from "../GroupSetManager";
 import { exportICS } from "../exportICS";
 import { ExportPngBtn } from "../ExportPngBtn";
+import { allTimetables } from "../timetables";
 
 export function FloatingSettingsPanel({
   open,
   currentSchedule,
   onScheduleChange,
-  allTimetables = [],
   activeGroupSetId,
   activeGroupSetName,
   groupSetOptions = [],
   onGroupSetChange,
-  onSaveGroupSet,
   onCreateGroupSet,
   onRenameActiveGroupSet,
   onDeleteActiveGroupSet,
@@ -32,9 +31,9 @@ export function FloatingSettingsPanel({
   lektoratOptions = [],
   setOpen,
   computeFiltered,
-  SCHEDULE,
+  schedule,
   viewedWeekStart,
-  ref,
+  exportRef,
   viewedWeekRange,
   selection,
   options = [],
@@ -78,7 +77,7 @@ export function FloatingSettingsPanel({
             activeGroupSetName={activeGroupSetName}
             groupSetOptions={groupSetOptions}
             onGroupSetChange={onGroupSetChange}
-            onCreateGroupSet={onCreateGroupSet || onSaveGroupSet}
+            onCreateGroupSet={onCreateGroupSet}
             onRenameActiveGroupSet={onRenameActiveGroupSet}
             onDeleteActiveGroupSet={onDeleteActiveGroupSet}
           />
@@ -177,7 +176,7 @@ export function FloatingSettingsPanel({
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-700 text-gray-300"
             onClick={() => {
               const dataForICS = computeFiltered(
-                SCHEDULE,
+                schedule,
                 studentGroups,
                 hideLectures,
                 showAll,
@@ -192,7 +191,7 @@ export function FloatingSettingsPanel({
 
           <ExportPngBtn
             viewMode={viewMode}
-            exportRef={ref}
+            exportRef={exportRef}
             viewedWeekRange={viewedWeekRange}
             selection={selection}
             combinedOptions={options}

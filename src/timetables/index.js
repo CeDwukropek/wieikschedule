@@ -14,20 +14,12 @@ const SUBJECT_COLORS = [
   "bg-fuchsia-700",
 ];
 
-const GROUP_ORDER = ["Ć", "C", "L", "Lf", "Lek", "Lk", "P"];
+const GROUP_ORDER = ["Ć", "C", "K", "L", "Lab", "Lec", "Lek", "Lk", "P", "S"];
 
 function parseDateParts(dateValue) {
+  // Parse ISO date string (YYYY-MM-DD) into numeric parts.
   const raw = String(dateValue || "").trim();
-  let match = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (match) {
-    return {
-      year: Number(match[3]),
-      month: Number(match[2]),
-      day: Number(match[1]),
-    };
-  }
-
-  match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (match) {
     return {
       year: Number(match[1]),
@@ -40,6 +32,7 @@ function parseDateParts(dateValue) {
 }
 
 function toIsoDateFromParts(parts) {
+  // Convert parsed date parts back to a normalized ISO date.
   if (!parts) return "";
   return `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(
     2,
@@ -48,6 +41,7 @@ function toIsoDateFromParts(parts) {
 }
 
 function getWeekInfo(dateValue) {
+  // Resolve a date to a weekday index where Monday=0 and Sunday=6.
   const parts = parseDateParts(dateValue);
   if (!parts) return null;
 
@@ -63,6 +57,7 @@ function getWeekInfo(dateValue) {
 }
 
 function normalizeHm(value) {
+  // Validate and normalize time to HH:mm format.
   const raw = String(value || "").trim();
   const match = raw.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return "";
@@ -73,6 +68,7 @@ function normalizeHm(value) {
 }
 
 function addMinutesToHm(startHm, durationMinutes) {
+  // Add duration to start time and return wrapped HH:mm value.
   const start = normalizeHm(startHm);
   if (!start) return "";
   const [hh, mm] = start.split(":").map(Number);
@@ -85,15 +81,17 @@ function addMinutesToHm(startHm, durationMinutes) {
 }
 
 function parseGroups(value) {
+  // Split raw group string into normalized group tokens.
   const raw = String(value || "").trim();
   if (!raw) return [];
   return raw
-    .split(/\s*[/,;|]\s*/)
+    .split(/\s*\/\s*/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 function isAllGroupsLabel(groupValue) {
+  // Detect labels that represent events for all groups.
   const normalized = String(groupValue || "")
     .trim()
     .toLowerCase()
@@ -102,57 +100,39 @@ function isAllGroupsLabel(groupValue) {
 
   if (!normalized) return false;
 
-  if (
-    normalized === "*" ||
-    normalized === "all" ||
-    normalized === "wszyscy" ||
-    normalized === "wszyscy studenci" ||
-    normalized === "wszystkie" ||
-    normalized === "wszystkie grupy" ||
-    normalized === "caly rok"
-  ) {
-    return true;
-  }
-
-  return normalized.includes("wszystkie grupy");
+  return normalized === "wszystkie grupy";
 }
 
 function getGroupPrefix(groupName) {
+  // Extract the non-numeric prefix from a group identifier.
   const raw = String(groupName || "").trim();
   if (!raw) return "";
   const prefix = raw.match(/^[^\d\s]+/)?.[0] || "";
   return prefix;
 }
 
-function normalizeType(type, groups) {
+function normalizeType(type) {
+  // Normalize event type label for consistent UI display.
   const rawType = String(type || "")
     .trim()
     .toLowerCase();
   if (rawType.includes("wyk")) return "Wykład";
-  if ((groups || []).some((g) => g === "W")) return "Wykład";
   if (!rawType) return "Zajęcia";
   return rawType.charAt(0).toUpperCase() + rawType.slice(1);
 }
 
 function isDayOffStatus(value) {
+  // Mark day-off records based on normalized status field.
   const normalized = String(value || "")
     .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
-  return normalized === "wolne" || normalized === "nieaktywne";
-}
-
-function isDayOffType(value) {
-  const normalized = String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  return normalized === "swieto";
+  return normalized === "wolne";
 }
 
 function hashString(text) {
+  // Create a stable numeric hash used for deterministic color assignment.
   let hash = 0;
   const value = String(text || "");
   for (let i = 0; i < value.length; i++) {
@@ -163,6 +143,7 @@ function hashString(text) {
 }
 
 function makeSubjectCode(name) {
+  // Build an uppercase ASCII-safe key for subject dictionary entries.
   const normalized = String(name || "")
     .trim()
     .toUpperCase()
@@ -174,6 +155,7 @@ function makeSubjectCode(name) {
 }
 
 function makeGroupLabel(prefix) {
+  // Map internal group prefixes to user-friendly labels.
   const value = String(prefix || "").trim();
   if (!value) return "Grupa";
 
@@ -191,6 +173,7 @@ function makeGroupLabel(prefix) {
 }
 
 function buildGroups(normalizedEvents) {
+  // Derive available group filters and defaults from normalized schedule events.
   const defaults = new Map();
 
   normalizedEvents.forEach((event) => {
@@ -221,6 +204,7 @@ function buildGroups(normalizedEvents) {
 }
 
 function buildTimetableFromSemesterJson(fileId, json) {
+  // Transform raw semester JSON into normalized timetable data used by the app.
   const rawEvents = Array.isArray(json?.events) ? json.events : [];
   const name = String(json?.facultyName || fileId);
   const subjectCodes = new Map();
@@ -266,12 +250,11 @@ function buildTimetableFromSemesterJson(fileId, json) {
     const appliesToAllByGroup =
       parsedGroups.length > 0 &&
       parsedGroups.every((group) => isAllGroupsLabel(group));
-    const appliesToAllByStatus =
-      isDayOffStatus(status) || isDayOffType(item?.type);
+    const appliesToAllByStatus = isDayOffStatus(status);
     const appliesToAllGroups = appliesToAllByGroup || appliesToAllByStatus;
     const normalizedGroups =
       parsedGroups.includes("W") || appliesToAllGroups ? [] : parsedGroups;
-    const eventType = normalizeType(item?.type, parsedGroups);
+    const eventType = normalizeType(item?.type);
 
     let subjCode = subjectCodes.get(subjectName);
     if (!subjCode) {
@@ -378,6 +361,7 @@ export const defaultTimetable = allTimetables[0] || null;
 const timetableCache = new Map();
 
 function normalizeLoadedTimetable(id, json) {
+  // Ensure loaded timetable has normalized shape and final metadata.
   const timetable = buildTimetableFromSemesterJson(id, json);
   const name = String(json?.facultyName || timetable.name || id);
   return {
@@ -388,10 +372,12 @@ function normalizeLoadedTimetable(id, json) {
 }
 
 export function getCachedTimetableById(id) {
+  // Return timetable from in-memory cache when available.
   return timetableCache.get(id) || null;
 }
 
 export async function loadTimetableById(id) {
+  // Lazy-load a timetable JSON file, normalize it, and cache the result.
   const scheduleId = String(id || "").trim();
   if (!scheduleId) return null;
   if (timetableCache.has(scheduleId)) {
@@ -411,5 +397,3 @@ export async function loadTimetableById(id) {
     return null;
   }
 }
-
-export const timetableMap = {};

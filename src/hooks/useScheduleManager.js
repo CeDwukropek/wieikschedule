@@ -17,57 +17,39 @@ function buildDefaultGroupsForTimetable(timetable) {
   return groups;
 }
 
+// Build initial schedule group sets from saved settings, ensuring a valid structure
 function buildInitialScheduleGroupSets(savedSettings) {
-  const modern = savedSettings?.scheduleGroupSets;
-  if (modern && typeof modern === "object") {
-    return modern;
-  }
-
-  const legacy = savedSettings?.scheduleGroups;
-  if (!legacy || typeof legacy !== "object") {
-    return {};
-  }
-
-  const migrated = {};
-  Object.entries(legacy).forEach(([scheduleId, groups]) => {
-    migrated[scheduleId] = {
-      sets: [
-        {
-          id: "set-1",
-          name: "Zestaw 1",
-          groups: groups || {},
-        },
-      ],
-    };
-  });
-
-  return migrated;
+  const scheduleGroupSets = savedSettings?.scheduleGroupSets;
+  return scheduleGroupSets && typeof scheduleGroupSets === "object"
+    ? scheduleGroupSets
+    : {};
 }
 
-function sanitizeGroupSetName(name, fallback = "Nowy zestaw") {
-  const value = String(name || "").trim();
-  return value || fallback;
-}
-
+// Generate a default name for a new group set based on the number of existing sets
 function buildNextDefaultSetName(sets) {
   return `Zestaw ${Number(sets?.length || 0) + 1}`;
 }
 
 export function useScheduleManager(savedSettings) {
+  // Resolve the fallback timetable id used during initial load.
   const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
 
+  // Persist currently selected timetable id.
   const [currentSchedule, setCurrentSchedule] = useState(
     savedSettings?.currentSchedule ?? defaultScheduleId,
   );
 
+  // Store all group sets keyed by schedule id.
   const [scheduleGroupSets, setScheduleGroupSets] = useState(() =>
     buildInitialScheduleGroupSets(savedSettings),
   );
 
+  // Track which group set is active for each schedule.
   const [activeGroupSetBySchedule, setActiveGroupSetBySchedule] = useState(
     savedSettings?.activeGroupSetBySchedule ?? {},
   );
 
+  // Keep loaded timetable payloads in-memory to avoid repeated imports.
   const [loadedTimetables, setLoadedTimetables] = useState(() => {
     const initial = {};
     const initialId = savedSettings?.currentSchedule ?? defaultScheduleId;
@@ -80,6 +62,7 @@ export function useScheduleManager(savedSettings) {
 
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
 
+  // Load timetable data when currentSchedule changes, if not already loaded
   useEffect(() => {
     let active = true;
     const targetId = currentSchedule || defaultScheduleId;
@@ -121,6 +104,7 @@ export function useScheduleManager(savedSettings) {
     [loadedTimetables, currentSchedule, defaultScheduleId],
   );
 
+  // Build default groups for the current timetable - memoized to prevent infinite loops
   const defaultGroups = useMemo(
     () => buildDefaultGroupsForTimetable(currentTimetable),
     [currentTimetable],
@@ -131,6 +115,7 @@ export function useScheduleManager(savedSettings) {
     [scheduleGroupSets, currentSchedule],
   );
 
+  // Pick active set id or fall back to the first available/default set id.
   const activeGroupSetId = useMemo(() => {
     return (
       activeGroupSetBySchedule[currentSchedule] ||
@@ -139,21 +124,25 @@ export function useScheduleManager(savedSettings) {
     );
   }, [activeGroupSetBySchedule, currentSchedule, currentGroupSets]);
 
+  // Resolve the full active set object from the current schedule.
   const activeGroupSet = useMemo(
     () => currentGroupSets.find((set) => set.id === activeGroupSetId),
     [currentGroupSets, activeGroupSetId],
   );
 
+  // Expose a stable active set name for UI controls.
   const activeGroupSetName = useMemo(
     () => activeGroupSet?.name || "Zestaw 1",
     [activeGroupSet],
   );
 
+  // Current group selections used to filter schedule events.
   const studentGroups = useMemo(
     () => activeGroupSet?.groups || defaultGroups,
     [activeGroupSet, defaultGroups],
   );
 
+  // Flatten active groups by schedule for persistence/export consumers.
   const scheduleGroups = useMemo(() => {
     const mapped = {};
     Object.entries(scheduleGroupSets).forEach(([scheduleId, config]) => {
@@ -165,8 +154,10 @@ export function useScheduleManager(savedSettings) {
     return mapped;
   }, [scheduleGroupSets, activeGroupSetBySchedule]);
 
+  // Expose schedule entries for view rendering.
   const schedule = useMemo(() => currentTimetable.schedule, [currentTimetable]);
 
+  // Expose subject dictionary used by cards, tooltips and exports.
   const subjects = useMemo(
     () => currentTimetable.subjects || {},
     [currentTimetable],
@@ -178,6 +169,7 @@ export function useScheduleManager(savedSettings) {
     [currentTimetable],
   );
 
+  // Initialize a default group set for schedules that do not have one yet.
   useEffect(() => {
     if (!currentSchedule || !currentTimetable?.groups?.length) return;
     setScheduleGroupSets((prev) => {
@@ -205,6 +197,7 @@ export function useScheduleManager(savedSettings) {
     });
   }, [currentSchedule, currentTimetable]);
 
+  // Normalize and store a single group input change inside the active set.
   const handleGroupChange = useCallback(
     (type, number) => {
       const rawValue = (number ?? "").toString().trim();
@@ -278,6 +271,7 @@ export function useScheduleManager(savedSettings) {
 
   const handleGroupSetChange = useCallback(
     (setId) => {
+      // Switch active set for the current schedule.
       setActiveGroupSetBySchedule((prev) => ({
         ...prev,
         [currentSchedule]: setId,
@@ -286,6 +280,7 @@ export function useScheduleManager(savedSettings) {
     [currentSchedule],
   );
 
+  // Create a new set by cloning groups from the active (or first) set.
   const handleCreateGroupSet = useCallback(
     (name) => {
       const nextId = `set-${Date.now()}`;
@@ -301,7 +296,7 @@ export function useScheduleManager(savedSettings) {
         };
 
         const fallbackName = buildNextDefaultSetName(sets);
-        const newSetName = sanitizeGroupSetName(name, fallbackName);
+        const newSetName = String(name || "").trim() || fallbackName;
 
         const newSet = {
           id: nextId,
@@ -326,32 +321,10 @@ export function useScheduleManager(savedSettings) {
     [currentSchedule, activeGroupSetId, defaultGroups],
   );
 
-  const handleUpdateActiveGroupSet = useCallback(() => {
-    setScheduleGroupSets((prev) => {
-      const existingConfig = prev[currentSchedule];
-      if (!existingConfig?.sets?.length) return prev;
-
-      const nextSets = existingConfig.sets.map((set) => {
-        if (set.id !== activeGroupSetId) return set;
-        return {
-          ...set,
-          groups: { ...studentGroups },
-        };
-      });
-
-      return {
-        ...prev,
-        [currentSchedule]: {
-          ...existingConfig,
-          sets: nextSets,
-        },
-      };
-    });
-  }, [currentSchedule, activeGroupSetId, studentGroups]);
-
+  // Rename active set while preventing empty names.
   const handleRenameActiveGroupSet = useCallback(
     (name) => {
-      const targetName = sanitizeGroupSetName(name, activeGroupSetName);
+      const targetName = String(name || "").trim() || activeGroupSetName;
 
       setScheduleGroupSets((prev) => {
         const existingConfig = prev[currentSchedule];
@@ -377,6 +350,7 @@ export function useScheduleManager(savedSettings) {
     [currentSchedule, activeGroupSetId, activeGroupSetName],
   );
 
+  // Delete the active set (if possible) and choose a new active set id.
   const handleDeleteActiveGroupSet = useCallback(() => {
     let nextActiveId = activeGroupSetId;
 
@@ -407,15 +381,18 @@ export function useScheduleManager(savedSettings) {
     });
   }, [currentSchedule, activeGroupSetId]);
 
+  // Build select-friendly options for group set switchers.
   const groupSetOptions = useMemo(
     () => currentGroupSets.map((set) => ({ id: set.id, name: set.name })),
     [currentGroupSets],
   );
 
+  // Update selected schedule id from UI controls.
   const handleScheduleChange = useCallback((scheduleId) => {
     setCurrentSchedule(scheduleId);
   }, []);
 
+  // Public API consumed by App and nested UI panels.
   return {
     currentSchedule,
     scheduleGroupSets,
@@ -432,9 +409,7 @@ export function useScheduleManager(savedSettings) {
     isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
-    handleSaveCurrentAsNewSet: handleCreateGroupSet,
     handleCreateGroupSet,
-    handleUpdateActiveGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
     handleScheduleChange,
