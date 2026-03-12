@@ -43,6 +43,7 @@ export default function Timetable() {
     subjects,
     groupConfigs,
     currentTimetable,
+    isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
@@ -262,6 +263,7 @@ export default function Timetable() {
         viewedWeekStart={viewedWeekStart}
         selectedLectoratSubject={selectedLectoratSubject}
         exportRef={exportRef}
+        isScheduleLoading={isScheduleLoading}
         viewedWeekRange={viewedWeekRange}
         selection={selection}
         combinedOptions={combinedOptions}
@@ -355,7 +357,8 @@ export default function Timetable() {
         options={combinedOptions}
         selection={selection}
         onChange={setSelection}
-        ref={exportRef}
+        exportRef={exportRef}
+        isScheduleLoading={isScheduleLoading}
         computeFiltered={computeFiltered}
         SCHEDULE={schedule}
         currentSchedule={currentSchedule}

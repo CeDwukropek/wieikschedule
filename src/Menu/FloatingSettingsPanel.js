@@ -34,7 +34,8 @@ export function FloatingSettingsPanel({
   computeFiltered,
   SCHEDULE,
   viewedWeekStart,
-  ref,
+  exportRef,
+  isScheduleLoading,
   viewedWeekRange,
   selection,
   options = [],
@@ -192,7 +193,8 @@ export function FloatingSettingsPanel({
 
           <ExportPngBtn
             viewMode={viewMode}
-            exportRef={ref}
+            exportRef={exportRef}
+            disabled={isScheduleLoading}
             viewedWeekRange={viewedWeekRange}
             selection={selection}
             combinedOptions={options}

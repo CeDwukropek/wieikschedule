@@ -68,7 +68,7 @@ const WeekView = forwardRef(function WeekView(
       `}</style>
 
       {/* Jeden scroll-container */}
-      <div className="week-grid">
+      <div ref={ref} className="week-grid">
         {/* Header row - Day names */}
         {dayNames.map((name, dayIndex) => (
           <div
