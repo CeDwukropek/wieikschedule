@@ -27,7 +27,8 @@ export default function FloatingMenu({
   canGoNextWeek,
   currentParity,
   currentRange,
-  ref,
+  exportRef,
+  isScheduleLoading,
   computeFiltered,
   SCHEDULE,
   currentSchedule,
@@ -101,7 +102,8 @@ export default function FloatingMenu({
         computeFiltered={computeFiltered}
         SCHEDULE={SCHEDULE}
         viewedWeekStart={viewedWeekStart}
-        ref={ref}
+        exportRef={exportRef}
+        isScheduleLoading={isScheduleLoading}
         viewedWeekRange={viewedWeekRange}
         selection={selection}
         options={options}

@@ -30,6 +30,7 @@ export default function ControlsPanel({
   viewedWeekStart,
   selectedLectoratSubject,
   exportRef,
+  isScheduleLoading,
   viewedWeekRange,
   selection,
   combinedOptions,
@@ -168,6 +169,7 @@ export default function ControlsPanel({
               <ExportPngBtn
                 viewMode={viewMode}
                 exportRef={exportRef}
+                disabled={isScheduleLoading}
                 viewedWeekRange={viewedWeekRange}
                 selection={selection}
                 combinedOptions={combinedOptions}
