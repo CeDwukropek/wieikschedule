@@ -6,6 +6,7 @@ import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
 import FAQ from "./FAQ";
+import ChatPopup from "./chatbot/ChatPopup";
 import { useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
@@ -405,6 +406,10 @@ export default function Timetable() {
         />
       )}
       <FAQ />
+      <ChatPopup
+        scheduleName={currentSchedule}
+        selectedGroups={studentGroups}
+      />
     </div>
   );
 }

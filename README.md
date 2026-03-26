@@ -24,6 +24,43 @@ See the section about [running tests](https://facebook.github.io/create-react-ap
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
+## n8n Chatbot Setup
+
+1. Create `.env.local` in the project root.
+2. Add your n8n webhook URL:
+
+```bash
+REACT_APP_N8N_CHAT_WEBHOOK=https://your-n8n-instance/webhook/your-chat-endpoint
+```
+
+3. Restart the dev server after changing env vars.
+
+The chat widget sends payloads in this shape:
+
+```json
+{
+	"message": "When is my next lab?",
+	"context": {
+		"scheduleName": "EiAs2",
+		"sessionId": "5f9781e4-00fb-4da3-96a0-8f4e87d3cc24",
+		"selectedGroups": {
+			"W": "W1",
+			"C": "C2",
+			"L": "L1",
+			"P": "P1",
+			"Lek": "LekN"
+		}
+	},
+	"metadata": {
+		"source": "wieikschedule-web",
+		"timestamp": "2026-03-25T10:00:00.000Z"
+	}
+}
+```
+
+Expected response can be either plain text or JSON with one of these string fields:
+`reply`, `response`, `answer`, `output`, `message`, `text`.
+
 The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
