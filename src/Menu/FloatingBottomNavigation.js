@@ -48,7 +48,7 @@ export function FloatingBottomNavigation({
   return (
     <>
       {open && (
-        <div className="sm:hidden fixed inset-x-4 bottom-28 z-40 rounded-3xl border border-neutral-800 bg-neutral-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="sm:hidden fixed bottom-28 z-40 rounded-3xl border border-neutral-800 bg-neutral-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
           <div className="p-3">
             <div className="mb-3 flex rounded-2xl bg-neutral-800 p-1">
               <button
@@ -103,9 +103,9 @@ export function FloatingBottomNavigation({
       )}
 
       <div className="sm:hidden fixed inset-x-4 bottom-4 z-50">
-        <div className="relative rounded-full border border-neutral-800 bg-neutral-950/95 px-4 py-5 shadow-2xl backdrop-blur-xl">
-          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
-            <div className="min-w-[170px] rounded-full border border-neutral-800 bg-neutral-950 px-5 py-2 text-center text-sm tracking-wide text-neutral-300 shadow-lg">
+        <div className="relative rounded-full border border-neutral-800 bg-neutral-950/95 px-3 py-3 shadow-2xl backdrop-blur-xl">
+          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[99%]">
+            <div className="min-w-[170px] rounded-t-[1.5rem] border border-neutral-800 bg-neutral-950 px-5 py-2 text-center text-sm tracking-wide text-neutral-300 shadow-lg">
               {label}
             </div>
           </div>
@@ -116,12 +116,12 @@ export function FloatingBottomNavigation({
               aria-label={
                 isWeek ? "Przełącz na widok dnia" : "Przełącz na widok tygodnia"
               }
-              className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-100 transition hover:bg-neutral-800 active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
             >
               {isWeek ? (
-                <Calendar className="h-8 w-8" strokeWidth={2.4} />
+                <Calendar className="h-5 w-5" strokeWidth={2.4} />
               ) : (
-                <List className="h-8 w-8" strokeWidth={2.4} />
+                <List className="h-5 w-5" strokeWidth={2.4} />
               )}
             </button>
 
@@ -143,7 +143,7 @@ export function FloatingBottomNavigation({
                 className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-neutral-800 active:scale-95"
               >
                 <span
-                  className={`h-6 w-6 rounded-full ${
+                  className={`h-3 w-3 rounded-full ${
                     isCurrent
                       ? "bg-lime-400 shadow-[0_0_18px_rgba(163,230,53,0.6)]"
                       : "bg-neutral-500"
