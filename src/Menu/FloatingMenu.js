@@ -7,6 +7,7 @@ export default function FloatingMenu({
   groupState,
   weekNavigation,
   daySelection,
+  dayNavigation,
   filtering,
   scheduleState,
   lektoratState,
@@ -37,6 +38,15 @@ export default function FloatingMenu({
     canGoNextWeek,
   } = weekNavigation || {};
   const { options = [], selection, onChange } = daySelection || {};
+  const {
+    onPrevDay,
+    onResetDay,
+    onNextDay,
+    currentDayLabel,
+    isCurrentDay,
+    canGoPrevDay,
+    canGoNextDay,
+  } = dayNavigation || {};
   const { filtered, computeFiltered } = filtering || {};
   const {
     schedule,
@@ -76,6 +86,13 @@ export default function FloatingMenu({
           isCurrentWeek={isCurrentWeek}
           canGoPrevWeek={canGoPrevWeek}
           canGoNextWeek={canGoNextWeek}
+          onPrevDay={onPrevDay}
+          onResetDay={onResetDay}
+          onNextDay={onNextDay}
+          currentDayLabel={currentDayLabel}
+          isCurrentDay={isCurrentDay}
+          canGoPrevDay={canGoPrevDay}
+          canGoNextDay={canGoNextDay}
           open={open}
           setOpen={setOpen}
         />
