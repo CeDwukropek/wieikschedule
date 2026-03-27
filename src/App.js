@@ -9,6 +9,7 @@ import { useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
+import { formatDate } from "./utils/dateUtils";
 
 export default function Timetable() {
   const exportRef = useRef(null);
@@ -60,7 +61,6 @@ export default function Timetable() {
     getRangeByOffset,
     getWeekStartByOffset,
     getOffsetForDate,
-    combinedOptions,
     defaultDayIndex,
   } = useDateHelpers();
 
@@ -198,16 +198,90 @@ export default function Timetable() {
     scheduleGroups,
   });
 
-  // Day view selection
-  const [selection, setSelection] = useState(`current:${defaultDayIndex}`);
+  const dayOptions = useMemo(() => {
+    const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
-  // Events for DayView filtered by selection's parity
+    if (
+      !Number.isFinite(minAllowedOffset) ||
+      !Number.isFinite(maxAllowedOffset)
+    ) {
+      return [0, 1].flatMap((offset) => {
+        const baseDate = getWeekStartByOffset(offset);
+        return names.map((name, i) => {
+          const d = new Date(baseDate);
+          d.setDate(d.getDate() + i);
+          return {
+            value: `${offset}:${i}`,
+            label: name,
+            date: formatDate(d),
+          };
+        });
+      });
+    }
+
+    const result = [];
+    for (
+      let offset = minAllowedOffset;
+      offset <= maxAllowedOffset;
+      offset += 1
+    ) {
+      const baseDate = getWeekStartByOffset(offset);
+      names.forEach((name, i) => {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        result.push({
+          value: `${offset}:${i}`,
+          label: name,
+          date: formatDate(d),
+        });
+      });
+    }
+    return result;
+  }, [getWeekStartByOffset, maxAllowedOffset, minAllowedOffset]);
+
+  const parseDaySelection = (value) => {
+    const [rawOffset, rawDay] = String(value || "").split(":");
+    const dayIndex = Number(rawDay);
+    const safeDayIndex = Number.isFinite(dayIndex)
+      ? Math.min(Math.max(dayIndex, 0), 4)
+      : defaultDayIndex;
+
+    if (rawOffset === "current") {
+      return { selectedWeekOffset: 0, selectedDayIndex: safeDayIndex };
+    }
+
+    if (rawOffset === "next") {
+      return { selectedWeekOffset: 1, selectedDayIndex: safeDayIndex };
+    }
+
+    const parsedOffset = Number(rawOffset);
+    const selectedWeekOffset = Number.isFinite(parsedOffset) ? parsedOffset : 0;
+
+    return { selectedWeekOffset, selectedDayIndex: safeDayIndex };
+  };
+
+  // Day view selection
+  const [selection, setSelection] = useState(`0:${defaultDayIndex}`);
+
+  useEffect(() => {
+    if (!dayOptions.length) return;
+    const exists = dayOptions.some((option) => option.value === selection);
+    if (exists) return;
+
+    const todayValue = `0:${defaultDayIndex}`;
+    const fallbackValue = dayOptions.some(
+      (option) => option.value === todayValue,
+    )
+      ? todayValue
+      : dayOptions[0].value;
+    setSelection(fallbackValue);
+  }, [dayOptions, defaultDayIndex, selection]);
+
+  // Events for DayView filtered by selected week offset
   const dayEvents = useMemo(() => {
     try {
-      const parts = (selection || "current:0").split(":");
-      const selParityToken = parts[0];
-      const selectedOffset = selParityToken === "next" ? 1 : 0;
-      const selectedWeekStart = getWeekStartByOffset(selectedOffset);
+      const { selectedWeekOffset } = parseDaySelection(selection);
+      const selectedWeekStart = getWeekStartByOffset(selectedWeekOffset);
       return computeFiltered(
         schedule,
         studentGroups,
@@ -230,6 +304,38 @@ export default function Timetable() {
     filtered,
     schedule,
   ]);
+
+  const selectedDayOptionIndex = useMemo(() => {
+    const index = dayOptions.findIndex((option) => option.value === selection);
+    return index >= 0 ? index : 0;
+  }, [dayOptions, selection]);
+
+  const selectedDayOption = dayOptions[selectedDayOptionIndex] || null;
+
+  const currentDayLabel = selectedDayOption
+    ? `${selectedDayOption.label} ${selectedDayOption.date}`
+    : "";
+
+  const canGoPrevDay = selectedDayOptionIndex > 0;
+  const canGoNextDay = selectedDayOptionIndex < dayOptions.length - 1;
+
+  const goToPrevDay = () => {
+    if (!canGoPrevDay) return;
+    setSelection(dayOptions[selectedDayOptionIndex - 1].value);
+  };
+
+  const goToNextDay = () => {
+    if (!canGoNextDay) return;
+    setSelection(dayOptions[selectedDayOptionIndex + 1].value);
+  };
+
+  const resetToCurrentDay = () => {
+    setSelection(`0:${defaultDayIndex}`);
+  };
+
+  const { selectedWeekOffset, selectedDayIndex } = parseDaySelection(selection);
+  const isCurrentDay =
+    selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
 
   const floatingMenuProps = {
     panelState: {
@@ -261,9 +367,18 @@ export default function Timetable() {
       canGoNextWeek,
     },
     daySelection: {
-      options: combinedOptions,
+      options: dayOptions,
       selection,
       onChange: setSelection,
+    },
+    dayNavigation: {
+      onPrevDay: goToPrevDay,
+      onResetDay: resetToCurrentDay,
+      onNextDay: goToNextDay,
+      currentDayLabel,
+      isCurrentDay,
+      canGoPrevDay,
+      canGoNextDay,
     },
     filtering: {
       filtered,
@@ -337,7 +452,7 @@ export default function Timetable() {
       exportRef,
       viewedWeekRange,
       selection,
-      combinedOptions,
+      combinedOptions: dayOptions,
     },
   };
 
@@ -421,7 +536,7 @@ export default function Timetable() {
           currentRange={currentRange}
           nextRange={nextRange}
           // control selection externally so BottomDayNav drives it
-          options={combinedOptions}
+          options={dayOptions}
           selection={selection}
           onSelectionChange={setSelection}
           ref={exportRef}
