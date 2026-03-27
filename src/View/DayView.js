@@ -7,7 +7,7 @@ const DayView = forwardRef(function DayView(
   ref,
 ) {
   const startHour = 7;
-  const endHour = 20;
+  const endHour = 22;
   const slotMinutes = 15;
   const totalSlots = (endHour - startHour) * (60 / slotMinutes);
 

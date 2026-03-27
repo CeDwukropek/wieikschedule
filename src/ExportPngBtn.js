@@ -3,13 +3,10 @@ import { toPng /*, toJpeg */ } from "html-to-image";
 export function ExportPngBtn({
   viewMode,
   exportRef,
-  weekParity,
-  currentParity,
-  currentRange,
-  nextRange,
-  nextParity,
+  disabled = false,
+  viewedWeekRange,
   selection,
-  combinedOptions,
+  combinedOptions = [],
 }) {
   // usuwa ogonki i zamienia spacje/znaki na podkreślenia
   const sanitizeFileName = (s) =>
@@ -23,15 +20,8 @@ export function ExportPngBtn({
   // generuje nazwę pliku na podstawie widoku i zakresu
   const getExportFilename = () => {
     if (viewMode === "week") {
-      // weź czytelny zakres aktywnego tygodnia
-      const range =
-        weekParity === currentParity
-          ? currentRange
-          : weekParity === nextParity
-            ? nextRange
-            : currentRange; // fallback
-
-      const label = `Tydzień_${range.replaceAll(" ", "")}}`;
+      const range = viewedWeekRange || "Tydzień";
+      const label = `Tydzień_${range.replaceAll(" ", "")}`;
       return sanitizeFileName(label) + ".png";
     } else {
       // dla dnia: "Poniedziałek_06.10"
@@ -43,8 +33,9 @@ export function ExportPngBtn({
 
   return (
     <button
+      disabled={disabled}
       onClick={async () => {
-        if (!exportRef.current) return;
+        if (disabled || !exportRef?.current) return;
         // (opcjonalnie) poczekaj na fonty, żeby tekst się nie „przesunął”
         if (document.fonts?.ready) await document.fonts.ready;
         const dataUrl = await toPng(exportRef.current, {
@@ -57,9 +48,13 @@ export function ExportPngBtn({
         a.download = getExportFilename();
         a.click();
       }}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 text-gray-300"
+      className={`w-full px-3 py-2 text-white rounded transition-colors text-sm ${
+        disabled
+          ? "bg-blue-900/50 cursor-not-allowed opacity-60"
+          : "bg-blue-700 hover:bg-blue-600"
+      }`}
     >
-      Eksport PNG
+      {disabled ? "Ładowanie planu..." : "Eksport PNG"}
     </button>
   );
 }

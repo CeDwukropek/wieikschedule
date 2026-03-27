@@ -16,18 +16,9 @@ const ITEMS = [
     href: "https://samorzad.pk.edu.pl/mapa",
   },
   {
-    q: "Czy są gdzieś notatki z Wstepu do matematyki inzynierskiej?",
-    a: "Tak, regularnie uzupełniane notatki są dostępne tutaj, jednak daleko im do kompletności:",
-    href: "https://tinyurl.com/4uybarv8",
-  },
-  {
     q: "Ktoś kiedyś podesłał link do kursu ETRAPEZ, gdzie on jest?",
     a: "Tu:",
     href: "https://tinyurl.com/yvkdknth",
-  },
-  {
-    q: "Czy są gdziś notatki z Fizyki?",
-    a: "Jeszcze nie, ale będą.",
   },
 ];
 
