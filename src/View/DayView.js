@@ -1,6 +1,8 @@
 import React, { useMemo, forwardRef } from "react";
 import EventCard from "../EventCard";
+import EventTooltipWrapper from "../EventTooltipWrapper";
 import { timeToMinutes } from "../utils";
+import "./ViewStyles.css";
 
 const DayView = forwardRef(function DayView(
   { events, subjects = {}, selection: externalSelection },
@@ -19,9 +21,17 @@ const DayView = forwardRef(function DayView(
   );
 
   const selection = externalSelection;
-  // parse selection into parityToken and selectedDay
-  const [selParity, selDay] = selection.split(":");
-  const selectedDayIndex = Number(selDay);
+  // support both legacy (current/next) and numeric week offset selection formats
+  const [rawOffset, rawDay] = String(selection || "").split(":");
+  const selectedDayIndex = Number.isFinite(Number(rawDay))
+    ? Number(rawDay)
+    : defaultDayIndex;
+  const selectedWeekOffset =
+    rawOffset === "current"
+      ? 0
+      : rawOffset === "next"
+        ? 1
+        : Number(rawOffset) || 0;
 
   function groupOverlapping(eventsForDay) {
     const sorted = [...eventsForDay].sort(
@@ -57,15 +67,15 @@ const DayView = forwardRef(function DayView(
   );
   const groups = useMemo(() => groupOverlapping(eventsForDay), [eventsForDay]);
 
-  // highlight if the displayed day is today and parity is current
+  // highlight if the displayed day is today in the current week
   const isTodayDisplayed =
-    selParity === "current" && selectedDayIndex === defaultDayIndex;
+    selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
 
   return (
     <div>
       <div
         ref={ref}
-        className={`grid grid-cols-[60px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
+        className={`grid grid-cols-[40px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
           isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
         }`}
       >
@@ -120,7 +130,11 @@ const DayView = forwardRef(function DayView(
                     zIndex: 10 + ei,
                   }}
                 >
-                  <EventCard ev={ev} subjects={subjects} />
+                  <div className="h-full w-full rounded bg-neutral-900">
+                    <EventTooltipWrapper ev={ev}>
+                      <EventCard ev={ev} subjects={subjects} />
+                    </EventTooltipWrapper>
+                  </div>
                 </div>
               );
             }),

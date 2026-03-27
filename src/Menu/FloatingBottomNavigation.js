@@ -104,8 +104,8 @@ export function FloatingBottomNavigation({
 
       <div className="sm:hidden fixed inset-x-4 bottom-4 z-50">
         <div className="relative rounded-full border border-neutral-800 bg-neutral-950/95 px-3 py-3 shadow-2xl backdrop-blur-xl">
-          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[99%]">
-            <div className="min-w-[170px] rounded-t-[1.5rem] border border-neutral-800 bg-neutral-950 px-5 py-2 text-center text-sm tracking-wide text-neutral-300 shadow-lg">
+          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
+            <div className="min-w-[170px] rounded-t-[1.5rem] border border-neutral-800 bg-neutral-950 px-5 pt-2 text-center text-sm tracking-wide text-neutral-300 shadow-lg border-b-neutral-950">
               {label}
             </div>
           </div>
