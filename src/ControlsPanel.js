@@ -18,7 +18,11 @@ export default function ControlsPanel({
   exportState,
 }) {
   const { isOpen, onToggle } = panelState || {};
-  const { currentSchedule, onScheduleChange } = scheduleState || {};
+  const {
+    currentSchedule,
+    onScheduleChange,
+    isScheduleLoading = false,
+  } = scheduleState || {};
   const {
     activeGroupSetId,
     activeGroupSetName,

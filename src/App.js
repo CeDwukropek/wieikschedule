@@ -300,6 +300,7 @@ export default function Timetable() {
     scheduleState: {
       currentSchedule,
       onScheduleChange: handleScheduleChange,
+      isScheduleLoading,
     },
     groupSetState: {
       activeGroupSetId,
