@@ -1,6 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { Menu } from "lucide-react";
-import { allTimetables } from "./timetables";
 import ControlsPanel from "./ControlsPanel";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
@@ -47,7 +46,6 @@ export default function Timetable() {
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
-    handleUpdateActiveGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
     handleScheduleChange,
@@ -233,47 +231,121 @@ export default function Timetable() {
     schedule,
   ]);
 
+  const floatingMenuProps = {
+    panelState: {
+      open,
+      setOpen,
+      isControlsPanelOpen,
+    },
+    viewState: {
+      viewMode,
+      setViewMode,
+      hideLectures,
+      setHideLectures,
+      showAll,
+      setShowAll,
+    },
+    groupState: {
+      studentGroups,
+      groupConfigs,
+      handleGroupChange,
+    },
+    weekNavigation: {
+      onPrevWeek: goToPrevWeek,
+      onResetWeek: resetToCurrentWeek,
+      onNextWeek: goToNextWeek,
+      viewedWeekRange,
+      viewedWeekStart,
+      isCurrentWeek: weekOffset === 0,
+      canGoPrevWeek,
+      canGoNextWeek,
+    },
+    daySelection: {
+      options: combinedOptions,
+      selection,
+      onChange: setSelection,
+    },
+    filtering: {
+      filtered,
+      computeFiltered,
+    },
+    scheduleState: {
+      schedule,
+      currentSchedule,
+      activeGroupSetId,
+      activeGroupSetName,
+      groupSetOptions,
+      onGroupSetChange: handleGroupSetChange,
+      onCreateGroupSet: handleCreateGroupSet,
+      onRenameActiveGroupSet: handleRenameActiveGroupSet,
+      onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+      onScheduleChange: handleScheduleChange,
+    },
+    lektoratState: {
+      lektoratOptions,
+      selectedLectoratSubject,
+      onLectoratChange: handleLectoratChange,
+      shouldShowLectoratSelect,
+    },
+    exportState: {
+      exportRef,
+    },
+  };
+
+  const controlsPanelProps = {
+    panelState: {
+      isOpen: isControlsPanelOpen,
+      onToggle: () => setIsControlsPanelOpen((prev) => !prev),
+    },
+    scheduleState: {
+      currentSchedule,
+      onScheduleChange: handleScheduleChange,
+      isScheduleLoading,
+    },
+    groupSetState: {
+      activeGroupSetId,
+      activeGroupSetName,
+      groupSetOptions,
+      onGroupSetChange: handleGroupSetChange,
+      onCreateGroupSet: handleCreateGroupSet,
+      onRenameActiveGroupSet: handleRenameActiveGroupSet,
+      onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+    },
+    viewState: {
+      viewMode,
+      onViewModeToggle: () =>
+        setViewMode((prev) => (prev === "week" ? "day" : "week")),
+      hideLectures,
+      onToggleHideLectures: () => setHideLectures((prev) => !prev),
+      showAll,
+      onToggleShowAll: () => setShowAll((prev) => !prev),
+    },
+    filterState: {
+      schedule,
+      studentGroups,
+      computeFiltered,
+      groupConfigs,
+      onGroupChange: handleGroupChange,
+    },
+    lektoratState: {
+      shouldShowLectoratSelect,
+      selectedLectoratSubject,
+      onLectoratChange: handleLectoratChange,
+      lektoratOptions,
+    },
+    exportState: {
+      exportRef,
+      viewedWeekRange,
+      selection,
+      combinedOptions,
+    },
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
-      <ControlsPanel
-        isOpen={isControlsPanelOpen}
-        onToggle={() => setIsControlsPanelOpen(!isControlsPanelOpen)}
-        currentSchedule={currentSchedule}
-        onScheduleChange={handleScheduleChange}
-        allTimetables={allTimetables}
-        activeGroupSetId={activeGroupSetId}
-        activeGroupSetName={activeGroupSetName}
-        groupSetOptions={groupSetOptions}
-        onGroupSetChange={handleGroupSetChange}
-        onCreateGroupSet={handleCreateGroupSet}
-        onRenameActiveGroupSet={handleRenameActiveGroupSet}
-        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
-        viewMode={viewMode}
-        onViewModeToggle={() =>
-          setViewMode((prev) => (prev === "week" ? "day" : "week"))
-        }
-        hideLectures={hideLectures}
-        onToggleHideLectures={() => setHideLectures(!hideLectures)}
-        showAll={showAll}
-        onToggleShowAll={() => setShowAll(!showAll)}
-        schedule={schedule}
-        studentGroups={studentGroups}
-        viewedWeekStart={viewedWeekStart}
-        selectedLectoratSubject={selectedLectoratSubject}
-        exportRef={exportRef}
-        isScheduleLoading={isScheduleLoading}
-        viewedWeekRange={viewedWeekRange}
-        selection={selection}
-        combinedOptions={combinedOptions}
-        computeFiltered={computeFiltered}
-        groupConfigs={groupConfigs}
-        onGroupChange={handleGroupChange}
-        shouldShowLectoratSelect={shouldShowLectoratSelect}
-        onLectoratChange={handleLectoratChange}
-        lektoratOptions={lektoratOptions}
-      />
+      <ControlsPanel {...controlsPanelProps} />
 
       {/* --- Current period bar: auto parity + next week --- */}
 
@@ -329,56 +401,7 @@ export default function Timetable() {
 
       {/* Floating menu / settings (bottom-right) */}
 
-      <FloatingMenu
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        hideLectures={hideLectures}
-        setHideLectures={setHideLectures}
-        showAll={showAll}
-        setShowAll={setShowAll}
-        studentGroups={studentGroups}
-        groupConfigs={groupConfigs}
-        handleGroupChange={handleGroupChange}
-        onPrevWeek={goToPrevWeek}
-        onResetWeek={resetToCurrentWeek}
-        onNextWeek={goToNextWeek}
-        viewedWeekRange={viewedWeekRange}
-        viewedWeekStart={viewedWeekStart}
-        isCurrentWeek={weekOffset === 0}
-        canGoPrevWeek={canGoPrevWeek}
-        canGoNextWeek={canGoNextWeek}
-        currentParity={currentParity}
-        currentRange={currentRange}
-        nextRange={nextRange}
-        nextParity={nextParity}
-        filtered={filtered}
-        open={open}
-        setOpen={setOpen}
-        options={combinedOptions}
-        selection={selection}
-        onChange={setSelection}
-        exportRef={exportRef}
-        isScheduleLoading={isScheduleLoading}
-        computeFiltered={computeFiltered}
-        SCHEDULE={schedule}
-        currentSchedule={currentSchedule}
-        activeGroupSetId={activeGroupSetId}
-        groupSetOptions={groupSetOptions}
-        onGroupSetChange={handleGroupSetChange}
-        onSaveGroupSet={handleCreateGroupSet}
-        onCreateGroupSet={handleCreateGroupSet}
-        onUpdateActiveGroupSet={handleUpdateActiveGroupSet}
-        onRenameActiveGroupSet={handleRenameActiveGroupSet}
-        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
-        activeGroupSetName={activeGroupSetName}
-        lektoratOptions={lektoratOptions}
-        selectedLectoratSubject={selectedLectoratSubject}
-        onLectoratChange={handleLectoratChange}
-        shouldShowLectoratSelect={shouldShowLectoratSelect}
-        onScheduleChange={handleScheduleChange}
-        allTimetables={allTimetables}
-        isControlsPanelOpen={isControlsPanelOpen}
-      />
+      <FloatingMenu {...floatingMenuProps} />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView

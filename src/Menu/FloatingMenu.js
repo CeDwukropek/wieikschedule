@@ -2,53 +2,62 @@ import { FloatingBottomNavigation } from "./FloatingBottomNavigation";
 import { FloatingSettingsPanel } from "./FloatingSettingsPanel";
 
 export default function FloatingMenu({
-  viewMode,
-  setViewMode,
-  hideLectures,
-  setHideLectures,
-  showAll,
-  setShowAll,
-  studentGroups,
-  groupConfigs = [],
-  handleGroupChange,
-  filtered,
-  open,
-  setOpen,
-  options = [],
-  selection,
-  onChange,
-  onPrevWeek,
-  onResetWeek,
-  onNextWeek,
-  viewedWeekRange,
-  viewedWeekStart,
-  isCurrentWeek,
-  canGoPrevWeek,
-  canGoNextWeek,
-  currentParity,
-  currentRange,
-  exportRef,
-  isScheduleLoading,
-  computeFiltered,
-  SCHEDULE,
-  currentSchedule,
-  activeGroupSetId,
-  activeGroupSetName,
-  groupSetOptions = [],
-  onGroupSetChange,
-  onSaveGroupSet,
-  onCreateGroupSet,
-  onUpdateActiveGroupSet,
-  onRenameActiveGroupSet,
-  onDeleteActiveGroupSet,
-  lektoratOptions = [],
-  selectedLectoratSubject,
-  onLectoratChange,
-  shouldShowLectoratSelect,
-  onScheduleChange,
-  allTimetables = [],
-  isControlsPanelOpen = false,
+  panelState,
+  viewState,
+  groupState,
+  weekNavigation,
+  daySelection,
+  filtering,
+  scheduleState,
+  lektoratState,
+  exportState,
 }) {
+  const { open, setOpen, isControlsPanelOpen = false } = panelState || {};
+  const {
+    viewMode,
+    setViewMode,
+    hideLectures,
+    setHideLectures,
+    showAll,
+    setShowAll,
+  } = viewState || {};
+  const {
+    studentGroups,
+    groupConfigs = [],
+    handleGroupChange,
+  } = groupState || {};
+  const {
+    onPrevWeek,
+    onResetWeek,
+    onNextWeek,
+    viewedWeekRange,
+    viewedWeekStart,
+    isCurrentWeek,
+    canGoPrevWeek,
+    canGoNextWeek,
+  } = weekNavigation || {};
+  const { options = [], selection, onChange } = daySelection || {};
+  const { filtered, computeFiltered } = filtering || {};
+  const {
+    schedule,
+    currentSchedule,
+    activeGroupSetId,
+    activeGroupSetName,
+    groupSetOptions = [],
+    onGroupSetChange,
+    onCreateGroupSet,
+    onRenameActiveGroupSet,
+    onDeleteActiveGroupSet,
+    onScheduleChange,
+  } = scheduleState || {};
+  const {
+    lektoratOptions = [],
+    selectedLectoratSubject,
+    onLectoratChange,
+    shouldShowLectoratSelect,
+  } = lektoratState || {};
+  const { exportRef } = exportState || {};
+
   // whole floating menu visible only on mobile (hidden on sm and larger, and when panel is open)
   return (
     <div className={`${isControlsPanelOpen ? "hidden" : ""} sm:hidden`}>
@@ -76,12 +85,10 @@ export default function FloatingMenu({
         open={open}
         currentSchedule={currentSchedule}
         onScheduleChange={onScheduleChange}
-        allTimetables={allTimetables}
         activeGroupSetId={activeGroupSetId}
         activeGroupSetName={activeGroupSetName}
         groupSetOptions={groupSetOptions}
         onGroupSetChange={onGroupSetChange}
-        onSaveGroupSet={onSaveGroupSet}
         onCreateGroupSet={onCreateGroupSet}
         onRenameActiveGroupSet={onRenameActiveGroupSet}
         onDeleteActiveGroupSet={onDeleteActiveGroupSet}
@@ -100,10 +107,9 @@ export default function FloatingMenu({
         lektoratOptions={lektoratOptions}
         setOpen={setOpen}
         computeFiltered={computeFiltered}
-        SCHEDULE={SCHEDULE}
+        schedule={schedule}
         viewedWeekStart={viewedWeekStart}
         exportRef={exportRef}
-        isScheduleLoading={isScheduleLoading}
         viewedWeekRange={viewedWeekRange}
         selection={selection}
         options={options}
