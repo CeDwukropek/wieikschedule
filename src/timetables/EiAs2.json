@@ -11,7 +11,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-23",
@@ -23,7 +23,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-23",
@@ -35,7 +35,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-23",
@@ -47,7 +47,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-23",
@@ -59,7 +59,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-23",
@@ -71,7 +71,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-23",
@@ -83,7 +83,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-23",
@@ -95,7 +95,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-23",
@@ -107,7 +107,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-23",
@@ -119,7 +119,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-02-23",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-02-23",
@@ -128,46 +140,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-02-23",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-02-23",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-02-24",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-02-24",
@@ -179,7 +179,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-24",
@@ -191,7 +191,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-24",
@@ -203,7 +203,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-24",
@@ -215,7 +215,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-24",
@@ -227,7 +227,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-24",
@@ -239,7 +239,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-24",
@@ -251,7 +251,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-24",
@@ -263,7 +263,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-02-25",
@@ -275,7 +275,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-25",
@@ -287,7 +287,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-25",
@@ -299,7 +299,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-25",
@@ -311,7 +311,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-25",
@@ -323,7 +323,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-25",
@@ -335,7 +335,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-25",
@@ -347,7 +347,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-25",
@@ -359,7 +359,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-25",
@@ -371,7 +371,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-25",
@@ -383,7 +383,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-02-25",
@@ -395,7 +395,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-25",
@@ -407,7 +407,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -419,7 +419,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-26",
@@ -431,7 +431,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -443,7 +443,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-26",
@@ -455,7 +455,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -467,7 +467,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-26",
@@ -479,7 +479,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -491,7 +491,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-26",
@@ -503,7 +503,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -515,7 +515,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-26",
@@ -527,7 +527,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -539,7 +539,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-26",
@@ -551,7 +551,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-26",
@@ -563,7 +563,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-02-26",
@@ -575,7 +575,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-02-27",
@@ -587,7 +587,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-02-27",
@@ -599,7 +599,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-02-27",
@@ -611,7 +611,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-27",
@@ -623,7 +623,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-27",
@@ -635,7 +635,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-02-27",
@@ -647,7 +647,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-02",
@@ -659,7 +659,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-02",
@@ -671,7 +671,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-02",
@@ -683,7 +683,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-02",
@@ -695,7 +695,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-02",
@@ -707,7 +707,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-02",
@@ -719,7 +719,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-02",
@@ -731,7 +731,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-02",
@@ -743,7 +743,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-02",
@@ -755,7 +755,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-02",
@@ -767,7 +767,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-02",
@@ -779,19 +779,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-03-03",
+      "date": "2026-03-02",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-03",
@@ -803,7 +803,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-03",
@@ -815,7 +815,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-03",
@@ -827,7 +827,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-03",
@@ -839,7 +839,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-03",
@@ -851,7 +851,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-03",
@@ -863,7 +863,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -875,7 +875,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-04",
@@ -887,7 +887,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -899,7 +899,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-04",
@@ -911,7 +911,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -923,7 +923,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -935,7 +935,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-04",
@@ -947,7 +947,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -959,7 +959,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-04",
@@ -971,7 +971,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-04",
@@ -983,7 +983,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-04",
@@ -995,7 +995,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1007,7 +1007,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-05",
@@ -1019,7 +1019,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1031,7 +1031,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-05",
@@ -1043,7 +1043,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1055,7 +1055,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-05",
@@ -1067,7 +1067,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1079,7 +1079,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-05",
@@ -1091,7 +1091,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1103,7 +1103,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-05",
@@ -1115,7 +1115,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1127,7 +1127,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-05",
@@ -1139,7 +1139,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-05",
@@ -1151,7 +1151,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-05",
@@ -1163,7 +1163,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-06",
@@ -1175,7 +1175,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-06",
@@ -1187,7 +1187,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-06",
@@ -1199,7 +1199,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-06",
@@ -1211,7 +1211,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-06",
@@ -1223,7 +1223,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-09",
@@ -1235,7 +1235,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-09",
@@ -1247,7 +1247,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-09",
@@ -1259,7 +1259,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-09",
@@ -1271,7 +1271,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-09",
@@ -1283,7 +1283,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-09",
@@ -1295,7 +1295,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-09",
@@ -1307,7 +1307,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-09",
@@ -1319,7 +1319,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-09",
@@ -1331,7 +1331,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-09",
@@ -1343,7 +1343,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-03-09",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-03-09",
@@ -1352,46 +1364,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-03-09",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-09",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-10",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-10",
@@ -1403,7 +1403,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-10",
@@ -1415,7 +1415,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-10",
@@ -1427,7 +1427,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-10",
@@ -1439,7 +1439,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-10",
@@ -1451,7 +1451,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-10",
@@ -1463,7 +1463,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-10",
@@ -1475,7 +1475,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-10",
@@ -1487,7 +1487,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-11",
@@ -1499,7 +1499,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-11",
@@ -1511,7 +1511,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-11",
@@ -1523,7 +1523,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-11",
@@ -1535,7 +1535,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-11",
@@ -1547,7 +1547,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-11",
@@ -1559,7 +1559,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-11",
@@ -1571,7 +1571,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-11",
@@ -1583,7 +1583,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-11",
@@ -1595,7 +1595,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-11",
@@ -1607,7 +1607,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-11",
@@ -1619,7 +1619,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-11",
@@ -1631,7 +1631,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1643,7 +1643,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-12",
@@ -1655,7 +1655,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-03-12",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1667,7 +1679,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1679,7 +1691,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1691,7 +1703,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1703,7 +1715,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1715,7 +1727,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1727,7 +1739,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1739,7 +1751,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1751,7 +1763,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1763,7 +1775,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-12",
@@ -1775,7 +1787,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-12",
@@ -1787,7 +1799,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-12",
@@ -1799,7 +1811,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-13",
@@ -1811,7 +1823,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-13",
@@ -1823,7 +1835,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-13",
@@ -1835,7 +1847,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-13",
@@ -1847,7 +1859,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-13",
@@ -1859,7 +1871,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-13",
@@ -1871,7 +1883,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-16",
@@ -1883,7 +1895,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-16",
@@ -1895,7 +1907,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-16",
@@ -1907,7 +1919,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-16",
@@ -1919,7 +1931,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-16",
@@ -1931,7 +1943,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-16",
@@ -1943,7 +1955,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-16",
@@ -1955,7 +1967,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-16",
@@ -1967,7 +1979,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-16",
@@ -1979,7 +1991,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-16",
@@ -1991,7 +2003,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-16",
@@ -2003,19 +2015,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-03-17",
+      "date": "2026-03-16",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-17",
@@ -2027,7 +2039,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-17",
@@ -2039,7 +2051,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-17",
@@ -2051,7 +2063,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-17",
@@ -2063,7 +2075,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-17",
@@ -2075,7 +2087,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-17",
@@ -2087,7 +2099,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2099,7 +2111,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2111,7 +2123,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
+    },
+    {
+      "date": "2026-03-18",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-18",
@@ -2123,7 +2147,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-18",
@@ -2135,7 +2159,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2147,7 +2171,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2159,7 +2183,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-18",
@@ -2171,7 +2195,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2183,7 +2207,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-18",
@@ -2195,7 +2219,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-18",
@@ -2207,7 +2231,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-18",
@@ -2219,19 +2243,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-19",
@@ -2243,7 +2267,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-03-19",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2255,7 +2291,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2267,7 +2303,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
@@ -2279,7 +2315,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2291,7 +2327,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
@@ -2303,7 +2339,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2315,7 +2351,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
@@ -2327,7 +2363,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2339,7 +2375,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
@@ -2351,7 +2387,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-19",
@@ -2363,7 +2399,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-19",
@@ -2375,7 +2411,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-19",
@@ -2387,7 +2423,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-20",
@@ -2399,7 +2435,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-20",
@@ -2411,7 +2447,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-20",
@@ -2423,7 +2459,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-20",
@@ -2435,7 +2471,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-20",
@@ -2447,7 +2483,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-23",
@@ -2459,7 +2495,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-23",
@@ -2471,7 +2507,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-23",
@@ -2483,7 +2519,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-23",
@@ -2495,7 +2531,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-23",
@@ -2507,7 +2543,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-23",
@@ -2519,7 +2555,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-23",
@@ -2531,7 +2567,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-23",
@@ -2543,7 +2579,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-23",
@@ -2555,7 +2591,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-23",
@@ -2567,7 +2603,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-03-23",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-03-23",
@@ -2576,46 +2624,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-03-23",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-23",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-24",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-24",
@@ -2627,7 +2663,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-24",
@@ -2639,7 +2675,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-24",
@@ -2651,7 +2687,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-24",
@@ -2663,7 +2699,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-24",
@@ -2675,7 +2711,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-24",
@@ -2687,7 +2723,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-24",
@@ -2699,7 +2735,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-24",
@@ -2711,7 +2747,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-25",
@@ -2723,7 +2759,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-25",
@@ -2735,7 +2771,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-25",
@@ -2747,7 +2783,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-25",
@@ -2759,7 +2795,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-25",
@@ -2771,7 +2807,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-25",
@@ -2783,7 +2819,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-25",
@@ -2795,7 +2831,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-25",
@@ -2807,7 +2843,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-25",
@@ -2819,7 +2855,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-25",
@@ -2831,7 +2867,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-25",
@@ -2843,7 +2879,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-25",
@@ -2855,19 +2891,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-26",
@@ -2879,7 +2915,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-03-26",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -2891,7 +2939,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -2903,7 +2951,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
@@ -2915,7 +2963,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -2927,7 +2975,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
@@ -2939,7 +2987,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -2951,7 +2999,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
@@ -2963,7 +3011,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -2975,7 +3023,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
@@ -2987,7 +3035,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-26",
@@ -2999,7 +3047,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-26",
@@ -3011,7 +3059,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-26",
@@ -3023,7 +3071,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-27",
@@ -3035,7 +3083,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-27",
@@ -3047,7 +3095,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-27",
@@ -3059,7 +3107,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-27",
@@ -3071,7 +3119,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-27",
@@ -3083,7 +3131,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-27",
@@ -3095,7 +3143,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-03-30",
@@ -3107,7 +3155,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-30",
@@ -3119,7 +3167,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-30",
@@ -3131,7 +3179,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-30",
@@ -3143,7 +3191,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-30",
@@ -3155,7 +3203,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-30",
@@ -3167,7 +3215,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-30",
@@ -3179,7 +3227,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-30",
@@ -3191,7 +3239,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-30",
@@ -3203,7 +3251,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-30",
@@ -3215,7 +3263,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-30",
@@ -3227,19 +3275,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-03-31",
+      "date": "2026-03-30",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-31",
@@ -3251,7 +3299,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-03-31",
@@ -3263,7 +3311,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-03-31",
@@ -3275,7 +3323,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-03-31",
@@ -3287,7 +3335,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-03-31",
@@ -3299,7 +3347,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-03-31",
@@ -3311,7 +3359,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-01",
@@ -3407,7 +3455,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-08",
@@ -3419,7 +3467,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-08",
@@ -3431,7 +3479,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-08",
@@ -3443,7 +3491,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-08",
@@ -3455,7 +3503,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-08",
@@ -3467,7 +3515,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-08",
@@ -3479,7 +3527,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-08",
@@ -3491,7 +3539,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-08",
@@ -3503,7 +3551,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-08",
@@ -3515,7 +3563,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-08",
@@ -3527,7 +3575,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-08",
@@ -3539,19 +3587,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-09",
@@ -3563,7 +3611,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-09",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3575,7 +3635,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3587,7 +3647,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
@@ -3599,7 +3659,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3611,7 +3671,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
@@ -3623,7 +3683,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3635,7 +3695,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
@@ -3647,7 +3707,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3659,7 +3719,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
@@ -3671,7 +3731,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-09",
@@ -3683,7 +3743,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-09",
@@ -3695,7 +3755,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-09",
@@ -3707,7 +3767,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-10",
@@ -3719,7 +3779,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-10",
@@ -3731,7 +3791,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-10",
@@ -3743,7 +3803,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-10",
@@ -3755,7 +3815,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-10",
@@ -3767,7 +3827,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-10",
@@ -3779,7 +3839,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-13",
@@ -3791,7 +3851,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-13",
@@ -3803,7 +3863,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-13",
@@ -3815,7 +3875,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-13",
@@ -3827,7 +3887,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-13",
@@ -3839,7 +3899,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-13",
@@ -3851,7 +3911,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-13",
@@ -3863,7 +3923,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-13",
@@ -3875,7 +3935,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-13",
@@ -3887,7 +3947,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-13",
@@ -3899,7 +3959,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-13",
@@ -3911,19 +3971,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-04-14",
+      "date": "2026-04-13",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-14",
@@ -3935,7 +3995,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-14",
@@ -3947,7 +4007,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-14",
@@ -3959,7 +4019,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-14",
@@ -3971,7 +4031,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-14",
@@ -3983,7 +4043,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-14",
@@ -3995,7 +4055,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-15",
@@ -4007,7 +4067,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-15",
@@ -4019,7 +4079,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-15",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-15",
@@ -4031,7 +4103,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-15",
@@ -4043,7 +4115,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-15",
@@ -4055,7 +4127,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-15",
@@ -4067,7 +4139,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-15",
@@ -4079,7 +4151,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-15",
@@ -4091,7 +4163,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-15",
@@ -4103,7 +4175,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-15",
@@ -4115,7 +4187,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-15",
@@ -4127,19 +4199,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-16",
@@ -4151,7 +4223,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-16",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4163,7 +4247,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4175,7 +4259,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
@@ -4187,7 +4271,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4199,7 +4283,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
@@ -4211,7 +4295,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4223,7 +4307,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
@@ -4235,7 +4319,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4247,7 +4331,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
@@ -4259,7 +4343,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-16",
@@ -4271,7 +4355,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-16",
@@ -4283,7 +4367,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-16",
@@ -4295,7 +4379,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-17",
@@ -4307,7 +4391,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-17",
@@ -4319,7 +4403,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-17",
@@ -4331,7 +4415,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-17",
@@ -4343,7 +4427,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-17",
@@ -4355,7 +4439,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-20",
@@ -4367,7 +4451,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-20",
@@ -4379,7 +4463,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-20",
@@ -4391,7 +4475,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-20",
@@ -4403,7 +4487,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-20",
@@ -4415,7 +4499,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-20",
@@ -4427,7 +4511,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-20",
@@ -4439,7 +4523,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-20",
@@ -4451,7 +4535,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-20",
@@ -4463,7 +4547,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-20",
@@ -4475,7 +4559,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-04-20",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-04-20",
@@ -4484,46 +4580,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-04-20",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-20",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-21",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-21",
@@ -4535,7 +4619,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-21",
@@ -4547,7 +4631,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-21",
@@ -4559,7 +4643,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-21",
@@ -4571,7 +4655,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-21",
@@ -4583,7 +4667,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-21",
@@ -4595,7 +4679,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-21",
@@ -4607,7 +4691,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-21",
@@ -4619,7 +4703,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-22",
@@ -4631,7 +4715,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-22",
@@ -4643,7 +4727,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-22",
@@ -4655,7 +4739,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-22",
@@ -4667,7 +4751,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-22",
@@ -4679,7 +4763,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-22",
@@ -4691,7 +4775,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-22",
@@ -4703,7 +4787,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-22",
@@ -4715,7 +4799,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-22",
@@ -4727,7 +4811,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-22",
@@ -4739,7 +4823,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-22",
@@ -4751,7 +4835,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-22",
@@ -4763,7 +4847,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-22",
@@ -4775,19 +4859,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-23",
@@ -4799,7 +4883,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-23",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4811,7 +4907,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4823,7 +4919,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
@@ -4835,7 +4931,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4847,7 +4943,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
@@ -4859,7 +4955,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4871,7 +4967,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
@@ -4883,7 +4979,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4895,7 +4991,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
@@ -4907,7 +5003,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-23",
@@ -4919,7 +5015,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-23",
@@ -4931,7 +5027,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-23",
@@ -4943,7 +5039,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-24",
@@ -4955,7 +5051,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-24",
@@ -4967,7 +5063,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-24",
@@ -4979,7 +5075,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-24",
@@ -4991,7 +5087,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-24",
@@ -5003,7 +5099,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-24",
@@ -5015,7 +5111,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-27",
@@ -5027,7 +5123,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-27",
@@ -5039,7 +5135,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-27",
@@ -5051,7 +5147,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-27",
@@ -5063,7 +5159,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-27",
@@ -5075,7 +5171,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-27",
@@ -5087,7 +5183,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-27",
@@ -5099,7 +5195,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-27",
@@ -5111,7 +5207,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-27",
@@ -5123,7 +5219,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-27",
@@ -5135,7 +5231,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-27",
@@ -5147,19 +5243,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-04-28",
+      "date": "2026-04-27",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-28",
@@ -5171,7 +5267,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-28",
@@ -5183,7 +5279,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-28",
@@ -5195,7 +5291,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-28",
@@ -5207,7 +5303,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-28",
@@ -5219,7 +5315,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-28",
@@ -5231,7 +5327,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-29",
@@ -5243,7 +5339,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-29",
@@ -5255,7 +5351,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-29",
@@ -5267,7 +5363,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-29",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-04-29",
@@ -5279,7 +5387,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-29",
@@ -5291,7 +5399,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-29",
@@ -5303,7 +5411,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-29",
@@ -5315,7 +5423,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-29",
@@ -5327,7 +5435,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-29",
@@ -5339,7 +5447,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-29",
@@ -5351,7 +5459,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-04-29",
@@ -5363,7 +5471,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-29",
@@ -5375,19 +5483,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-04-30",
@@ -5399,7 +5507,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-04-30",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5411,7 +5531,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5423,7 +5543,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
@@ -5435,7 +5555,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5447,7 +5567,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
@@ -5459,7 +5579,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5471,7 +5591,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
@@ -5483,7 +5603,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5495,7 +5615,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
@@ -5507,7 +5627,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-04-30",
@@ -5519,7 +5639,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-04-30",
@@ -5531,7 +5651,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-04-30",
@@ -5543,7 +5663,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-01",
@@ -5598,12 +5718,12 @@
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-05",
@@ -5615,7 +5735,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-05",
@@ -5627,7 +5747,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-05",
@@ -5639,7 +5759,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-05",
@@ -5651,7 +5771,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-05",
@@ -5663,7 +5783,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-05",
@@ -5675,7 +5795,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-05",
@@ -5687,7 +5807,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-05",
@@ -5699,7 +5819,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-06",
@@ -5711,7 +5831,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-06",
@@ -5723,7 +5843,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-06",
@@ -5735,7 +5855,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-06",
@@ -5747,7 +5867,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-06",
@@ -5759,7 +5879,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-06",
@@ -5771,7 +5891,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-06",
@@ -5783,7 +5903,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-06",
@@ -5795,7 +5915,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-06",
@@ -5807,7 +5927,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-06",
@@ -5819,7 +5939,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-06",
@@ -5831,7 +5951,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-06",
@@ -5843,7 +5963,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-06",
@@ -5855,19 +5975,19 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-07",
@@ -5879,7 +5999,19 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-05-07",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -5891,7 +6023,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -5903,7 +6035,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
@@ -5915,7 +6047,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -5927,7 +6059,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
@@ -5939,7 +6071,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -5951,7 +6083,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
@@ -5963,7 +6095,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -5975,7 +6107,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
@@ -5987,7 +6119,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-07",
@@ -5999,7 +6131,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-07",
@@ -6011,7 +6143,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-07",
@@ -6023,7 +6155,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-08",
@@ -6035,7 +6167,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-08",
@@ -6047,7 +6179,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-08",
@@ -6059,7 +6191,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-08",
@@ -6071,7 +6203,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-08",
@@ -6083,7 +6215,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-08",
@@ -6095,7 +6227,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-11",
@@ -6107,7 +6239,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-11",
@@ -6119,7 +6251,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-11",
@@ -6131,7 +6263,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-11",
@@ -6143,7 +6275,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-11",
@@ -6155,7 +6287,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-11",
@@ -6167,7 +6299,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-11",
@@ -6179,7 +6311,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-11",
@@ -6191,7 +6323,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-11",
@@ -6203,7 +6335,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-11",
@@ -6215,7 +6347,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-11",
@@ -6227,7 +6359,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-05-11",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P1",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
+      "status": "aktywne",
+      "subject": "Geometria i grafika inżynierska w AUTOCAD",
+      "type": "Projekt"
     },
     {
       "date": "2026-05-12",
@@ -6251,7 +6395,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-13",
@@ -6263,7 +6407,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-13",
@@ -6275,7 +6419,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-05-13",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-13",
@@ -6287,7 +6443,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-13",
@@ -6299,7 +6455,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-13",
@@ -6311,7 +6467,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-13",
@@ -6323,7 +6479,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-13",
@@ -6335,7 +6491,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-13",
@@ -6347,7 +6503,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-13",
@@ -6359,7 +6515,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-13",
@@ -6371,7 +6527,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-13",
@@ -6383,19 +6539,31 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-14",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
+    },
+    {
+      "date": "2026-05-14",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6407,7 +6575,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6419,7 +6587,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6431,7 +6599,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6443,7 +6611,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6455,7 +6623,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-14",
@@ -6467,19 +6635,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-05-14",
-      "durationMin": 45,
-      "faculty": "EiAs2",
-      "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "13",
-      "startTime": "17:45",
-      "status": "aktywne",
-      "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-14",
@@ -6491,7 +6647,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-14",
@@ -6503,7 +6659,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-14",
@@ -6515,7 +6671,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-15",
@@ -6527,7 +6683,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-15",
@@ -6539,7 +6695,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-15",
@@ -6551,7 +6707,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-15",
@@ -6563,7 +6719,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-15",
@@ -6575,7 +6731,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-18",
@@ -6587,7 +6743,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-18",
@@ -6599,7 +6755,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-18",
@@ -6611,7 +6767,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-18",
@@ -6623,7 +6779,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-18",
@@ -6635,7 +6791,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-18",
@@ -6647,7 +6803,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-18",
@@ -6659,7 +6815,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-18",
@@ -6671,7 +6827,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-18",
@@ -6683,7 +6839,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-18",
@@ -6695,7 +6851,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-05-18",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-05-18",
@@ -6704,46 +6872,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-05-18",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-18",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-19",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-19",
@@ -6755,7 +6911,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-19",
@@ -6767,7 +6923,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-19",
@@ -6779,7 +6935,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-19",
@@ -6791,7 +6947,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-19",
@@ -6803,7 +6959,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-19",
@@ -6815,7 +6971,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-20",
@@ -6827,7 +6983,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-20",
@@ -6839,7 +6995,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-20",
@@ -6851,7 +7007,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-20",
@@ -6863,7 +7019,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-20",
@@ -6875,7 +7031,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-20",
@@ -6887,7 +7043,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-20",
@@ -6899,7 +7055,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-20",
@@ -6911,7 +7067,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-20",
@@ -6923,7 +7079,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-20",
@@ -6935,7 +7091,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-20",
@@ -6947,7 +7103,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-20",
@@ -6959,7 +7115,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-20",
@@ -6971,19 +7127,31 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-21",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
+    },
+    {
+      "date": "2026-05-21",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -6995,7 +7163,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -7007,7 +7175,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -7019,7 +7187,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -7031,7 +7199,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -7043,7 +7211,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-21",
@@ -7055,7 +7223,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-21",
@@ -7067,7 +7235,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-21",
@@ -7079,7 +7247,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-22",
@@ -7091,7 +7259,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-22",
@@ -7103,7 +7271,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-22",
@@ -7115,7 +7283,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-22",
@@ -7127,7 +7295,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-22",
@@ -7139,7 +7307,7 @@
       "startTime": "13:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-24",
@@ -7163,7 +7331,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-25",
@@ -7175,7 +7343,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-25",
@@ -7187,7 +7355,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-25",
@@ -7199,7 +7367,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-25",
@@ -7211,7 +7379,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-25",
@@ -7223,7 +7391,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-25",
@@ -7235,7 +7403,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-25",
@@ -7247,7 +7415,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-25",
@@ -7259,7 +7427,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-25",
@@ -7271,7 +7439,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-25",
@@ -7283,19 +7451,19 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
-      "date": "2026-05-26",
+      "date": "2026-05-25",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-26",
@@ -7307,7 +7475,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-26",
@@ -7319,7 +7487,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-26",
@@ -7331,7 +7499,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-26",
@@ -7343,7 +7511,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-26",
@@ -7355,7 +7523,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-27",
@@ -7367,7 +7535,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-05-27",
@@ -7379,7 +7547,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-27",
@@ -7391,7 +7559,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-05-27",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-27",
@@ -7403,7 +7583,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-27",
@@ -7415,7 +7595,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-27",
@@ -7427,7 +7607,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-27",
@@ -7439,7 +7619,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-27",
@@ -7451,7 +7631,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-27",
@@ -7463,7 +7643,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-27",
@@ -7475,7 +7655,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-05-27",
@@ -7487,7 +7667,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-27",
@@ -7499,19 +7679,31 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-28",
       "durationMin": 135,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
+    },
+    {
+      "date": "2026-05-28",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7523,7 +7715,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7535,7 +7727,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7547,7 +7739,7 @@
       "startTime": "14:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7559,7 +7751,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7571,7 +7763,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-28",
@@ -7583,7 +7775,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-28",
@@ -7595,7 +7787,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-05-28",
@@ -7607,7 +7799,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-05-29",
@@ -7619,7 +7811,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-05-29",
@@ -7631,7 +7823,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-29",
@@ -7643,7 +7835,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-05-29",
@@ -7655,7 +7847,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-01",
@@ -7667,7 +7859,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-01",
@@ -7679,7 +7871,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-01",
@@ -7691,7 +7883,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-01",
@@ -7703,7 +7895,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-01",
@@ -7715,7 +7907,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-01",
@@ -7727,7 +7919,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-01",
@@ -7739,7 +7931,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-01",
@@ -7751,7 +7943,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-01",
@@ -7763,7 +7955,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-01",
@@ -7775,7 +7967,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-06-01",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-06-01",
@@ -7784,46 +7988,34 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-01",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-01",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-02",
       "durationMin": 90,
       "faculty": "EiAs2",
       "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
+      "instructor": "prof. P. Małka",
       "room": "12",
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-02",
@@ -7835,7 +8027,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-02",
@@ -7847,7 +8039,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-02",
@@ -7859,7 +8051,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-02",
@@ -7871,7 +8063,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-02",
@@ -7883,7 +8075,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-02",
@@ -7895,7 +8087,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-03",
@@ -7907,7 +8099,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-03",
@@ -7919,7 +8111,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-03",
@@ -7931,7 +8123,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -7943,7 +8135,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -7955,7 +8147,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -7967,7 +8159,7 @@
       "startTime": "14:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -7979,7 +8171,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -7991,7 +8183,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -8003,7 +8195,7 @@
       "startTime": "16:00",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-03",
@@ -8015,7 +8207,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-03",
@@ -8027,7 +8219,7 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-04",
@@ -8063,7 +8255,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-08",
@@ -8075,7 +8267,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-08",
@@ -8087,7 +8279,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-08",
@@ -8099,7 +8291,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-08",
@@ -8111,7 +8303,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-08",
@@ -8123,7 +8315,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-08",
@@ -8135,7 +8327,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-08",
@@ -8147,7 +8339,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-08",
@@ -8159,7 +8351,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-08",
@@ -8171,7 +8363,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-08",
@@ -8183,19 +8375,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-08",
-      "durationMin": 45,
-      "faculty": "EiAs2",
-      "group": "P3",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
-      "startTime": "16:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-08",
@@ -8204,10 +8384,34 @@
       "group": "P1",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
+      "startTime": "16:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-06-08",
+      "durationMin": 45,
+      "faculty": "EiAs2",
+      "group": "P1",
+      "instructor": "prof. P. Małka",
+      "room": "18",
+      "startTime": "17:00",
+      "status": "aktywne",
+      "subject": "Geometria i grafika inżynierska w AUTOCAD",
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-06-08",
+      "durationMin": 45,
+      "faculty": "EiAs2",
+      "group": "P3",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-08",
@@ -8219,19 +8423,7 @@
       "startTime": "17:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-09",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P1",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
-      "status": "aktywne",
-      "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-09",
@@ -8243,7 +8435,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-09",
@@ -8255,7 +8447,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-09",
@@ -8267,7 +8459,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-09",
@@ -8279,7 +8471,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-10",
@@ -8291,7 +8483,7 @@
       "startTime": "09:15",
       "status": "aktywne",
       "subject": "Samodzielna działalność gospodarcza",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-10",
@@ -8303,7 +8495,19 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
+    },
+    {
+      "date": "2026-06-10",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "C_dodatkowa",
+      "instructor": "prof. A. Szromba",
+      "room": "10",
+      "startTime": "11:45",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-10",
@@ -8315,7 +8519,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-10",
@@ -8327,7 +8531,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-10",
@@ -8339,7 +8543,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Metody numeryczne",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-10",
@@ -8351,7 +8555,7 @@
       "startTime": "15:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-10",
@@ -8363,7 +8567,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Język francuski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-10",
@@ -8375,19 +8579,31 @@
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-11",
       "durationMin": 135,
       "faculty": "EiAs2",
       "group": "W",
-      "instructor": "dr inż. K. Suchenia",
+      "instructor": "dr inż. D. Gutenko",
       "room": "A3",
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "wykład"
+      "type": "Wykład"
+    },
+    {
+      "date": "2026-06-11",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "L_dodatkowa",
+      "instructor": "dr inż. A. Drwal",
+      "room": "06",
+      "startTime": "10:00",
+      "status": "aktywne",
+      "subject": "Podstawy elektroniki",
+      "type": "Laboratoria"
     },
     {
       "date": "2026-06-11",
@@ -8399,7 +8615,7 @@
       "startTime": "16:15",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-11",
@@ -8411,7 +8627,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-11",
@@ -8423,7 +8639,7 @@
       "startTime": "18:45",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-12",
@@ -8435,7 +8651,7 @@
       "startTime": "08:15",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Laboratoria"
     },
     {
       "date": "2026-06-12",
@@ -8447,7 +8663,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-12",
@@ -8459,7 +8675,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-12",
@@ -8471,7 +8687,7 @@
       "startTime": "12:45",
       "status": "aktywne",
       "subject": "Fizyka",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-15",
@@ -8483,7 +8699,7 @@
       "startTime": "07:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-15",
@@ -8495,7 +8711,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-15",
@@ -8507,7 +8723,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-15",
@@ -8519,7 +8735,7 @@
       "startTime": "10:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-15",
@@ -8531,7 +8747,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-15",
@@ -8543,7 +8759,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-15",
@@ -8555,7 +8771,7 @@
       "startTime": "11:45",
       "status": "aktywne",
       "subject": "Język niemiecki",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-15",
@@ -8567,7 +8783,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Analiza matematyczna",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-15",
@@ -8579,7 +8795,7 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-15",
@@ -8591,7 +8807,19 @@
       "startTime": "13:30",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Projekt"
+    },
+    {
+      "date": "2026-06-15",
+      "durationMin": 90,
+      "faculty": "EiAs2",
+      "group": "P5",
+      "instructor": "mgr inż. M. Raźny",
+      "room": "19",
+      "startTime": "15:15",
+      "status": "aktywne",
+      "subject": "Programowanie w C++",
+      "type": "Projekt"
     },
     {
       "date": "2026-06-15",
@@ -8600,46 +8828,10 @@
       "group": "P3",
       "instructor": "mgr inż. M. Raźny",
       "room": "19",
-      "startTime": "15:15",
-      "status": "aktywne",
-      "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-15",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Raźny",
-      "room": "19",
       "startTime": "17:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-15",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P5",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "18:45",
-      "status": "aktywne",
-      "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
-    },
-    {
-      "date": "2026-06-16",
-      "durationMin": 90,
-      "faculty": "EiAs2",
-      "group": "P2",
-      "instructor": "mgr inż. M. Gibas",
-      "room": "12",
-      "startTime": "07:30",
-      "status": "aktywne",
-      "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     },
     {
       "date": "2026-06-16",
@@ -8651,7 +8843,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Język angielski",
-      "type": "laboratoria"
+      "type": "Lektorat"
     },
     {
       "date": "2026-06-16",
@@ -8663,7 +8855,7 @@
       "startTime": "11:00",
       "status": "aktywne",
       "subject": "Podstawy elektroniki",
-      "type": "laboratoria"
+      "type": "Ćwiczenia"
     },
     {
       "date": "2026-06-16",
@@ -8675,7 +8867,7 @@
       "startTime": "14:30",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "wykład"
+      "type": "Wykład"
     },
     {
       "date": "2026-06-16",
@@ -8687,7 +8879,7 @@
       "startTime": "18:00",
       "status": "aktywne",
       "subject": "Programowanie w C++",
-      "type": "laboratoria"
+      "type": "Lab. Komp."
     },
     {
       "date": "2026-06-16",
@@ -8699,7 +8891,7 @@
       "startTime": "19:45",
       "status": "aktywne",
       "subject": "Geometria i grafika inżynierska w AUTOCAD",
-      "type": "laboratoria"
+      "type": "Projekt"
     }
   ]
 }

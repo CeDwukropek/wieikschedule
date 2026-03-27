@@ -42,6 +42,7 @@ export default function Timetable() {
     subjects,
     groupConfigs,
     currentTimetable,
+    isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,

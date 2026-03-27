@@ -173,6 +173,7 @@ export default function ControlsPanel({
               <ExportPngBtn
                 viewMode={viewMode}
                 exportRef={exportRef}
+                disabled={isScheduleLoading}
                 viewedWeekRange={viewedWeekRange}
                 selection={selection}
                 combinedOptions={combinedOptions}
