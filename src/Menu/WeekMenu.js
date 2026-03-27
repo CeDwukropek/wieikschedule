@@ -1,45 +1,59 @@
 export function WeekMenu({
-  activeParity,
-  setWeekParity,
-  currentParity,
-  nextParity,
-  currentRange,
-  nextRange,
+  onPrevWeek,
+  onResetWeek,
+  onNextWeek,
+  viewedRange,
+  isCurrentWeek,
+  canGoPrevWeek,
+  canGoNextWeek,
 }) {
   return (
     <>
       <button
         onClick={() => {
-          if (setWeekParity) {
-            setWeekParity(currentParity);
+          if (onPrevWeek) {
+            onPrevWeek();
           }
         }}
-        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-          activeParity === currentParity
-            ? "bg-neutral-800 text-white"
-            : "bg-neutral-900 text-gray-300"
+        disabled={!canGoPrevWeek}
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          canGoPrevWeek
+            ? "bg-neutral-900 text-gray-300"
+            : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
         }`}
       >
-        This week
-        <br></br>
-        <span className="text-[0.75rem]">{currentRange}</span>
+        Prev
       </button>
 
       <button
         onClick={() => {
-          if (setWeekParity) {
-            setWeekParity(nextParity);
+          if (onResetWeek) {
+            onResetWeek();
           }
         }}
-        className={`flex-1 text-sm px-3 py-2 rounded truncate ${
-          activeParity === nextParity
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          isCurrentWeek
             ? "bg-neutral-800 text-white"
             : "bg-neutral-900 text-gray-300"
         }`}
       >
-        Next week
-        <br></br>
-        <span className="text-[0.75rem]">{nextRange}</span>
+        <span className="text-[0.75rem]">{viewedRange}</span>
+      </button>
+
+      <button
+        onClick={() => {
+          if (onNextWeek) {
+            onNextWeek();
+          }
+        }}
+        disabled={!canGoNextWeek}
+        className={`flex-1 text-sm px-2 py-2 rounded truncate ${
+          canGoNextWeek
+            ? "bg-neutral-900 text-gray-300"
+            : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+        }`}
+      >
+        Next
       </button>
     </>
   );
