@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import { Menu } from "lucide-react";
 import ControlsPanel from "./ControlsPanel";
 import WeekView from "./View/WeekView";
@@ -239,26 +245,31 @@ export default function Timetable() {
     return result;
   }, [getWeekStartByOffset, maxAllowedOffset, minAllowedOffset]);
 
-  const parseDaySelection = (value) => {
-    const [rawOffset, rawDay] = String(value || "").split(":");
-    const dayIndex = Number(rawDay);
-    const safeDayIndex = Number.isFinite(dayIndex)
-      ? Math.min(Math.max(dayIndex, 0), 4)
-      : defaultDayIndex;
+  const parseDaySelection = useCallback(
+    (value) => {
+      const [rawOffset, rawDay] = String(value || "").split(":");
+      const dayIndex = Number(rawDay);
+      const safeDayIndex = Number.isFinite(dayIndex)
+        ? Math.min(Math.max(dayIndex, 0), 4)
+        : defaultDayIndex;
 
-    if (rawOffset === "current") {
-      return { selectedWeekOffset: 0, selectedDayIndex: safeDayIndex };
-    }
+      if (rawOffset === "current") {
+        return { selectedWeekOffset: 0, selectedDayIndex: safeDayIndex };
+      }
 
-    if (rawOffset === "next") {
-      return { selectedWeekOffset: 1, selectedDayIndex: safeDayIndex };
-    }
+      if (rawOffset === "next") {
+        return { selectedWeekOffset: 1, selectedDayIndex: safeDayIndex };
+      }
 
-    const parsedOffset = Number(rawOffset);
-    const selectedWeekOffset = Number.isFinite(parsedOffset) ? parsedOffset : 0;
+      const parsedOffset = Number(rawOffset);
+      const selectedWeekOffset = Number.isFinite(parsedOffset)
+        ? parsedOffset
+        : 0;
 
-    return { selectedWeekOffset, selectedDayIndex: safeDayIndex };
-  };
+      return { selectedWeekOffset, selectedDayIndex: safeDayIndex };
+    },
+    [defaultDayIndex],
+  );
 
   // Day view selection
   const [selection, setSelection] = useState(`0:${defaultDayIndex}`);
@@ -295,6 +306,7 @@ export default function Timetable() {
     }
   }, [
     selection,
+    parseDaySelection,
     computeFiltered,
     studentGroups,
     hideLectures,
@@ -502,7 +514,44 @@ export default function Timetable() {
               Next
             </button>
           </div>
-        ) : null}
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={goToPrevDay}
+              disabled={!canGoPrevDay}
+              className={`px-3 py-1 rounded text-sm ${
+                canGoPrevDay
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={resetToCurrentDay}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                isCurrentDay
+                  ? "bg-neutral-800"
+                  : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {currentDayLabel || "Dzień"}
+            </button>
+
+            <button
+              onClick={goToNextDay}
+              disabled={!canGoNextDay}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                canGoNextDay
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Menu button */}
         <button
