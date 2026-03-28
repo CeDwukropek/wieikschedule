@@ -12,6 +12,7 @@ export default function FloatingMenu({
   scheduleState,
   lektoratState,
   exportState,
+  chatState,
 }) {
   const { open, setOpen, isControlsPanelOpen = false } = panelState || {};
   const {
@@ -67,6 +68,7 @@ export default function FloatingMenu({
     shouldShowLectoratSelect,
   } = lektoratState || {};
   const { exportRef } = exportState || {};
+  const { scheduleName, selectedGroups } = chatState || {};
 
   // whole floating menu visible only on mobile (hidden on sm and larger, and when panel is open)
   return (
@@ -93,6 +95,8 @@ export default function FloatingMenu({
           isCurrentDay={isCurrentDay}
           canGoPrevDay={canGoPrevDay}
           canGoNextDay={canGoNextDay}
+          chatScheduleName={scheduleName}
+          chatSelectedGroups={selectedGroups}
           open={open}
           setOpen={setOpen}
         />
