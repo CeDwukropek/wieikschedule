@@ -1,6 +1,13 @@
 import React, { useMemo, forwardRef } from "react";
 import EventCard from "../EventCard";
-import { timeToMinutes } from "../utils";
+import EventTooltipWrapper from "../EventTooltipWrapper";
+import {
+  createTimeSlots,
+  getEventsForSlot,
+  getEventSpan,
+  toMinutes,
+} from "../timeSlotUtils";
+import "./ViewStyles.css";
 
 const DayView = forwardRef(function DayView(
   { events, subjects = {}, selection: externalSelection },
@@ -9,7 +16,8 @@ const DayView = forwardRef(function DayView(
   const startHour = 7;
   const endHour = 22;
   const slotMinutes = 15;
-  const totalSlots = (endHour - startHour) * (60 / slotMinutes);
+  const slotsPerHour = 60 / slotMinutes;
+  const totalSlots = (endHour - startHour) * slotsPerHour;
 
   const today = React.useMemo(() => new Date(), []);
   // default selected day index (clamped to 0..4) - used to detect "today"
@@ -19,113 +27,139 @@ const DayView = forwardRef(function DayView(
   );
 
   const selection = externalSelection;
-  // parse selection into parityToken and selectedDay
-  const [selParity, selDay] = selection.split(":");
-  const selectedDayIndex = Number(selDay);
-
-  function groupOverlapping(eventsForDay) {
-    const sorted = [...eventsForDay].sort(
-      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
-    );
-    const groups = [];
-    sorted.forEach((ev) => {
-      let placed = false;
-      for (const group of groups) {
-        if (
-          group.some(
-            (g) =>
-              timeToMinutes(ev.start) < timeToMinutes(g.end) &&
-              timeToMinutes(ev.end) > timeToMinutes(g.start),
-          )
-        ) {
-          group.push(ev);
-          placed = true;
-          break;
-        }
-      }
-      if (!placed) groups.push([ev]);
-    });
-    groups.forEach((g) =>
-      g.sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)),
-    );
-    return groups;
-  }
+  // support both legacy (current/next) and numeric week offset selection formats
+  const [rawOffset, rawDay] = String(selection || "").split(":");
+  const selectedDayIndex = Number.isFinite(Number(rawDay))
+    ? Number(rawDay)
+    : defaultDayIndex;
+  const selectedWeekOffset =
+    rawOffset === "current"
+      ? 0
+      : rawOffset === "next"
+        ? 1
+        : Number(rawOffset) || 0;
 
   const eventsForDay = useMemo(
     () => events.filter((e) => e.day === selectedDayIndex),
     [events, selectedDayIndex],
   );
-  const groups = useMemo(() => groupOverlapping(eventsForDay), [eventsForDay]);
+  const timeSlots = useMemo(
+    () => createTimeSlots(startHour, endHour, slotMinutes),
+    [startHour, endHour, slotMinutes],
+  );
 
-  // highlight if the displayed day is today and parity is current
+  // highlight if the displayed day is today in the current week
   const isTodayDisplayed =
-    selParity === "current" && selectedDayIndex === defaultDayIndex;
+    selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
 
   return (
     <div>
+      <style>{`
+        .day-grid {
+          display: grid;
+          grid-template-columns: 40px minmax(0, 1fr);
+          grid-template-rows: repeat(${totalSlots}, 1rem);
+        }
+      `}</style>
+
       <div
         ref={ref}
-        className={`grid grid-cols-[60px_1fr] bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
+        className={`day-grid relative bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
           isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
         }`}
       >
         {/* time column */}
-        <div className="flex flex-col bg-neutral-900 border-r border-neutral-700">
-          {Array.from({ length: endHour - startHour }, (_, i) => (
-            <div
-              key={i}
-              className="h-16 flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700"
-            >
-              <span className="">{startHour + i}:00</span>
-            </div>
-          ))}
-        </div>
+        {Array.from({ length: endHour - startHour }, (_, i) => (
+          <div
+            key={i}
+            className="flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900 border-r"
+            style={{
+              gridColumn: 1,
+              gridRow: i * slotsPerHour + 1,
+              gridRowEnd: (i + 1) * slotsPerHour + 1,
+            }}
+          >
+            <span className="mt-[0.25em]">{startHour + i}:00</span>
+          </div>
+        ))}
 
-        {/* day column with grid lines and absolutely-positioned events */}
-        <div className="relative min-h-0 min-w-0">
-          {isTodayDisplayed ? (
-            <div className="absolute right-3 top-3 z-30 text-xs bg-yellow-400 text-black px-2 py-0.5 rounded">
-              Dzisiaj
-            </div>
-          ) : null}
+        {/* single day column rendered in slots like week view */}
+        {(() => {
+          const renderedEvents = new Set();
+          const occupiedSlots = new Set();
 
-          {Array.from({ length: totalSlots }, (_, i) => (
-            <div
-              key={i}
-              className={`h-4 border-t ${
-                i % 4 === 0 ? "border-neutral-700" : "border-neutral-800"
-              }`}
-            />
-          ))}
+          return timeSlots.map((slot) => {
+            const slotEvents = getEventsForSlot(
+              eventsForDay,
+              slot.slotStart,
+              slot.slotEnd,
+            );
 
-          {groups.map((group, gi) =>
-            group.map((ev, ei) => {
-              const startM = timeToMinutes(ev.start);
-              const endM = timeToMinutes(ev.end);
-              const top = ((startM - startHour * 60) / slotMinutes) * 16;
-              const height = ((endM - startM) / slotMinutes) * 16;
-              const width = 100 / group.length;
-              const left = ei * width;
-              const uniqueKey = `${gi}-${ei}-${ev.id}-${ev.start}-${ev.end}-${ev.room}`;
+            const newEvents = slotEvents.filter((ev) => {
+              const evStart = toMinutes(ev.start);
+              const eventStartsInThisSlot =
+                evStart >= slot.slotStart && evStart < slot.slotEnd;
+              const notYetRendered = !renderedEvents.has(ev);
 
-              return (
-                <div
-                  key={uniqueKey}
-                  className="absolute px-0.5"
-                  style={{
-                    top: `${top}px`,
-                    left: `${left}%`,
-                    width: `${width}%`,
-                    height: `${height}px`,
-                    zIndex: 10 + ei,
-                  }}
-                >
-                  <EventCard ev={ev} subjects={subjects} />
-                </div>
-              );
-            }),
-          )}
-        </div>
+              if (eventStartsInThisSlot && notYetRendered) {
+                renderedEvents.add(ev);
+                const span = getEventSpan(ev, slotMinutes);
+                for (let i = 1; i < span; i += 1) {
+                  occupiedSlots.add(slot.index + i);
+                }
+                return true;
+              }
+              return false;
+            });
+
+            if (occupiedSlots.has(slot.index) && newEvents.length === 0) {
+              return null;
+            }
+
+            const maxSpan =
+              newEvents.length > 0
+                ? Math.max(
+                    ...newEvents.map((ev) => getEventSpan(ev, slotMinutes)),
+                  )
+                : 1;
+
+            const isHourBoundary = slot.index % slotsPerHour === 0;
+            const hourBlock = Math.floor(slot.index / slotsPerHour);
+
+            return (
+              <div
+                key={`day-${selectedDayIndex}-${slot.index}`}
+                className={`day-time-slot border-l border-neutral-800 border-t ${
+                  isHourBoundary ? "border-neutral-700" : "border-neutral-800"
+                } ${hourBlock % 2 === 0 ? "day-hour-even" : ""}`}
+                style={{
+                  gridColumn: 2,
+                  gridRow: slot.index + 1,
+                  gridRowEnd: `span ${maxSpan}`,
+                }}
+              >
+                {newEvents.length > 0 && (
+                  <div className="day-event-container">
+                    {newEvents.map((ev, idx) => {
+                      const uniqueKey = `day-${selectedDayIndex}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
+                      return (
+                        <EventTooltipWrapper ev={ev} key={uniqueKey}>
+                          <EventCard ev={ev} subjects={subjects} />
+                        </EventTooltipWrapper>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          });
+        })()}
+
+        {isTodayDisplayed ? (
+          <div className="pointer-events-none absolute right-3 top-3 z-30 text-xs bg-yellow-400 text-black px-2 py-0.5 rounded">
+            Dzisiaj
+          </div>
+        ) : null}
       </div>
     </div>
   );

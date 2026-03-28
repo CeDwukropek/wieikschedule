@@ -1,46 +1,61 @@
 import React from "react";
-import { ChevronRight, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Book, CalendarOff, X } from "lucide-react";
 import GroupFiltersPanel from "./GroupFiltersPanel";
 import GroupSetManager from "./GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
 import { ExportPngBtn } from "./ExportPngBtn";
 import { exportICS } from "./exportICS";
+import { allTimetables } from "./timetables";
+import { HideLectures } from "./HideLectures";
 
 export default function ControlsPanel({
-  isOpen,
-  onToggle,
-  currentSchedule,
-  onScheduleChange,
-  allTimetables,
-  activeGroupSetId,
-  activeGroupSetName,
-  groupSetOptions,
-  onGroupSetChange,
-  onCreateGroupSet,
-  onRenameActiveGroupSet,
-  onDeleteActiveGroupSet,
-  viewMode,
-  onViewModeToggle,
-  hideLectures,
-  onToggleHideLectures,
-  showAll,
-  onToggleShowAll,
-  schedule,
-  studentGroups,
-  viewedWeekStart,
-  selectedLectoratSubject,
-  exportRef,
-  isScheduleLoading,
-  viewedWeekRange,
-  selection,
-  combinedOptions,
-  computeFiltered,
-  groupConfigs,
-  onGroupChange,
-  shouldShowLectoratSelect,
-  onLectoratChange,
-  lektoratOptions,
+  panelState,
+  scheduleState,
+  groupSetState,
+  viewState,
+  filterState,
+  lektoratState,
+  exportState,
 }) {
+  const { isOpen, onToggle, mobileFloatingClose = false } = panelState || {};
+  const {
+    currentSchedule,
+    onScheduleChange,
+    isScheduleLoading = false,
+  } = scheduleState || {};
+  const {
+    activeGroupSetId,
+    activeGroupSetName,
+    groupSetOptions,
+    onGroupSetChange,
+    onCreateGroupSet,
+    onRenameActiveGroupSet,
+    onDeleteActiveGroupSet,
+  } = groupSetState || {};
+  const {
+    viewMode,
+    onViewModeToggle,
+    hideLectures,
+    onToggleHideLectures,
+    showAll,
+    onToggleShowAll,
+  } = viewState || {};
+  const {
+    schedule,
+    studentGroups,
+    computeFiltered,
+    groupConfigs,
+    onGroupChange,
+  } = filterState || {};
+  const {
+    shouldShowLectoratSelect,
+    selectedLectoratSubject,
+    onLectoratChange,
+    lektoratOptions,
+  } = lektoratState || {};
+  const { exportRef, viewedWeekRange, selection, combinedOptions } =
+    exportState || {};
+
   const handleExportICS = () => {
     // Export should include ALL events from the schedule with user's group filters applied
     // but without week filtering. We pass null as weekStartDate to bypass week filtering
@@ -73,7 +88,9 @@ export default function ControlsPanel({
           <h2 className="text-lg font-semibold text-white">Opcje</h2>
           <button
             onClick={onToggle}
-            className="p-2 rounded hover:bg-neutral-700 text-gray-300 hover:text-white"
+            className={`p-2 rounded hover:bg-neutral-700 text-gray-300 hover:text-white ${
+              mobileFloatingClose ? "hidden sm:inline-flex" : ""
+            }`}
             type="button"
           >
             <ChevronRight size={20} />
@@ -133,30 +150,23 @@ export default function ControlsPanel({
             {/* View mode switch */}
             <div className="space-y-2 flex flex-col">
               <label className="text-xs text-gray-400">Widok</label>
-              <ViewModeSwitch viewMode={viewMode} onToggle={onViewModeToggle} />
+              <div className="flex flex-row space-x-2">
+                <ViewModeSwitch
+                  viewMode={viewMode}
+                  onToggle={onViewModeToggle}
+                />
+                <HideLectures
+                  val={hideLectures}
+                  setVal={onToggleHideLectures}
+                  icon={<Book className="w-4 h-4" />}
+                />
+                <HideLectures
+                  val={!showAll}
+                  setVal={onToggleShowAll}
+                  icon={<CalendarOff className="w-4 h-4" />}
+                />
+              </div>
             </div>
-
-            {/* Hide lectures toggle */}
-            <button
-              onClick={onToggleHideLectures}
-              className="w-full flex items-center justify-between px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded transition-colors text-sm"
-            >
-              <span>{hideLectures ? "Pokaż wykłady" : "Ukryj wykłady"}</span>
-              {hideLectures ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
-
-            {/* Show all toggle */}
-            <button
-              onClick={onToggleShowAll}
-              className="w-full px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded transition-colors text-sm"
-            >
-              {showAll ? "Pokaż twój plan" : "Pokaż cały plan"}
-            </button>
-
             {/* Export buttons */}
             <div className="space-y-2 pt-4 border-t border-neutral-800">
               <button
@@ -178,6 +188,17 @@ export default function ControlsPanel({
           </div>
         </div>
       </div>
+
+      {mobileFloatingClose && isOpen ? (
+        <button
+          aria-label="Zamknij ustawienia"
+          onClick={onToggle}
+          className="sm:hidden fixed right-7 bottom-7 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
+          type="button"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      ) : null}
     </>
   );
 }
