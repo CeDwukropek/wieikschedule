@@ -118,7 +118,9 @@ const DayView = forwardRef(function DayView(
 
             const maxSpan =
               newEvents.length > 0
-                ? Math.max(...newEvents.map((ev) => getEventSpan(ev, slotMinutes)))
+                ? Math.max(
+                    ...newEvents.map((ev) => getEventSpan(ev, slotMinutes)),
+                  )
                 : 1;
 
             const isHourBoundary = slot.index % slotsPerHour === 0;

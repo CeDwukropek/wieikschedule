@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { ReactComponent as Substract } from "../Menu/Subtract.svg";
 
 export function FloatingBottomNavigation({
   viewMode,
@@ -103,9 +104,15 @@ export function FloatingBottomNavigation({
       )}
 
       <div className="sm:hidden fixed inset-x-4 bottom-4 z-50">
-        <div className="relative rounded-full border border-neutral-800 bg-neutral-950/95 px-3 py-3 shadow-2xl backdrop-blur-xl">
+        <div className="relative rounded-full border-none bg-neutral-950 px-3 py-3 shadow-2xl">
           <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
-            <div className="rounded-t-[1rem] border border-neutral-800 bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide text-neutral-300 shadow-lg border-b-neutral-950">
+            <div className="absolute bottom-0 left-[-7px]">
+              <Substract className="text-neutral-950" />
+            </div>
+            <div className="absolute bottom-0 right-[-7px]">
+              <Substract className="text-neutral-950 [transform:scaleX(-1)]" />
+            </div>
+            <div className="rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide text-neutral-300 shadow-lg border-b-neutral-950">
               {label}
             </div>
           </div>
