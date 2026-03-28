@@ -531,9 +531,7 @@ export default function Timetable() {
             <button
               onClick={resetToCurrentDay}
               className={`px-3 ml-3 py-1 rounded text-sm ${
-                isCurrentDay
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
+                isCurrentDay ? "bg-neutral-800" : "bg-neutral-900 text-gray-300"
               }`}
             >
               {currentDayLabel || "Dzień"}
