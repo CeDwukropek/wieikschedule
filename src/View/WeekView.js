@@ -58,8 +58,8 @@ const WeekView = forwardRef(function WeekView(
 
         @media (max-width: 768px) {
           .week-grid {
-            grid-template-columns: 40px repeat(5, minmax(calc(100vw - 60px), 1fr));
-            min-width: calc(60px + (100vw - 60px) * 5);
+            grid-template-columns: 40px repeat(5, calc(100vw - 88px));
+            min-width: calc(40px + (100vw - 88px) * 5);
           }
         }
 
