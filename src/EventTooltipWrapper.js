@@ -85,9 +85,9 @@ export default function EventTooltipWrapper({ ev, children }) {
       onFocus={onFocus}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
-      onTouchStart={isTouchDevice ? undefined : onTouchStart}
-      onTouchEnd={isTouchDevice ? undefined : onTouchEnd}
-      onTouchMove={isTouchDevice ? undefined : onTouchMove}
+      onTouchStart={isTouchDevice ? onTouchStart : undefined}
+      onTouchEnd={isTouchDevice ? onTouchEnd : undefined}
+      onTouchMove={isTouchDevice ? onTouchMove : undefined}
     >
       {children}
       <div

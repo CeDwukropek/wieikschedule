@@ -53,6 +53,7 @@ const WeekView = forwardRef(function WeekView(
         .week-grid {
           grid-template-columns: 40px repeat(5, minmax(160px, 1fr));
           grid-template-rows: auto auto repeat(${totalSlots}, 1rem);
+          overflow: hidden;
         }
 
         @media (max-width: 768px) {

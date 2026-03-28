@@ -1,6 +1,11 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import { Menu } from "lucide-react";
-import { allTimetables } from "./timetables";
 import ControlsPanel from "./ControlsPanel";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
@@ -10,6 +15,7 @@ import { useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
+import { formatDate } from "./utils/dateUtils";
 
 export default function Timetable() {
   const exportRef = useRef(null);
@@ -47,7 +53,6 @@ export default function Timetable() {
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
-    handleUpdateActiveGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
     handleScheduleChange,
@@ -62,7 +67,6 @@ export default function Timetable() {
     getRangeByOffset,
     getWeekStartByOffset,
     getOffsetForDate,
-    combinedOptions,
     defaultDayIndex,
   } = useDateHelpers();
 
@@ -200,16 +204,95 @@ export default function Timetable() {
     scheduleGroups,
   });
 
-  // Day view selection
-  const [selection, setSelection] = useState(`current:${defaultDayIndex}`);
+  const dayOptions = useMemo(() => {
+    const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
-  // Events for DayView filtered by selection's parity
+    if (
+      !Number.isFinite(minAllowedOffset) ||
+      !Number.isFinite(maxAllowedOffset)
+    ) {
+      return [0, 1].flatMap((offset) => {
+        const baseDate = getWeekStartByOffset(offset);
+        return names.map((name, i) => {
+          const d = new Date(baseDate);
+          d.setDate(d.getDate() + i);
+          return {
+            value: `${offset}:${i}`,
+            label: name,
+            date: formatDate(d),
+          };
+        });
+      });
+    }
+
+    const result = [];
+    for (
+      let offset = minAllowedOffset;
+      offset <= maxAllowedOffset;
+      offset += 1
+    ) {
+      const baseDate = getWeekStartByOffset(offset);
+      names.forEach((name, i) => {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        result.push({
+          value: `${offset}:${i}`,
+          label: name,
+          date: formatDate(d),
+        });
+      });
+    }
+    return result;
+  }, [getWeekStartByOffset, maxAllowedOffset, minAllowedOffset]);
+
+  const parseDaySelection = useCallback(
+    (value) => {
+      const [rawOffset, rawDay] = String(value || "").split(":");
+      const dayIndex = Number(rawDay);
+      const safeDayIndex = Number.isFinite(dayIndex)
+        ? Math.min(Math.max(dayIndex, 0), 4)
+        : defaultDayIndex;
+
+      if (rawOffset === "current") {
+        return { selectedWeekOffset: 0, selectedDayIndex: safeDayIndex };
+      }
+
+      if (rawOffset === "next") {
+        return { selectedWeekOffset: 1, selectedDayIndex: safeDayIndex };
+      }
+
+      const parsedOffset = Number(rawOffset);
+      const selectedWeekOffset = Number.isFinite(parsedOffset)
+        ? parsedOffset
+        : 0;
+
+      return { selectedWeekOffset, selectedDayIndex: safeDayIndex };
+    },
+    [defaultDayIndex],
+  );
+
+  // Day view selection
+  const [selection, setSelection] = useState(`0:${defaultDayIndex}`);
+
+  useEffect(() => {
+    if (!dayOptions.length) return;
+    const exists = dayOptions.some((option) => option.value === selection);
+    if (exists) return;
+
+    const todayValue = `0:${defaultDayIndex}`;
+    const fallbackValue = dayOptions.some(
+      (option) => option.value === todayValue,
+    )
+      ? todayValue
+      : dayOptions[0].value;
+    setSelection(fallbackValue);
+  }, [dayOptions, defaultDayIndex, selection]);
+
+  // Events for DayView filtered by selected week offset
   const dayEvents = useMemo(() => {
     try {
-      const parts = (selection || "current:0").split(":");
-      const selParityToken = parts[0];
-      const selectedOffset = selParityToken === "next" ? 1 : 0;
-      const selectedWeekStart = getWeekStartByOffset(selectedOffset);
+      const { selectedWeekOffset } = parseDaySelection(selection);
+      const selectedWeekStart = getWeekStartByOffset(selectedWeekOffset);
       return computeFiltered(
         schedule,
         studentGroups,
@@ -223,6 +306,7 @@ export default function Timetable() {
     }
   }, [
     selection,
+    parseDaySelection,
     computeFiltered,
     studentGroups,
     hideLectures,
@@ -233,47 +317,162 @@ export default function Timetable() {
     schedule,
   ]);
 
+  const selectedDayOptionIndex = useMemo(() => {
+    const index = dayOptions.findIndex((option) => option.value === selection);
+    return index >= 0 ? index : 0;
+  }, [dayOptions, selection]);
+
+  const selectedDayOption = dayOptions[selectedDayOptionIndex] || null;
+
+  const currentDayLabel = selectedDayOption
+    ? `${selectedDayOption.label} ${selectedDayOption.date}`
+    : "";
+
+  const canGoPrevDay = selectedDayOptionIndex > 0;
+  const canGoNextDay = selectedDayOptionIndex < dayOptions.length - 1;
+
+  const goToPrevDay = () => {
+    if (!canGoPrevDay) return;
+    setSelection(dayOptions[selectedDayOptionIndex - 1].value);
+  };
+
+  const goToNextDay = () => {
+    if (!canGoNextDay) return;
+    setSelection(dayOptions[selectedDayOptionIndex + 1].value);
+  };
+
+  const resetToCurrentDay = () => {
+    setSelection(`0:${defaultDayIndex}`);
+  };
+
+  const { selectedWeekOffset, selectedDayIndex } = parseDaySelection(selection);
+  const isCurrentDay =
+    selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
+
+  const floatingMenuProps = {
+    panelState: {
+      open,
+      setOpen,
+      isControlsPanelOpen,
+    },
+    viewState: {
+      viewMode,
+      setViewMode,
+      hideLectures,
+      setHideLectures,
+      showAll,
+      setShowAll,
+    },
+    groupState: {
+      studentGroups,
+      groupConfigs,
+      handleGroupChange,
+    },
+    weekNavigation: {
+      onPrevWeek: goToPrevWeek,
+      onResetWeek: resetToCurrentWeek,
+      onNextWeek: goToNextWeek,
+      viewedWeekRange,
+      viewedWeekStart,
+      isCurrentWeek: weekOffset === 0,
+      canGoPrevWeek,
+      canGoNextWeek,
+    },
+    daySelection: {
+      options: dayOptions,
+      selection,
+      onChange: setSelection,
+    },
+    dayNavigation: {
+      onPrevDay: goToPrevDay,
+      onResetDay: resetToCurrentDay,
+      onNextDay: goToNextDay,
+      currentDayLabel,
+      isCurrentDay,
+      canGoPrevDay,
+      canGoNextDay,
+    },
+    filtering: {
+      filtered,
+      computeFiltered,
+    },
+    scheduleState: {
+      schedule,
+      currentSchedule,
+      activeGroupSetId,
+      activeGroupSetName,
+      groupSetOptions,
+      onGroupSetChange: handleGroupSetChange,
+      onCreateGroupSet: handleCreateGroupSet,
+      onRenameActiveGroupSet: handleRenameActiveGroupSet,
+      onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+      onScheduleChange: handleScheduleChange,
+    },
+    lektoratState: {
+      lektoratOptions,
+      selectedLectoratSubject,
+      onLectoratChange: handleLectoratChange,
+      shouldShowLectoratSelect,
+    },
+    exportState: {
+      exportRef,
+    },
+  };
+
+  const controlsPanelProps = {
+    panelState: {
+      isOpen: isControlsPanelOpen,
+      onToggle: () => setIsControlsPanelOpen((prev) => !prev),
+    },
+    scheduleState: {
+      currentSchedule,
+      onScheduleChange: handleScheduleChange,
+      isScheduleLoading,
+    },
+    groupSetState: {
+      activeGroupSetId,
+      activeGroupSetName,
+      groupSetOptions,
+      onGroupSetChange: handleGroupSetChange,
+      onCreateGroupSet: handleCreateGroupSet,
+      onRenameActiveGroupSet: handleRenameActiveGroupSet,
+      onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+    },
+    viewState: {
+      viewMode,
+      onViewModeToggle: () =>
+        setViewMode((prev) => (prev === "week" ? "day" : "week")),
+      hideLectures,
+      onToggleHideLectures: () => setHideLectures((prev) => !prev),
+      showAll,
+      onToggleShowAll: () => setShowAll((prev) => !prev),
+    },
+    filterState: {
+      schedule,
+      studentGroups,
+      computeFiltered,
+      groupConfigs,
+      onGroupChange: handleGroupChange,
+    },
+    lektoratState: {
+      shouldShowLectoratSelect,
+      selectedLectoratSubject,
+      onLectoratChange: handleLectoratChange,
+      lektoratOptions,
+    },
+    exportState: {
+      exportRef,
+      viewedWeekRange,
+      selection,
+      combinedOptions: dayOptions,
+    },
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* --- Kontrolki --- */}
       {/* hidden on mobile, visible on sm and up */}
-      <ControlsPanel
-        isOpen={isControlsPanelOpen}
-        onToggle={() => setIsControlsPanelOpen(!isControlsPanelOpen)}
-        currentSchedule={currentSchedule}
-        onScheduleChange={handleScheduleChange}
-        allTimetables={allTimetables}
-        activeGroupSetId={activeGroupSetId}
-        activeGroupSetName={activeGroupSetName}
-        groupSetOptions={groupSetOptions}
-        onGroupSetChange={handleGroupSetChange}
-        onCreateGroupSet={handleCreateGroupSet}
-        onRenameActiveGroupSet={handleRenameActiveGroupSet}
-        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
-        viewMode={viewMode}
-        onViewModeToggle={() =>
-          setViewMode((prev) => (prev === "week" ? "day" : "week"))
-        }
-        hideLectures={hideLectures}
-        onToggleHideLectures={() => setHideLectures(!hideLectures)}
-        showAll={showAll}
-        onToggleShowAll={() => setShowAll(!showAll)}
-        schedule={schedule}
-        studentGroups={studentGroups}
-        viewedWeekStart={viewedWeekStart}
-        selectedLectoratSubject={selectedLectoratSubject}
-        exportRef={exportRef}
-        isScheduleLoading={isScheduleLoading}
-        viewedWeekRange={viewedWeekRange}
-        selection={selection}
-        combinedOptions={combinedOptions}
-        computeFiltered={computeFiltered}
-        groupConfigs={groupConfigs}
-        onGroupChange={handleGroupChange}
-        shouldShowLectoratSelect={shouldShowLectoratSelect}
-        onLectoratChange={handleLectoratChange}
-        lektoratOptions={lektoratOptions}
-      />
+      <ControlsPanel {...controlsPanelProps} />
 
       {/* --- Current period bar: auto parity + next week --- */}
 
@@ -315,7 +514,42 @@ export default function Timetable() {
               Next
             </button>
           </div>
-        ) : null}
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={goToPrevDay}
+              disabled={!canGoPrevDay}
+              className={`px-3 py-1 rounded text-sm ${
+                canGoPrevDay
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={resetToCurrentDay}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                isCurrentDay ? "bg-neutral-800" : "bg-neutral-900 text-gray-300"
+              }`}
+            >
+              {currentDayLabel || "Dzień"}
+            </button>
+
+            <button
+              onClick={goToNextDay}
+              disabled={!canGoNextDay}
+              className={`px-3 ml-3 py-1 rounded text-sm ${
+                canGoNextDay
+                  ? "bg-neutral-900 text-gray-300"
+                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Menu button */}
         <button
@@ -329,56 +563,7 @@ export default function Timetable() {
 
       {/* Floating menu / settings (bottom-right) */}
 
-      <FloatingMenu
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        hideLectures={hideLectures}
-        setHideLectures={setHideLectures}
-        showAll={showAll}
-        setShowAll={setShowAll}
-        studentGroups={studentGroups}
-        groupConfigs={groupConfigs}
-        handleGroupChange={handleGroupChange}
-        onPrevWeek={goToPrevWeek}
-        onResetWeek={resetToCurrentWeek}
-        onNextWeek={goToNextWeek}
-        viewedWeekRange={viewedWeekRange}
-        viewedWeekStart={viewedWeekStart}
-        isCurrentWeek={weekOffset === 0}
-        canGoPrevWeek={canGoPrevWeek}
-        canGoNextWeek={canGoNextWeek}
-        currentParity={currentParity}
-        currentRange={currentRange}
-        nextRange={nextRange}
-        nextParity={nextParity}
-        filtered={filtered}
-        open={open}
-        setOpen={setOpen}
-        options={combinedOptions}
-        selection={selection}
-        onChange={setSelection}
-        exportRef={exportRef}
-        isScheduleLoading={isScheduleLoading}
-        computeFiltered={computeFiltered}
-        SCHEDULE={schedule}
-        currentSchedule={currentSchedule}
-        activeGroupSetId={activeGroupSetId}
-        groupSetOptions={groupSetOptions}
-        onGroupSetChange={handleGroupSetChange}
-        onSaveGroupSet={handleCreateGroupSet}
-        onCreateGroupSet={handleCreateGroupSet}
-        onUpdateActiveGroupSet={handleUpdateActiveGroupSet}
-        onRenameActiveGroupSet={handleRenameActiveGroupSet}
-        onDeleteActiveGroupSet={handleDeleteActiveGroupSet}
-        activeGroupSetName={activeGroupSetName}
-        lektoratOptions={lektoratOptions}
-        selectedLectoratSubject={selectedLectoratSubject}
-        onLectoratChange={handleLectoratChange}
-        shouldShowLectoratSelect={shouldShowLectoratSelect}
-        onScheduleChange={handleScheduleChange}
-        allTimetables={allTimetables}
-        isControlsPanelOpen={isControlsPanelOpen}
-      />
+      <FloatingMenu {...floatingMenuProps} />
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView
@@ -398,7 +583,7 @@ export default function Timetable() {
           currentRange={currentRange}
           nextRange={nextRange}
           // control selection externally so BottomDayNav drives it
-          options={combinedOptions}
+          options={dayOptions}
           selection={selection}
           onSelectionChange={setSelection}
           ref={exportRef}

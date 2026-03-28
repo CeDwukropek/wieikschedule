@@ -89,6 +89,8 @@
 .week-grid {
   display: grid;
   position: relative;
+  width: 100%;
+  min-width: 840px;
   background-color: #171717;
   color: #e5e7eb;
   border-left: 1px solid rgba(148, 163, 184, 0.08);
@@ -114,6 +116,8 @@
   }
 
   .week-grid {
+    width: max-content;
+    min-width: 100%;
     -webkit-overflow-scrolling: touch;
   }
 }
