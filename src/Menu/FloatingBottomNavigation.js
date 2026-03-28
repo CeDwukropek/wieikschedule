@@ -285,7 +285,7 @@ export function FloatingBottomNavigation({
                 aria-label={
                   isCurrent ? "Aktualny okres" : "Przejdź do bieżącego okresu"
                 }
-                className={`-mb-[2px] rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${isCurrent ? 'text-lime-400' : 'text-neutral-300'} shadow-lg border-b-neutral-950`}
+                className={`-mb-[2px] rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${isCurrent ? "text-lime-400" : "text-neutral-300"} shadow-lg border-b-neutral-950`}
               >
                 {label}
               </button>
