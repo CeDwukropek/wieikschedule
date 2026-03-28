@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Book, CalendarOff } from "lucide-react";
+import { ChevronRight, Book, CalendarOff, X } from "lucide-react";
 import GroupFiltersPanel from "./GroupFiltersPanel";
 import GroupSetManager from "./GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
@@ -17,7 +17,7 @@ export default function ControlsPanel({
   lektoratState,
   exportState,
 }) {
-  const { isOpen, onToggle } = panelState || {};
+  const { isOpen, onToggle, mobileFloatingClose = false } = panelState || {};
   const {
     currentSchedule,
     onScheduleChange,
@@ -88,7 +88,9 @@ export default function ControlsPanel({
           <h2 className="text-lg font-semibold text-white">Opcje</h2>
           <button
             onClick={onToggle}
-            className="p-2 rounded hover:bg-neutral-700 text-gray-300 hover:text-white"
+            className={`p-2 rounded hover:bg-neutral-700 text-gray-300 hover:text-white ${
+              mobileFloatingClose ? "hidden sm:inline-flex" : ""
+            }`}
             type="button"
           >
             <ChevronRight size={20} />
@@ -186,6 +188,17 @@ export default function ControlsPanel({
           </div>
         </div>
       </div>
+
+      {mobileFloatingClose && isOpen ? (
+        <button
+          aria-label="Zamknij ustawienia"
+          onClick={onToggle}
+          className="sm:hidden fixed right-7 bottom-7 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
+          type="button"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      ) : null}
     </>
   );
 }
