@@ -258,11 +258,11 @@ export function FloatingBottomNavigation({
         ) : null}
 
         <div className="relative rounded-full border-none bg-neutral-950 px-3 py-3 shadow-2xl">
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
-            <div className="absolute bottom-0 left-[-7px]">
+          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
+            <div className="absolute bottom-0 left-[-14px]">
               <Substract className="text-neutral-950" />
             </div>
-            <div className="absolute bottom-0 right-[-7px]">
+            <div className="absolute bottom-0 right-[-14px]">
               <Substract className="text-neutral-950 [transform:scaleX(-1)]" />
             </div>
 
