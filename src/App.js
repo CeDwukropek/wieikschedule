@@ -417,6 +417,10 @@ export default function Timetable() {
     exportState: {
       exportRef,
     },
+    chatState: {
+      scheduleName: currentSchedule,
+      selectedGroups: studentGroups,
+    },
   };
 
   const controlsPanelProps = {
