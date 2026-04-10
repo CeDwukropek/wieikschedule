@@ -18,6 +18,7 @@ import { formatDate } from "./utils/dateUtils";
 export default function Timetable() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
   // Load saved settings from localStorage
   const savedSettings = useSettings({});
@@ -441,6 +442,11 @@ export default function Timetable() {
     },
     exportState: {
       exportRef,
+    },
+    chatState: {
+      enabled: isAiChatEnabled,
+      scheduleName: currentSchedule,
+      selectedGroups: studentGroups,
     },
   };
 
