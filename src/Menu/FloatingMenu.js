@@ -413,15 +413,13 @@ export default function FloatingMenu({
                         ? "Aktualny okres"
                         : "Przejdź do bieżącego okresu"
                     }
-                    className={`flex h-10 w-10 items-center justify-center rounded-full transition active:scale-95 ${
-                      isCurrent
-                        ? "bg-lime-400 text-neutral-950"
-                        : "bg-neutral-800 text-neutral-100 hover:bg-neutral-700"
-                    }`}
+                    className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-neutral-800 active:scale-95"
                   >
                     <span
-                      className={`block h-2.5 w-2.5 rounded-full ${
-                        isCurrent ? "bg-neutral-950" : "bg-neutral-200"
+                      className={`h-3 w-3 rounded-full ${
+                        isCurrent
+                          ? "bg-lime-400 shadow-[0_0_18px_rgba(163,230,53,0.6)]"
+                          : "bg-neutral-500"
                       }`}
                     />
                   </button>
