@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.floating-select-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #737373 #262626;
+}
+
+.floating-select-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.floating-select-scrollbar::-webkit-scrollbar-track {
+  background: #262626;
+  border-radius: 9999px;
+}
+
+.floating-select-scrollbar::-webkit-scrollbar-thumb {
+  background: #737373;
+  border-radius: 9999px;
+  border: 1px solid #262626;
+}
+
+.floating-select-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
