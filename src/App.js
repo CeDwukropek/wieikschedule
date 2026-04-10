@@ -5,8 +5,6 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { Menu } from "lucide-react";
-import ControlsPanel from "./ControlsPanel";
 import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
@@ -20,7 +18,7 @@ import { formatDate } from "./utils/dateUtils";
 export default function Timetable() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [isControlsPanelOpen, setIsControlsPanelOpen] = useState(false);
+  const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
   // Load saved settings from localStorage
   const savedSettings = useSettings({});
@@ -49,7 +47,6 @@ export default function Timetable() {
     subjects,
     groupConfigs,
     currentTimetable,
-    isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
@@ -99,6 +96,31 @@ export default function Timetable() {
     () => getWeekStartByOffset(weekOffset),
     [getWeekStartByOffset, weekOffset],
   );
+
+  const weekOptions = useMemo(() => {
+    if (
+      !Number.isFinite(minAllowedOffset) ||
+      !Number.isFinite(maxAllowedOffset)
+    ) {
+      return [-1, 0, 1].map((offset) => ({
+        value: offset,
+        label: getRangeByOffset(offset),
+      }));
+    }
+
+    const result = [];
+    for (
+      let offset = minAllowedOffset;
+      offset <= maxAllowedOffset;
+      offset += 1
+    ) {
+      result.push({
+        value: offset,
+        label: getRangeByOffset(offset),
+      });
+    }
+    return result;
+  }, [getRangeByOffset, maxAllowedOffset, minAllowedOffset]);
 
   const canGoPrevWeek = weekOffset > minAllowedOffset;
   const canGoNextWeek = weekOffset < maxAllowedOffset;
@@ -353,7 +375,6 @@ export default function Timetable() {
     panelState: {
       open,
       setOpen,
-      isControlsPanelOpen,
     },
     viewState: {
       viewMode,
@@ -377,6 +398,11 @@ export default function Timetable() {
       isCurrentWeek: weekOffset === 0,
       canGoPrevWeek,
       canGoNextWeek,
+    },
+    weekSelection: {
+      options: weekOptions,
+      selection: weekOffset,
+      onChange: setWeekOffset,
     },
     daySelection: {
       options: dayOptions,
@@ -418,154 +444,15 @@ export default function Timetable() {
       exportRef,
     },
     chatState: {
+      enabled: isAiChatEnabled,
       scheduleName: currentSchedule,
       selectedGroups: studentGroups,
     },
   };
 
-  const controlsPanelProps = {
-    panelState: {
-      isOpen: isControlsPanelOpen,
-      onToggle: () => setIsControlsPanelOpen((prev) => !prev),
-    },
-    scheduleState: {
-      currentSchedule,
-      onScheduleChange: handleScheduleChange,
-      isScheduleLoading,
-    },
-    groupSetState: {
-      activeGroupSetId,
-      activeGroupSetName,
-      groupSetOptions,
-      onGroupSetChange: handleGroupSetChange,
-      onCreateGroupSet: handleCreateGroupSet,
-      onRenameActiveGroupSet: handleRenameActiveGroupSet,
-      onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
-    },
-    viewState: {
-      viewMode,
-      onViewModeToggle: () =>
-        setViewMode((prev) => (prev === "week" ? "day" : "week")),
-      hideLectures,
-      onToggleHideLectures: () => setHideLectures((prev) => !prev),
-      showAll,
-      onToggleShowAll: () => setShowAll((prev) => !prev),
-    },
-    filterState: {
-      schedule,
-      studentGroups,
-      computeFiltered,
-      groupConfigs,
-      onGroupChange: handleGroupChange,
-    },
-    lektoratState: {
-      shouldShowLectoratSelect,
-      selectedLectoratSubject,
-      onLectoratChange: handleLectoratChange,
-      lektoratOptions,
-    },
-    exportState: {
-      exportRef,
-      viewedWeekRange,
-      selection,
-      combinedOptions: dayOptions,
-    },
-  };
-
   return (
     <div className="min-h-screen bg-black text-white p-6">
-      {/* --- Kontrolki --- */}
-      {/* hidden on mobile, visible on sm and up */}
-      <ControlsPanel {...controlsPanelProps} />
-
-      {/* --- Current period bar: auto parity + next week --- */}
-
-      <div className="hidden sm:flex gap-3 items-center justify-between mb-4 ">
-        {viewMode === "week" ? (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={goToPrevWeek}
-              disabled={!canGoPrevWeek}
-              className={`px-3 py-1 rounded text-sm ${
-                canGoPrevWeek
-                  ? "bg-neutral-900 text-gray-300"
-                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              Prev
-            </button>
-
-            <button
-              onClick={resetToCurrentWeek}
-              className={`px-3 ml-3 py-1 rounded text-sm ${
-                weekOffset === 0
-                  ? "bg-neutral-800"
-                  : "bg-neutral-900 text-gray-300"
-              }`}
-            >
-              {viewedWeekRange}
-            </button>
-
-            <button
-              onClick={goToNextWeek}
-              disabled={!canGoNextWeek}
-              className={`px-3 ml-3 py-1 rounded text-sm ${
-                canGoNextWeek
-                  ? "bg-neutral-900 text-gray-300"
-                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={goToPrevDay}
-              disabled={!canGoPrevDay}
-              className={`px-3 py-1 rounded text-sm ${
-                canGoPrevDay
-                  ? "bg-neutral-900 text-gray-300"
-                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              Prev
-            </button>
-
-            <button
-              onClick={resetToCurrentDay}
-              className={`px-3 ml-3 py-1 rounded text-sm ${
-                isCurrentDay ? "bg-neutral-800" : "bg-neutral-900 text-gray-300"
-              }`}
-            >
-              {currentDayLabel || "Dzień"}
-            </button>
-
-            <button
-              onClick={goToNextDay}
-              disabled={!canGoNextDay}
-              className={`px-3 ml-3 py-1 rounded text-sm ${
-                canGoNextDay
-                  ? "bg-neutral-900 text-gray-300"
-                  : "bg-neutral-900/50 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        )}
-
-        {/* Menu button */}
-        <button
-          onClick={() => setIsControlsPanelOpen(!isControlsPanelOpen)}
-          className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-neutral-900 text-gray-300 hover:bg-neutral-800 transition-colors rounded"
-          title="Pokaż opcje"
-        >
-          <Menu size={18} />
-        </button>
-      </div>
-
-      {/* Floating menu / settings (bottom-right) */}
+      {/* Floating menu / settings for all breakpoints */}
 
       <FloatingMenu {...floatingMenuProps} />
       {/* --- Widok planu --- */}
