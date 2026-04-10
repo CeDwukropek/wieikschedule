@@ -90,7 +90,11 @@ export default function FloatingMenu({
     shouldShowLectoratSelect,
   } = lektoratState || {};
   const { exportRef } = exportState || {};
-  const { scheduleName, selectedGroups } = chatState || {};
+  const {
+    enabled: isAiChatEnabled = false,
+    scheduleName,
+    selectedGroups,
+  } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
@@ -192,6 +196,12 @@ export default function FloatingMenu({
     setSelectionOpen(false);
   }, [isChatMode]);
 
+  useEffect(() => {
+    if (isAiChatEnabled) return;
+    setIsChatMode(false);
+    setIsChatWindowOpen(false);
+  }, [isAiChatEnabled]);
+
   const handleChatSend = async () => {
     if (!canSend) return;
     setIsChatWindowOpen(true);
@@ -258,7 +268,7 @@ export default function FloatingMenu({
         style={{ bottom: `${16 + keyboardOffset}px` }}
       >
         <FloatingChatPanel
-          isChatMode={isChatMode}
+          isChatMode={isAiChatEnabled && isChatMode}
           isChatWindowOpen={isChatWindowOpen}
           scheduleName={scheduleName}
           status={status}
@@ -277,7 +287,7 @@ export default function FloatingMenu({
               <Substract className="text-neutral-950 [transform:scaleX(-1)]" />
             </div>
 
-            {isChatMode ? (
+            {isAiChatEnabled && isChatMode ? (
               <button
                 onClick={() => setIsChatWindowOpen((prev) => !prev)}
                 aria-label={isChatWindowOpen ? "Zwiń chat" : "Rozwiń chat"}
@@ -318,7 +328,7 @@ export default function FloatingMenu({
             <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-950" />
           </div>
 
-          {isChatMode ? (
+          {isAiChatEnabled && isChatMode ? (
             <div className="flex items-center gap-2">
               <button
                 aria-label="Ukryj chat"
@@ -381,19 +391,41 @@ export default function FloatingMenu({
                   <ChevronLeft className="h-5 w-5" strokeWidth={2.6} />
                 </button>
 
-                <button
-                  onClick={() => {
-                    setSelectionOpen(false);
-                    setIsChatMode(true);
-                  }}
-                  aria-label="Otwórz AI chat"
-                  className="bg-lime-400 flex h-10 w-10 items-center justify-center rounded-full shadow-[0_0_16px_rgba(163,230,53,0.45)] transition hover:bg-lime-300 hover:shadow-[0_0_22px_rgba(163,230,53,0.62)] active:scale-95"
-                >
-                  <Sparkles
-                    className="h-5 w-5 text-neutral-950"
-                    strokeWidth={2.4}
-                  />
-                </button>
+                {isAiChatEnabled ? (
+                  <button
+                    onClick={() => {
+                      setSelectionOpen(false);
+                      setIsChatMode(true);
+                    }}
+                    aria-label="Otwórz AI chat"
+                    className="bg-lime-400 flex h-10 w-10 items-center justify-center rounded-full shadow-[0_0_16px_rgba(163,230,53,0.45)] transition hover:bg-lime-300 hover:shadow-[0_0_22px_rgba(163,230,53,0.62)] active:scale-95"
+                  >
+                    <Sparkles
+                      className="h-5 w-5 text-neutral-950"
+                      strokeWidth={2.4}
+                    />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleReset}
+                    aria-label={
+                      isCurrent
+                        ? "Aktualny okres"
+                        : "Przejdź do bieżącego okresu"
+                    }
+                    className={`flex h-10 w-10 items-center justify-center rounded-full transition active:scale-95 ${
+                      isCurrent
+                        ? "bg-lime-400 text-neutral-950"
+                        : "bg-neutral-800 text-neutral-100 hover:bg-neutral-700"
+                    }`}
+                  >
+                    <span
+                      className={`block h-2.5 w-2.5 rounded-full ${
+                        isCurrent ? "bg-neutral-950" : "bg-neutral-200"
+                      }`}
+                    />
+                  </button>
+                )}
 
                 <button
                   onClick={handleNext}

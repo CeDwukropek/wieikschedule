@@ -26,6 +26,14 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 ## n8n Chatbot Setup
 
+AI chat can be enabled per branch/environment with a feature flag:
+
+```bash
+REACT_APP_ENABLE_AI_CHAT=true
+```
+
+Set it to `false` (or omit it) on Beta/public to keep unified navigation without AI chat integration in the UI.
+
 1. Create `.env.local` in the project root.
 2. Add your n8n webhook URL:
 
@@ -39,22 +47,22 @@ The chat widget sends payloads in this shape:
 
 ```json
 {
-	"message": "When is my next lab?",
-	"context": {
-		"scheduleName": "EiAs2",
-		"sessionId": "5f9781e4-00fb-4da3-96a0-8f4e87d3cc24",
-		"selectedGroups": {
-			"W": "W1",
-			"C": "C2",
-			"L": "L1",
-			"P": "P1",
-			"Lek": "LekN"
-		}
-	},
-	"metadata": {
-		"source": "wieikschedule-web",
-		"timestamp": "2026-03-25T10:00:00.000Z"
-	}
+  "message": "When is my next lab?",
+  "context": {
+    "scheduleName": "EiAs2",
+    "sessionId": "5f9781e4-00fb-4da3-96a0-8f4e87d3cc24",
+    "selectedGroups": {
+      "W": "W1",
+      "C": "C2",
+      "L": "L1",
+      "P": "P1",
+      "Lek": "LekN"
+    }
+  },
+  "metadata": {
+    "source": "wieikschedule-web",
+    "timestamp": "2026-03-25T10:00:00.000Z"
+  }
 }
 ```
 
