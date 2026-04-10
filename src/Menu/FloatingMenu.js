@@ -8,14 +8,14 @@ import {
   ChevronRight,
   Sparkles,
   SendHorizontal,
-  Bot,
-  Trash2,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
 import ControlsPanel from "../ControlsPanel";
 import { ReactComponent as Substract } from "./Subtract.svg";
 import { useChatbot } from "../chatbot/useChatbot";
+import FloatingSelectionPanel from "./FloatingSelectionPanel";
+import FloatingChatPanel from "./FloatingChatPanel";
 
 export default function FloatingMenu({
   panelState,
@@ -235,202 +235,38 @@ export default function FloatingMenu({
 
   return (
     <div>
-      {selectionOpen && !isChatMode && (
-        <div className="fixed bottom-28 left-1/2 z-[190] w-[min(92vw,460px)] -translate-x-1/2 rounded-3xl border border-neutral-800 bg-neutral-900/95 shadow-2xl backdrop-blur-xl overflow-hidden">
-          <div className="p-3">
-            <div className="mb-3 flex rounded-2xl bg-neutral-800 p-1">
-              <button
-                onClick={() => {
-                  setSelectionTab("day");
-                  setViewMode("day");
-                }}
-                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  selectionTab === "day"
-                    ? "bg-neutral-700 text-white"
-                    : "text-neutral-400"
-                }`}
-              >
-                Day
-              </button>
-
-              <button
-                onClick={() => {
-                  setSelectionTab("week");
-                  setViewMode("week");
-                }}
-                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  selectionTab === "week"
-                    ? "bg-neutral-700 text-white"
-                    : "text-neutral-400"
-                }`}
-              >
-                Week
-              </button>
-            </div>
-
-            {selectionTab === "day" && options.length > 0 && onChange && (
-              <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1 floating-select-scrollbar">
-                {options.map((option) => {
-                  const active = option.value === selection;
-                  const isCurrentOption = option.value === currentDayValue;
-
-                  return (
-                    <button
-                      key={option.value}
-                      ref={active ? dayActiveRef : null}
-                      onClick={() => {
-                        onChange(option.value);
-                        setSelectionOpen(false);
-                      }}
-                      className={`w-full rounded-2xl px-4 py-3 text-left text-sm transition ${
-                        active
-                          ? "bg-neutral-700 text-white"
-                          : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate">{option.label}</div>
-                          <div className="mt-0.5 text-xs text-neutral-400 truncate">
-                            {option.date}
-                          </div>
-                        </div>
-                        {isCurrentOption ? (
-                          <span className="shrink-0 rounded-full bg-lime-500/20 px-2 py-0.5 text-[11px] font-medium text-lime-300">
-                            Teraz
-                          </span>
-                        ) : null}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {selectionTab === "week" &&
-              weekOptions.length > 0 &&
-              onWeekChange && (
-                <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1 floating-select-scrollbar">
-                  {weekOptions.map((option) => {
-                    const active =
-                      Number(option.value) === Number(weekSelectionValue);
-                    const isCurrentOption = Number(option.value) === 0;
-
-                    return (
-                      <button
-                        key={option.value}
-                        ref={active ? weekActiveRef : null}
-                        onClick={() => {
-                          onWeekChange(Number(option.value));
-                          setSelectionOpen(false);
-                        }}
-                        className={`w-full rounded-2xl px-4 py-3 text-left text-sm transition ${
-                          active
-                            ? "bg-neutral-700 text-white"
-                            : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="truncate">{option.label}</span>
-                          {isCurrentOption ? (
-                            <span className="shrink-0 rounded-full bg-lime-500/20 px-2 py-0.5 text-[11px] font-medium text-lime-300">
-                              Teraz
-                            </span>
-                          ) : null}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-          </div>
-        </div>
-      )}
+      <FloatingSelectionPanel
+        open={selectionOpen}
+        isChatMode={isChatMode}
+        selectionTab={selectionTab}
+        setSelectionTab={setSelectionTab}
+        setViewMode={setViewMode}
+        options={options}
+        selection={selection}
+        onChange={onChange}
+        currentDayValue={currentDayValue}
+        dayActiveRef={dayActiveRef}
+        weekOptions={weekOptions}
+        weekSelectionValue={weekSelectionValue}
+        onWeekChange={onWeekChange}
+        weekActiveRef={weekActiveRef}
+        setSelectionOpen={setSelectionOpen}
+      />
 
       <div
         className={`fixed inset-x-4 md:left-1/2 md:right-auto md:w-[min(92vw,460px)] md:-translate-x-1/2 ${isSettingsOpen ? "z-30" : "z-[200]"}`}
         style={{ bottom: `${16 + keyboardOffset}px` }}
       >
-        {isChatMode && isChatWindowOpen ? (
-          <div className="mb-3 h-[42vh] max-h-[360px] min-h-[220px] rounded-2xl border border-neutral-700 bg-neutral-900 shadow-2xl overflow-hidden flex flex-col">
-            <div className="px-3 py-2 border-b border-neutral-700 bg-neutral-950/80 flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-white">
-                  Schedule Assistant
-                </p>
-                <p className="truncate text-[11px] text-neutral-400">
-                  {scheduleName
-                    ? `Plan: ${scheduleName}`
-                    : "No schedule selected"}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-neutral-300">
-                  {status === "sending"
-                    ? "Sending..."
-                    : status === "waiting"
-                      ? "Waiting..."
-                      : status === "error"
-                        ? "Error"
-                        : "Ready"}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={clearConversation}
-                  className="h-8 w-8 rounded-full bg-neutral-800 text-neutral-200 flex items-center justify-center"
-                  aria-label="Wyczyść konwersację"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-
-            {error ? (
-              <div className="px-3 py-2 text-xs bg-rose-900/30 text-rose-200 border-b border-rose-800 flex items-center justify-between gap-3">
-                <span className="truncate">{error}</span>
-                <button
-                  type="button"
-                  onClick={resetError}
-                  className="text-rose-100 underline underline-offset-2"
-                >
-                  Dismiss
-                </button>
-              </div>
-            ) : null}
-
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2">
-              {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-5 text-neutral-400">
-                  <Bot className="w-8 h-8 mb-2 text-neutral-500" />
-                  <p className="text-sm">Ask anything about your schedule.</p>
-                </div>
-              ) : (
-                messages.map((message) => {
-                  const isUser = message.role === "user";
-                  const isLoading = message.stage === "loading";
-                  const isErrorMsg = message.stage === "error";
-
-                  const className = isUser
-                    ? "ml-10 bg-white text-black"
-                    : isErrorMsg
-                      ? "mr-10 bg-rose-900/40 border border-rose-700 text-rose-100"
-                      : "mr-10 bg-neutral-800 text-neutral-100";
-
-                  return (
-                    <div
-                      key={message.id}
-                      className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${className}`}
-                    >
-                      {isLoading ? "Thinking..." : message.text}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        ) : null}
+        <FloatingChatPanel
+          isChatMode={isChatMode}
+          isChatWindowOpen={isChatWindowOpen}
+          scheduleName={scheduleName}
+          status={status}
+          clearConversation={clearConversation}
+          error={error}
+          resetError={resetError}
+          messages={messages}
+        />
 
         <div className="relative rounded-full border-none bg-neutral-950 px-3 py-3 shadow-2xl">
           <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
