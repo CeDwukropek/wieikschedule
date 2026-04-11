@@ -296,7 +296,7 @@ export default function FloatingMenu({
               <button
                 onClick={() => setIsChatWindowOpen((prev) => !prev)}
                 aria-label={isChatWindowOpen ? "Zwiń chat" : "Rozwiń chat"}
-                className="pointer-events-auto -mb-[2px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide text-neutral-300 shadow-lg border-b-neutral-950"
+                className="pointer-events-auto  -mb-[2px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide text-neutral-300 shadow-lg border-b-neutral-950"
               >
                 <span>AI Chat</span>
                 {isChatWindowOpen ? (
@@ -317,11 +317,11 @@ export default function FloatingMenu({
                 aria-label={
                   isCurrent ? "Aktualny okres" : "Przejdź do bieżącego okresu"
                 }
-                className={`pointer-events-auto -mb-[2px] inline-flex select-none items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${
+                className={`pointer-events-auto -mb-[3px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${
                   isCurrent ? "text-lime-400" : "text-neutral-300"
                 } shadow-lg border-b-neutral-950`}
               >
-                <span className="select-none">{label}</span>
+                <span>{label}</span>
                 {selectionOpen ? (
                   <ChevronUp className="h-3.5 w-3.5" />
                 ) : (
@@ -330,7 +330,7 @@ export default function FloatingMenu({
               </button>
             )}
 
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-950" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[3px] bg-neutral-950" />
           </div>
 
           {isAiChatEnabled && isChatMode ? (
