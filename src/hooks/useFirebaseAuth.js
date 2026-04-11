@@ -70,15 +70,22 @@ export function useFirebaseAuth() {
       return;
     }
 
-    const host = typeof window !== "undefined" ? window.location.hostname : "";
-    const isLocalHost =
-      host === "localhost" || host === "127.0.0.1" || host === "::1";
-
     setAuthError("");
     try {
-      if (isLocalHost) {
+      try {
         await signInWithPopup(auth, googleProvider);
         return;
+      } catch (popupError) {
+        const popupCode = String(popupError?.code || "");
+        const shouldFallbackToRedirect =
+          popupCode === "auth/popup-blocked" ||
+          popupCode === "auth/popup-closed-by-user" ||
+          popupCode === "auth/cancelled-popup-request" ||
+          popupCode === "auth/web-storage-unsupported";
+
+        if (!shouldFallbackToRedirect) {
+          throw popupError;
+        }
       }
 
       await signInWithRedirect(auth, googleProvider);
