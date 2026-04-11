@@ -2,6 +2,8 @@
 .event-wrapper {
   position: relative;
   flex: 1;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   display: flex;
   outline: none;
@@ -160,4 +162,18 @@
   gap: 2px;
   width: 100%;
   height: 100%;
+}
+
+.week-events-overlay,
+.day-events-overlay {
+  position: relative;
+  pointer-events: none;
+}
+
+.week-event-item,
+.day-event-item {
+  position: absolute;
+  padding: 2px;
+  box-sizing: border-box;
+  pointer-events: auto;
 }
