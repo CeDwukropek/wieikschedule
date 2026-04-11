@@ -46,12 +46,17 @@ export default function Timetable() {
     schedule,
     subjects,
     groupConfigs,
+    loadedTimetables,
+    activeExternalSelections,
     currentTimetable,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
+    handleAddExternalSelection,
+    handleUpdateExternalSelection,
+    handleRemoveExternalSelection,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
 
@@ -213,6 +218,99 @@ export default function Timetable() {
     selectedLectoratSubject,
   );
 
+  const buildMergedEvents = useCallback(
+    (weekStartDate) => {
+      const baseEvents = computeFiltered(
+        schedule,
+        studentGroups,
+        hideLectures,
+        showAll,
+        weekStartDate,
+        selectedLectoratSubject,
+      );
+
+      const merged = new Map();
+      baseEvents.forEach((ev) => {
+        const key = ["base", ev.id, ev.day, ev.start, ev.end, ev.room].join(
+          "::",
+        );
+        merged.set(key, ev);
+      });
+
+      (activeExternalSelections || []).forEach((item) => {
+        const scheduleId = String(item?.scheduleId || "").trim();
+        const groupType = String(item?.groupType || "").trim();
+        const groupValue = String(item?.groupValue || "").trim();
+        const subjectKey = String(item?.subjectKey || "").trim();
+
+        if (!scheduleId || !groupType || !groupValue) return;
+
+        const externalTimetable = loadedTimetables[scheduleId];
+        if (!externalTimetable?.schedule?.length) return;
+
+        const externalGroups = {
+          [groupType]: groupValue,
+        };
+
+        const externalEvents = computeFiltered(
+          externalTimetable.schedule,
+          externalGroups,
+          hideLectures,
+          false,
+          weekStartDate,
+          "",
+        ).filter((event) => {
+          if (!subjectKey) return true;
+          return String(event?.subj || "").trim() === subjectKey;
+        });
+
+        externalEvents.forEach((ev) => {
+          const taggedEvent = {
+            ...ev,
+            _sourceScheduleId: scheduleId,
+            _isExternal: true,
+          };
+
+          const key = [
+            "external",
+            scheduleId,
+            groupType,
+            groupValue,
+            subjectKey || "*",
+            ev.id,
+            ev.day,
+            ev.start,
+            ev.end,
+            ev.room,
+          ].join("::");
+
+          merged.set(key, taggedEvent);
+        });
+      });
+
+      return Array.from(merged.values()).sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        if (a.start !== b.start) return a.start.localeCompare(b.start);
+        return String(a.id).localeCompare(String(b.id));
+      });
+    },
+    [
+      computeFiltered,
+      schedule,
+      studentGroups,
+      hideLectures,
+      showAll,
+      selectedLectoratSubject,
+      activeExternalSelections,
+      loadedTimetables,
+    ],
+  );
+
+  const mergedWeekEvents = useMemo(
+    () => buildMergedEvents(viewedWeekStart),
+    [buildMergedEvents, viewedWeekStart],
+  );
+
   // Persist all settings
   useSettings({
     viewMode,
@@ -315,28 +413,16 @@ export default function Timetable() {
     try {
       const { selectedWeekOffset } = parseDaySelection(selection);
       const selectedWeekStart = getWeekStartByOffset(selectedWeekOffset);
-      return computeFiltered(
-        schedule,
-        studentGroups,
-        hideLectures,
-        showAll,
-        selectedWeekStart,
-        selectedLectoratSubject,
-      );
+      return buildMergedEvents(selectedWeekStart);
     } catch (e) {
-      return filtered;
+      return mergedWeekEvents;
     }
   }, [
     selection,
     parseDaySelection,
-    computeFiltered,
-    studentGroups,
-    hideLectures,
-    showAll,
-    selectedLectoratSubject,
     getWeekStartByOffset,
-    filtered,
-    schedule,
+    buildMergedEvents,
+    mergedWeekEvents,
   ]);
 
   const selectedDayOptionIndex = useMemo(() => {
@@ -432,6 +518,11 @@ export default function Timetable() {
       onCreateGroupSet: handleCreateGroupSet,
       onRenameActiveGroupSet: handleRenameActiveGroupSet,
       onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+      externalSelections: activeExternalSelections,
+      loadedTimetables,
+      onAddExternalSelection: handleAddExternalSelection,
+      onUpdateExternalSelection: handleUpdateExternalSelection,
+      onRemoveExternalSelection: handleRemoveExternalSelection,
       onScheduleChange: handleScheduleChange,
     },
     lektoratState: {
@@ -458,7 +549,7 @@ export default function Timetable() {
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView
-          events={filtered}
+          events={mergedWeekEvents}
           subjects={subjects}
           viewedWeekStart={viewedWeekStart}
           ref={exportRef}

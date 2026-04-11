@@ -7,6 +7,7 @@ import { ExportPngBtn } from "./ExportPngBtn";
 import { exportICS } from "./exportICS";
 import { allTimetables } from "./timetables";
 import { HideLectures } from "./HideLectures";
+import ExternalGroupSelectionManager from "./ExternalGroupSelectionManager";
 
 export default function ControlsPanel({
   panelState,
@@ -31,6 +32,11 @@ export default function ControlsPanel({
     onCreateGroupSet,
     onRenameActiveGroupSet,
     onDeleteActiveGroupSet,
+    externalSelections = [],
+    loadedTimetables = {},
+    onAddExternalSelection,
+    onUpdateExternalSelection,
+    onRemoveExternalSelection,
   } = groupSetState || {};
   const {
     viewMode,
@@ -67,7 +73,41 @@ export default function ControlsPanel({
       null, // null weekStartDate = no week filtering
       selectedLectoratSubject,
     );
-    exportICS(allWeeksFiltered);
+
+    const extraEvents = [];
+    (externalSelections || []).forEach((item) => {
+      const scheduleId = String(item?.scheduleId || "").trim();
+      const groupType = String(item?.groupType || "").trim();
+      const groupValue = String(item?.groupValue || "").trim();
+      const subjectKey = String(item?.subjectKey || "").trim();
+
+      if (!scheduleId || !groupType || !groupValue) return;
+
+      const externalTimetable = loadedTimetables[scheduleId];
+      if (!externalTimetable?.schedule?.length) return;
+
+      const events = computeFiltered(
+        externalTimetable.schedule,
+        { [groupType]: groupValue },
+        hideLectures,
+        false,
+        null,
+        "",
+      )
+        .filter((event) => {
+          if (!subjectKey) return true;
+          return String(event?.subj || "").trim() === subjectKey;
+        })
+        .map((event) => ({
+          ...event,
+          _sourceScheduleId: scheduleId,
+          _isExternal: true,
+        }));
+
+      extraEvents.push(...events);
+    });
+
+    exportICS([...allWeeksFiltered, ...extraEvents]);
   };
 
   return (
@@ -144,6 +184,17 @@ export default function ControlsPanel({
                 onRenameActiveGroupSet={onRenameActiveGroupSet}
                 onDeleteActiveGroupSet={onDeleteActiveGroupSet}
                 compact
+              />
+            </div>
+
+            <div className="space-y-2 pb-4 border-b border-neutral-800">
+              <ExternalGroupSelectionManager
+                currentSchedule={currentSchedule}
+                externalSelections={externalSelections}
+                loadedTimetables={loadedTimetables}
+                onAddExternalSelection={onAddExternalSelection}
+                onUpdateExternalSelection={onUpdateExternalSelection}
+                onRemoveExternalSelection={onRemoveExternalSelection}
               />
             </div>
 

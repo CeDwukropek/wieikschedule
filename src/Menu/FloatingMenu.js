@@ -81,6 +81,11 @@ export default function FloatingMenu({
     onCreateGroupSet,
     onRenameActiveGroupSet,
     onDeleteActiveGroupSet,
+    externalSelections = [],
+    loadedTimetables = {},
+    onAddExternalSelection,
+    onUpdateExternalSelection,
+    onRemoveExternalSelection,
     onScheduleChange,
   } = scheduleState || {};
   const {
@@ -468,6 +473,11 @@ export default function FloatingMenu({
           onCreateGroupSet,
           onRenameActiveGroupSet,
           onDeleteActiveGroupSet,
+          externalSelections,
+          loadedTimetables,
+          onAddExternalSelection,
+          onUpdateExternalSelection,
+          onRemoveExternalSelection,
         }}
         viewState={{
           viewMode,
