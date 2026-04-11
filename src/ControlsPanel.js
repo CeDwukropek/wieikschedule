@@ -173,6 +173,17 @@ export default function ControlsPanel({
               />
             </div>
 
+            <div className="space-y-2 pb-4 border-b border-neutral-800">
+              <ExternalGroupSelectionManager
+                currentSchedule={currentSchedule}
+                externalSelections={externalSelections}
+                loadedTimetables={loadedTimetables}
+                onAddExternalSelection={onAddExternalSelection}
+                onUpdateExternalSelection={onUpdateExternalSelection}
+                onRemoveExternalSelection={onRemoveExternalSelection}
+              />
+            </div>
+
             {/* Group set manager */}
             <div className="space-y-2">
               <GroupSetManager
@@ -184,17 +195,6 @@ export default function ControlsPanel({
                 onRenameActiveGroupSet={onRenameActiveGroupSet}
                 onDeleteActiveGroupSet={onDeleteActiveGroupSet}
                 compact
-              />
-            </div>
-
-            <div className="space-y-2 pb-4 border-b border-neutral-800">
-              <ExternalGroupSelectionManager
-                currentSchedule={currentSchedule}
-                externalSelections={externalSelections}
-                loadedTimetables={loadedTimetables}
-                onAddExternalSelection={onAddExternalSelection}
-                onUpdateExternalSelection={onUpdateExternalSelection}
-                onRemoveExternalSelection={onRemoveExternalSelection}
               />
             </div>
 
