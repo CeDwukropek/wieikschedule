@@ -401,7 +401,6 @@ export function useScheduleManager(savedSettings) {
 
           if (Object.prototype.hasOwnProperty.call(patch || {}, "groupType")) {
             next.groupValue = "";
-            next.subjectKey = "";
           }
 
           if (

@@ -185,11 +185,11 @@ export default function ExternalGroupSelectionManager({
 
       {groupedSelections.length === 0 ? (
         <p className="text-xs text-gray-400">
-          Brak dodatkowych grup. Dodaj pojedyncze grupy z innych planów.
+          Dodaj pojedyncze grupy z innych planów.
         </p>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         {groupedSelections.map((grouped) => {
           const timetable = loadedTimetables[grouped.scheduleId];
           const scheduleLabel = scheduleOptions.find(
@@ -199,9 +199,9 @@ export default function ExternalGroupSelectionManager({
           return (
             <div
               key={grouped.key}
-              className="rounded border border-neutral-800 bg-neutral-900/60 p-[5px]"
+              className="rounded border border-neutral-700 bg-neutral-900/60 p-[10px]"
             >
-              <div className="mb-2 flex items-center justify-between px-1">
+              <div className="mb-2 flex items-center justify-between">
                 {grouped.scheduleId ? (
                   <div className="text-xs font-medium text-gray-200">
                     {scheduleLabel || grouped.scheduleId}
@@ -261,10 +261,10 @@ export default function ExternalGroupSelectionManager({
                   <div
                     key={item.id}
                     className={
-                      idx > 0 ? "mt-2 border-t border-neutral-800 pt-2" : ""
+                      idx > 0 ? "mt-2 border-t border-neutral-700 pt-2" : ""
                     }
                   >
-                    <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
                       <select
                         value={item.subjectKey || ""}
                         onChange={(e) =>
@@ -272,7 +272,7 @@ export default function ExternalGroupSelectionManager({
                             subjectKey: e.target.value,
                           })
                         }
-                        className="px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
+                        className="w-full min-w-0 truncate px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
                         disabled={!item.scheduleId}
                       >
                         <option value="">Wszystkie przedmioty</option>
@@ -293,7 +293,7 @@ export default function ExternalGroupSelectionManager({
                       </button>
                     </div>
 
-                    <div className="mt-2 grid grid-cols-[3fr_1fr] gap-2 items-center">
+                    <div className="mt-2 grid min-w-0 grid-cols-[3fr_1fr] gap-2 items-center">
                       <select
                         value={item.groupType || ""}
                         onChange={(e) =>
@@ -301,7 +301,7 @@ export default function ExternalGroupSelectionManager({
                             groupType: e.target.value,
                           })
                         }
-                        className="px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
+                        className="w-full min-w-0 truncate px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
                         disabled={!item.scheduleId}
                       >
                         <option value="">Typ grupy</option>
@@ -319,7 +319,7 @@ export default function ExternalGroupSelectionManager({
                             groupValue: e.target.value,
                           })
                         }
-                        className="px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
+                        className="w-full min-w-0 px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"
                         disabled={!item.groupType}
                       >
                         <option value="">Grupa</option>

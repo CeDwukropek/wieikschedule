@@ -317,11 +317,11 @@ export default function FloatingMenu({
                 aria-label={
                   isCurrent ? "Aktualny okres" : "Przejdź do bieżącego okresu"
                 }
-                className={`pointer-events-auto -mb-[2px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${
+                className={`pointer-events-auto -mb-[2px] inline-flex select-none items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${
                   isCurrent ? "text-lime-400" : "text-neutral-300"
                 } shadow-lg border-b-neutral-950`}
               >
-                <span>{label}</span>
+                <span className="select-none">{label}</span>
                 {selectionOpen ? (
                   <ChevronUp className="h-3.5 w-3.5" />
                 ) : (
