@@ -363,24 +363,25 @@ export function useScheduleManager(savedSettings) {
     [activeGroupSetBySchedule, currentSchedule, defaultGroups],
   );
 
-  const handleAddExternalSelection = useCallback(() => {
-    const firstExternalSchedule = allTimetables.find(
-      (tt) => tt.id !== currentSchedule,
-    );
+  const handleAddExternalSelection = useCallback(
+    (scheduleId = "") => {
+      const normalizedScheduleId = String(scheduleId || "").trim();
 
-    const nextSelection = {
-      id: `ext-${Date.now()}`,
-      scheduleId: firstExternalSchedule?.id || currentSchedule,
-      groupType: "",
-      groupValue: "",
-      subjectKey: "",
-    };
+      const nextSelection = {
+        id: `ext-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        scheduleId: normalizedScheduleId,
+        groupType: "",
+        groupValue: "",
+        subjectKey: "",
+      };
 
-    updateActiveSet((set) => ({
-      ...set,
-      externalSelections: [...(set.externalSelections || []), nextSelection],
-    }));
-  }, [currentSchedule, updateActiveSet]);
+      updateActiveSet((set) => ({
+        ...set,
+        externalSelections: [...(set.externalSelections || []), nextSelection],
+      }));
+    },
+    [updateActiveSet],
+  );
 
   const handleUpdateExternalSelection = useCallback(
     (selectionId, patch) => {
