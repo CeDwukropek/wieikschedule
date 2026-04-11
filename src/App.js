@@ -9,7 +9,7 @@ import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
 import FAQ from "./FAQ";
-import { useSettings } from "./hooks/useSettings";
+import { usePersistSettings, useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
@@ -22,7 +22,8 @@ export default function Timetable() {
   const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
   // Load saved settings from localStorage
-  const savedSettings = useSettings({});
+  const { savedSettings, isLoading: isSettingsLoading } = useSettings();
+  const [settingsReady, setSettingsReady] = useState(false);
 
   // View and filter states
   const [viewMode, setViewMode] = useState(savedSettings?.viewMode ?? "week");
@@ -94,7 +95,10 @@ export default function Timetable() {
   );
 
   useEffect(() => {
-    if (!savedSettings || typeof savedSettings !== "object") return;
+    if (!savedSettings || typeof savedSettings !== "object") {
+      setSettingsReady(true);
+      return;
+    }
 
     const signature = JSON.stringify({
       viewMode: savedSettings.viewMode,
@@ -104,31 +108,34 @@ export default function Timetable() {
       selectedLectoratBySchedule: savedSettings.selectedLectoratBySchedule,
     });
 
-    if (!signature || signature === appliedSettingsSignatureRef.current) return;
-    appliedSettingsSignatureRef.current = signature;
+    if (signature && signature !== appliedSettingsSignatureRef.current) {
+      appliedSettingsSignatureRef.current = signature;
 
-    if (typeof savedSettings.viewMode === "string") {
-      setViewMode(savedSettings.viewMode);
+      if (typeof savedSettings.viewMode === "string") {
+        setViewMode(savedSettings.viewMode);
+      }
+
+      if (typeof savedSettings.hideLectures === "boolean") {
+        setHideLectures(savedSettings.hideLectures);
+      }
+
+      if (typeof savedSettings.showAll === "boolean") {
+        setShowAll(savedSettings.showAll);
+      }
+
+      if (Number.isFinite(Number(savedSettings.weekOffset))) {
+        setWeekOffset(Number(savedSettings.weekOffset));
+      }
+
+      if (
+        savedSettings.selectedLectoratBySchedule &&
+        typeof savedSettings.selectedLectoratBySchedule === "object"
+      ) {
+        setSelectedLectoratBySchedule(savedSettings.selectedLectoratBySchedule);
+      }
     }
 
-    if (typeof savedSettings.hideLectures === "boolean") {
-      setHideLectures(savedSettings.hideLectures);
-    }
-
-    if (typeof savedSettings.showAll === "boolean") {
-      setShowAll(savedSettings.showAll);
-    }
-
-    if (Number.isFinite(Number(savedSettings.weekOffset))) {
-      setWeekOffset(Number(savedSettings.weekOffset));
-    }
-
-    if (
-      savedSettings.selectedLectoratBySchedule &&
-      typeof savedSettings.selectedLectoratBySchedule === "object"
-    ) {
-      setSelectedLectoratBySchedule(savedSettings.selectedLectoratBySchedule);
-    }
+    setSettingsReady(true);
   }, [savedSettings]);
 
   const viewedWeekRange = useMemo(
@@ -351,7 +358,7 @@ export default function Timetable() {
   );
 
   // Persist all settings
-  useSettings({
+  usePersistSettings({
     viewMode,
     weekOffset,
     hideLectures,
@@ -361,7 +368,7 @@ export default function Timetable() {
     activeGroupSetBySchedule,
     selectedLectoratBySchedule,
     scheduleGroups,
-  });
+  }, settingsReady && !isSettingsLoading);
 
   const dayOptions = useMemo(() => {
     const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
@@ -495,6 +502,19 @@ export default function Timetable() {
   const { selectedWeekOffset, selectedDayIndex } = parseDaySelection(selection);
   const isCurrentDay =
     selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
+
+  if (isSettingsLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-6 text-center">
+        <div>
+          <div className="text-lg font-semibold">Wczytywanie ustawień...</div>
+          <div className="mt-2 text-sm text-neutral-400">
+            Pobieram zapis z Firebase albo localStorage.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const floatingMenuProps = {
     panelState: {

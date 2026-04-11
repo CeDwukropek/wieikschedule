@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useUserId } from "./useUserId";
 import { useFirebaseAuth } from "./useFirebaseAuth";
@@ -6,13 +6,13 @@ import { db } from "../firebase/firebaseClient";
 
 export function useSettings(settings) {
   const userId = useUserId();
-  const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
-  const shouldPersist =
-    Boolean(settings) && Object.keys(settings || {}).length > 0;
+  const { user, isLoading: isAuthLoading, isConfigured: isAuthConfigured } =
+    useFirebaseAuth();
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   const SETTINGS_KEY = useMemo(
-    () => `wieikschedule.${userId}.settings`,
-    [userId],
+    () => `wieikschedule.${user?.uid || userId}.settings`,
+    [user?.uid, userId],
   );
 
   const readLocalSettings = useCallback(() => {
@@ -25,40 +25,112 @@ export function useSettings(settings) {
     return null;
   }, [SETTINGS_KEY]);
 
-  const [savedSettings, setSavedSettings] = useState(() => readLocalSettings());
+  const [savedSettings, setSavedSettings] = useState(null);
 
   useEffect(() => {
-    setSavedSettings(readLocalSettings());
-  }, [readLocalSettings]);
-
-  // If user is logged in, prefer cloud settings and update local cache.
-  useEffect(() => {
-    if (shouldPersist) return;
-    if (!user?.uid || !isAuthConfigured || !db) return;
-
     let active = true;
+    setHasHydrated(false);
+
+    const hydrateFromLocal = () => {
+      const localSettings = readLocalSettings();
+      if (!active) return;
+      setSavedSettings(localSettings);
+      setHasHydrated(true);
+    };
+
+    if (isAuthLoading) return () => {
+      active = false;
+    };
+
+    if (!user?.uid || !isAuthConfigured || !db) {
+      hydrateFromLocal();
+      return () => {
+        active = false;
+      };
+    }
+
     const settingsRef = doc(db, "userSettings", user.uid);
 
     getDoc(settingsRef)
-      .then((snapshot) => {
-        if (!active || !snapshot.exists()) return;
-        const data = snapshot.data()?.settings;
-        if (!data || typeof data !== "object") return;
-        setSavedSettings(data);
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+      .then(async (snapshot) => {
+        if (!active) return;
+
+        if (snapshot.exists()) {
+          const data = snapshot.data()?.settings;
+          if (data && typeof data === "object") {
+            setSavedSettings(data);
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+            setHasHydrated(true);
+            return;
+          }
+        }
+
+        const localSettings = readLocalSettings();
+        if (!active) return;
+        if (localSettings && typeof localSettings === "object") {
+          setSavedSettings(localSettings);
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(localSettings));
+
+          await setDoc(
+            settingsRef,
+            {
+              settings: localSettings,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true },
+          ).catch((e) => {
+            console.error("Failed to migrate local settings to cloud:", e);
+          });
+        } else {
+          setSavedSettings(null);
+        }
+
+        if (active) {
+          setHasHydrated(true);
+        }
       })
       .catch((e) => {
         console.error("Failed to load cloud settings:", e);
+        if (!active) return;
+        hydrateFromLocal();
       });
 
     return () => {
       active = false;
     };
-  }, [shouldPersist, user, isAuthConfigured, SETTINGS_KEY]);
+  }, [
+    isAuthLoading,
+    user,
+    isAuthConfigured,
+    SETTINGS_KEY,
+    readLocalSettings,
+  ]);
 
-  // Persist settings whenever they change: cloud for logged-in user, local for guest.
+  return {
+    savedSettings,
+    isLoading: !hasHydrated,
+  };
+}
+
+export function usePersistSettings(settings, enabled = true) {
+  const userId = useUserId();
+  const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
+  const lastSavedSignatureRef = useRef("");
+
+  const SETTINGS_KEY = useMemo(
+    () => `wieikschedule.${user?.uid || userId}.settings`,
+    [user?.uid, userId],
+  );
+
+  const settingsSignature = useMemo(() => JSON.stringify(settings || {}), [settings]);
+
   useEffect(() => {
-    if (!shouldPersist) return;
+    if (!enabled) return;
+    if (!settings || typeof settings !== "object") return;
+    if (!Object.keys(settings || {}).length) return;
+    if (settingsSignature === lastSavedSignatureRef.current) return;
+
+    lastSavedSignatureRef.current = settingsSignature;
 
     try {
       const serialized = JSON.stringify(settings);
@@ -80,7 +152,12 @@ export function useSettings(settings) {
     } catch (e) {
       console.error("Failed to save settings:", e);
     }
-  }, [settings, SETTINGS_KEY, shouldPersist, user, isAuthConfigured]);
-
-  return savedSettings;
+  }, [
+    settings,
+    settingsSignature,
+    SETTINGS_KEY,
+    enabled,
+    user,
+    isAuthConfigured,
+  ]);
 }
