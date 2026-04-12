@@ -19,11 +19,32 @@ export default function Timetable() {
   const exportRef = useRef(null);
   const appliedSettingsSignatureRef = useRef("");
   const [open, setOpen] = useState(false);
+  const [settingsConflict, setSettingsConflict] = useState(null);
   const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
+  const resolveCloudConflict = useCallback(() => {
+    return new Promise((resolve) => {
+      setSettingsConflict({ resolve });
+    });
+  }, []);
+
   // Load saved settings from localStorage
-  const { savedSettings, isLoading: isSettingsLoading } = useSettings();
+  const { savedSettings } = useSettings({
+    resolveCloudConflict,
+  });
   const [settingsReady, setSettingsReady] = useState(false);
+
+  const chooseCloudSettings = useCallback(() => {
+    if (!settingsConflict?.resolve) return;
+    settingsConflict.resolve("cloud");
+    setSettingsConflict(null);
+  }, [settingsConflict]);
+
+  const chooseLocalSettings = useCallback(() => {
+    if (!settingsConflict?.resolve) return;
+    settingsConflict.resolve("local");
+    setSettingsConflict(null);
+  }, [settingsConflict]);
 
   // View and filter states
   const [viewMode, setViewMode] = useState(savedSettings?.viewMode ?? "week");
@@ -358,17 +379,20 @@ export default function Timetable() {
   );
 
   // Persist all settings
-  usePersistSettings({
-    viewMode,
-    weekOffset,
-    hideLectures,
-    showAll,
-    currentSchedule,
-    scheduleGroupSets,
-    activeGroupSetBySchedule,
-    selectedLectoratBySchedule,
-    scheduleGroups,
-  }, settingsReady && !isSettingsLoading);
+  usePersistSettings(
+    {
+      viewMode,
+      weekOffset,
+      hideLectures,
+      showAll,
+      currentSchedule,
+      scheduleGroupSets,
+      activeGroupSetBySchedule,
+      selectedLectoratBySchedule,
+      scheduleGroups,
+    },
+    settingsReady,
+  );
 
   const dayOptions = useMemo(() => {
     const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
@@ -503,18 +527,34 @@ export default function Timetable() {
   const isCurrentDay =
     selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
 
-  if (isSettingsLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center px-6 text-center">
-        <div>
-          <div className="text-lg font-semibold">Wczytywanie ustawień...</div>
-          <div className="mt-2 text-sm text-neutral-400">
-            Pobieram zapis z Firebase albo localStorage.
-          </div>
+  const conflictPrompt = settingsConflict ? (
+    <div className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-neutral-700 bg-neutral-900 p-5 shadow-2xl">
+        <h3 className="text-base font-semibold text-white">
+          Wykryto zapisane ustawienia
+        </h3>
+        <p className="mt-2 text-sm text-neutral-300">
+          W Firebase masz zapisane ustawienia grup i filtrów. Co chcesz zrobić?
+        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={chooseCloudSettings}
+            className="w-full rounded-lg bg-lime-600 px-3 py-2 text-sm font-medium text-white hover:bg-lime-500"
+          >
+            Zaciągnij ustawienia z Firebase
+          </button>
+          <button
+            type="button"
+            onClick={chooseLocalSettings}
+            className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-sm font-medium text-neutral-100 hover:bg-neutral-700"
+          >
+            Zostaw lokalne i nadpisz Firebase
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  ) : null;
 
   const floatingMenuProps = {
     panelState: {
@@ -631,6 +671,7 @@ export default function Timetable() {
         />
       )}
       <FAQ />
+      {conflictPrompt}
     </div>
   );
 }
