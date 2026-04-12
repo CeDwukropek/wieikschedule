@@ -4,8 +4,7 @@ import { useUserId } from "./useUserId";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import { db } from "../firebase/firebaseClient";
 
-export function useSettings(options = {}) {
-  const { resolveCloudConflict } = options || {};
+export function useSettings() {
   const userId = useUserId();
   const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
   const previousUserUidRef = useRef(null);
@@ -45,10 +44,6 @@ export function useSettings(options = {}) {
   useEffect(() => {
     const currentUserUid = user?.uid || null;
     const previousUserUid = previousUserUidRef.current;
-
-    if (previousUserUid !== currentUserUid) {
-      // Auth session changed; keep transition handling deterministic.
-    }
 
     if (
       previousUserUid &&
@@ -114,7 +109,6 @@ export function useSettings(options = {}) {
     GUEST_SETTINGS_KEY,
     readSettingsFromKey,
     readLocalSettings,
-    resolveCloudConflict,
   ]);
 
   return {
