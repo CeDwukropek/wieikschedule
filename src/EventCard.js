@@ -29,10 +29,13 @@ export default function EventCard({ ev, subjects = {} }) {
   const colorBg = subj.color || "bg-gray-600";
   const colorText = colorBg.replace(/^bg-/, "text-");
   const eventTint = EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
+  const isExternal = Boolean(ev?._isExternal && ev?._sourceScheduleId);
 
   return (
     <div
-      className="w-full h-full flex overflow-hidden shadow-sm"
+      className={`w-full h-full flex overflow-hidden shadow-sm ${
+        isExternal ? "border border-amber-400/70" : ""
+      }`}
       style={{ backgroundColor: eventTint }}
     >
       <div className={`${colorBg} w-1 shrink-0`} />
@@ -41,6 +44,12 @@ export default function EventCard({ ev, subjects = {} }) {
         <div className={`${colorText} text-[0.7rem] font-semibold`}>
           {subj.name}
         </div>
+
+        {isExternal ? (
+          <div className="mt-1 inline-flex w-fit items-center rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-200">
+            {ev._sourceScheduleId}
+          </div>
+        ) : null}
 
         <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">
           {ev.start && ev.end ? (

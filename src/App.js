@@ -9,7 +9,7 @@ import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
 import FAQ from "./FAQ";
-import { useSettings } from "./hooks/useSettings";
+import { usePersistSettings, useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
@@ -17,11 +17,13 @@ import { formatDate } from "./utils/dateUtils";
 
 export default function Timetable() {
   const exportRef = useRef(null);
+  const appliedSettingsSignatureRef = useRef("");
   const [open, setOpen] = useState(false);
   const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
   // Load saved settings from localStorage
-  const savedSettings = useSettings({});
+  const { savedSettings } = useSettings();
+  const [settingsReady, setSettingsReady] = useState(false);
 
   // View and filter states
   const [viewMode, setViewMode] = useState(savedSettings?.viewMode ?? "week");
@@ -46,12 +48,17 @@ export default function Timetable() {
     schedule,
     subjects,
     groupConfigs,
+    loadedTimetables,
+    activeExternalSelections,
     currentTimetable,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
+    handleAddExternalSelection,
+    handleUpdateExternalSelection,
+    handleRemoveExternalSelection,
     handleScheduleChange,
   } = useScheduleManager(savedSettings);
 
@@ -86,6 +93,50 @@ export default function Timetable() {
           ? 1
           : 0,
   );
+
+  useEffect(() => {
+    if (!savedSettings || typeof savedSettings !== "object") {
+      setSettingsReady(true);
+      return;
+    }
+
+    const signature = JSON.stringify({
+      viewMode: savedSettings.viewMode,
+      hideLectures: savedSettings.hideLectures,
+      showAll: savedSettings.showAll,
+      weekOffset: savedSettings.weekOffset,
+      selectedLectoratBySchedule: savedSettings.selectedLectoratBySchedule,
+    });
+
+    if (signature && signature !== appliedSettingsSignatureRef.current) {
+      appliedSettingsSignatureRef.current = signature;
+
+      if (typeof savedSettings.viewMode === "string") {
+        setViewMode(savedSettings.viewMode);
+      }
+
+      if (typeof savedSettings.hideLectures === "boolean") {
+        setHideLectures(savedSettings.hideLectures);
+      }
+
+      if (typeof savedSettings.showAll === "boolean") {
+        setShowAll(savedSettings.showAll);
+      }
+
+      if (Number.isFinite(Number(savedSettings.weekOffset))) {
+        setWeekOffset(Number(savedSettings.weekOffset));
+      }
+
+      if (
+        savedSettings.selectedLectoratBySchedule &&
+        typeof savedSettings.selectedLectoratBySchedule === "object"
+      ) {
+        setSelectedLectoratBySchedule(savedSettings.selectedLectoratBySchedule);
+      }
+    }
+
+    setSettingsReady(true);
+  }, [savedSettings]);
 
   const viewedWeekRange = useMemo(
     () => getRangeByOffset(weekOffset),
@@ -213,18 +264,114 @@ export default function Timetable() {
     selectedLectoratSubject,
   );
 
+  const buildMergedEvents = useCallback(
+    (weekStartDate) => {
+      const baseEvents = computeFiltered(
+        schedule,
+        studentGroups,
+        hideLectures,
+        showAll,
+        weekStartDate,
+        selectedLectoratSubject,
+      );
+
+      const merged = new Map();
+      baseEvents.forEach((ev) => {
+        const key = ["base", ev.id, ev.day, ev.start, ev.end, ev.room].join(
+          "::",
+        );
+        merged.set(key, ev);
+      });
+
+      (activeExternalSelections || []).forEach((item) => {
+        const scheduleId = String(item?.scheduleId || "").trim();
+        const groupType = String(item?.groupType || "").trim();
+        const groupValue = String(item?.groupValue || "").trim();
+        const subjectKey = String(item?.subjectKey || "").trim();
+
+        if (!scheduleId || !groupType || !groupValue) return;
+
+        const externalTimetable = loadedTimetables[scheduleId];
+        if (!externalTimetable?.schedule?.length) return;
+
+        const externalGroups = {
+          [groupType]: groupValue,
+        };
+
+        const externalEvents = computeFiltered(
+          externalTimetable.schedule,
+          externalGroups,
+          hideLectures,
+          false,
+          weekStartDate,
+          "",
+        ).filter((event) => {
+          if (!subjectKey) return true;
+          return String(event?.subj || "").trim() === subjectKey;
+        });
+
+        externalEvents.forEach((ev) => {
+          const taggedEvent = {
+            ...ev,
+            _sourceScheduleId: scheduleId,
+            _isExternal: true,
+          };
+
+          const key = [
+            "external",
+            scheduleId,
+            groupType,
+            groupValue,
+            subjectKey || "*",
+            ev.id,
+            ev.day,
+            ev.start,
+            ev.end,
+            ev.room,
+          ].join("::");
+
+          merged.set(key, taggedEvent);
+        });
+      });
+
+      return Array.from(merged.values()).sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        if (a.start !== b.start) return a.start.localeCompare(b.start);
+        return String(a.id).localeCompare(String(b.id));
+      });
+    },
+    [
+      computeFiltered,
+      schedule,
+      studentGroups,
+      hideLectures,
+      showAll,
+      selectedLectoratSubject,
+      activeExternalSelections,
+      loadedTimetables,
+    ],
+  );
+
+  const mergedWeekEvents = useMemo(
+    () => buildMergedEvents(viewedWeekStart),
+    [buildMergedEvents, viewedWeekStart],
+  );
+
   // Persist all settings
-  useSettings({
-    viewMode,
-    weekOffset,
-    hideLectures,
-    showAll,
-    currentSchedule,
-    scheduleGroupSets,
-    activeGroupSetBySchedule,
-    selectedLectoratBySchedule,
-    scheduleGroups,
-  });
+  usePersistSettings(
+    {
+      viewMode,
+      weekOffset,
+      hideLectures,
+      showAll,
+      currentSchedule,
+      scheduleGroupSets,
+      activeGroupSetBySchedule,
+      selectedLectoratBySchedule,
+      scheduleGroups,
+    },
+    settingsReady,
+  );
 
   const dayOptions = useMemo(() => {
     const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
@@ -315,28 +462,16 @@ export default function Timetable() {
     try {
       const { selectedWeekOffset } = parseDaySelection(selection);
       const selectedWeekStart = getWeekStartByOffset(selectedWeekOffset);
-      return computeFiltered(
-        schedule,
-        studentGroups,
-        hideLectures,
-        showAll,
-        selectedWeekStart,
-        selectedLectoratSubject,
-      );
+      return buildMergedEvents(selectedWeekStart);
     } catch (e) {
-      return filtered;
+      return mergedWeekEvents;
     }
   }, [
     selection,
     parseDaySelection,
-    computeFiltered,
-    studentGroups,
-    hideLectures,
-    showAll,
-    selectedLectoratSubject,
     getWeekStartByOffset,
-    filtered,
-    schedule,
+    buildMergedEvents,
+    mergedWeekEvents,
   ]);
 
   const selectedDayOptionIndex = useMemo(() => {
@@ -432,6 +567,11 @@ export default function Timetable() {
       onCreateGroupSet: handleCreateGroupSet,
       onRenameActiveGroupSet: handleRenameActiveGroupSet,
       onDeleteActiveGroupSet: handleDeleteActiveGroupSet,
+      externalSelections: activeExternalSelections,
+      loadedTimetables,
+      onAddExternalSelection: handleAddExternalSelection,
+      onUpdateExternalSelection: handleUpdateExternalSelection,
+      onRemoveExternalSelection: handleRemoveExternalSelection,
       onScheduleChange: handleScheduleChange,
     },
     lektoratState: {
@@ -458,7 +598,7 @@ export default function Timetable() {
       {/* --- Widok planu --- */}
       {viewMode === "week" ? (
         <WeekView
-          events={filtered}
+          events={mergedWeekEvents}
           subjects={subjects}
           viewedWeekStart={viewedWeekStart}
           ref={exportRef}

@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // One document per user: /userSettings/{uid}
+    match /userSettings/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidSettingsWrite();
+      allow delete: if isOwner(userId);
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidSettingsWrite() {
+      // Keep the document shape predictable and avoid extra top-level fields.
+      return request.resource.data.keys().hasOnly(["settings", "updatedAt"]) &&
+        request.resource.data.settings is map &&
+        // Soft guard against oversized payloads.
+        request.resource.data.settings.keys().size() <= 100 &&
+        // Enforce server timestamp from the backend SDK call.
+        request.resource.data.updatedAt == request.time;
+    }
+  }
+}
