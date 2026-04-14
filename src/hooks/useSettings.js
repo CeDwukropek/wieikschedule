@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useUserId } from "./useUserId";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import { db } from "../firebase/firebaseClient";
@@ -79,25 +79,31 @@ export function useSettings() {
       };
     }
 
-    // If user-scoped cache is missing but guest snapshot exists, promote it after login.
-    try {
-      const userScopedLocalSettings = readSettingsFromKey(SETTINGS_KEY);
-      const guestLocalSettings = readSettingsFromKey(GUEST_SETTINGS_KEY);
+    // Load from Firestore in background without blocking UI
+    // UI already shows localStorage data (from useState initialization)
+    const loadSettingsFromFirestore = async () => {
+      try {
+        const settingsRef = doc(db, "userSettings", user.uid);
+        const snapshot = await getDoc(settingsRef);
 
-      if (
-        (!userScopedLocalSettings ||
-          typeof userScopedLocalSettings !== "object") &&
-        guestLocalSettings &&
-        typeof guestLocalSettings === "object"
-      ) {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(guestLocalSettings));
-        if (active) {
-          setSavedSettings(guestLocalSettings);
+        if (snapshot.exists() && snapshot.data()?.settings) {
+          const firestoreSettings = snapshot.data().settings;
+          if (active) {
+            // Update localStorage and state with Firestore data
+            localStorage.setItem(
+              SETTINGS_KEY,
+              JSON.stringify(firestoreSettings),
+            );
+            setSavedSettings(firestoreSettings);
+          }
         }
+      } catch (e) {
+        console.error("Failed to load settings from Firestore:", e);
       }
-    } catch (e) {
-      console.error("Failed to promote guest settings after login:", e);
-    }
+    };
+
+    // Always fetch from Firestore in background (non-blocking)
+    loadSettingsFromFirestore();
 
     return () => {
       active = false;
