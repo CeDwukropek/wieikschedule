@@ -1,11 +1,13 @@
 import EventCard from "../EventCard";
 import React, { forwardRef } from "react";
 import EventTooltipWrapper from "../EventTooltipWrapper";
-import { createTimeSlots } from "../timeSlotUtils";
-import { buildEventLayout } from "../utils/eventLayout";
+import {
+  createTimeSlots,
+  getEventsForSlot,
+  getEventSpan,
+  toMinutes,
+} from "../timeSlotUtils";
 import "./ViewStyles.css";
-
-const DAYS = [0, 1, 2, 3, 4]; // Pon–Pt
 
 const WeekView = forwardRef(function WeekView(
   { events, subjects = {}, viewedWeekStart },
@@ -18,6 +20,7 @@ const WeekView = forwardRef(function WeekView(
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
 
+  const days = [0, 1, 2, 3, 4]; // Pon–Pt
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
   // Get Monday of current week or use passed viewedWeekStart
@@ -43,16 +46,6 @@ const WeekView = forwardRef(function WeekView(
   };
 
   const timeSlots = createTimeSlots(startHour, endHour, slotMinutes);
-  const layoutByDay = React.useMemo(() => {
-    const map = new Map();
-
-    DAYS.forEach((day) => {
-      const dayEvents = events.filter((e) => e.day === day);
-      map.set(day, buildEventLayout(dayEvents, { startHour, endHour }));
-    });
-
-    return map;
-  }, [events, startHour, endHour]);
 
   return (
     <div className="week-scroll w-full overflow-auto">
@@ -126,9 +119,46 @@ const WeekView = forwardRef(function WeekView(
           </div>
         ))}
 
-        {/* Day columns with time slots as background */}
-        {DAYS.map((day) => {
+        {/* Day columns with time slots */}
+        {days.map((day) => {
+          const dayEvents = events.filter((e) => e.day === day);
+          const renderedEvents = new Set();
+          const occupiedSlots = new Set();
+
           return timeSlots.map((slot) => {
+            const slotEvents = getEventsForSlot(
+              dayEvents,
+              slot.slotStart,
+              slot.slotEnd,
+            );
+
+            const newEvents = slotEvents.filter((ev) => {
+              const evStart = toMinutes(ev.start);
+              const eventStartsInThisSlot =
+                evStart >= slot.slotStart && evStart < slot.slotEnd;
+              const notYetRendered = !renderedEvents.has(ev);
+
+              if (eventStartsInThisSlot && notYetRendered) {
+                renderedEvents.add(ev);
+                const span = getEventSpan(ev, slotMinutes);
+                for (let i = 1; i < span; i++)
+                  occupiedSlots.add(slot.index + i);
+                return true;
+              }
+              return false;
+            });
+
+            if (occupiedSlots.has(slot.index) && newEvents.length === 0) {
+              return null;
+            }
+
+            const maxSpan =
+              newEvents.length > 0
+                ? Math.max(
+                    ...newEvents.map((ev) => getEventSpan(ev, slotMinutes)),
+                  )
+                : 1;
+
             const isHourBoundary = slot.index % slotsPerHour === 0;
             const hourBlock = Math.floor(slot.index / slotsPerHour);
 
@@ -141,59 +171,24 @@ const WeekView = forwardRef(function WeekView(
                 style={{
                   gridColumn: day + 2,
                   gridRow: slot.index + 3,
+                  gridRowEnd: `span ${maxSpan}`,
                 }}
-              />
+              >
+                {newEvents.length > 0 && (
+                  <div className="event-container">
+                    {newEvents.map((ev, idx) => {
+                      const uniqueKey = `${day}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
+                      return (
+                        <EventTooltipWrapper ev={ev} key={uniqueKey}>
+                          <EventCard ev={ev} subjects={subjects} />
+                        </EventTooltipWrapper>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           });
-        })}
-
-        {/* Absolute overlay for day events */}
-        {DAYS.map((day) => {
-          const positionedEvents = layoutByDay.get(day) || [];
-
-          return (
-            <div
-              key={`overlay-${day}`}
-              className="week-events-overlay"
-              style={{
-                gridColumn: day + 2,
-                gridRow: 3,
-                gridRowEnd: `span ${totalSlots}`,
-              }}
-            >
-              {positionedEvents.map(
-                (
-                  { ev, startMinutes, endMinutes, column, columnCount },
-                  idx,
-                ) => {
-                  const startOffset = startMinutes - startHour * 60;
-                  const duration = endMinutes - startMinutes;
-                  const topSlots = startOffset / slotMinutes;
-                  const heightSlots = duration / slotMinutes;
-                  const width = 100 / columnCount;
-                  const left = column * width;
-                  const uniqueKey = `${day}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
-
-                  return (
-                    <div
-                      key={uniqueKey}
-                      className="week-event-item"
-                      style={{
-                        top: `${topSlots}rem`,
-                        height: `${heightSlots}rem`,
-                        left: `calc(${left}% + 1px)`,
-                        width: `calc(${width}% - 2px)`,
-                      }}
-                    >
-                      <EventTooltipWrapper ev={ev}>
-                        <EventCard ev={ev} subjects={subjects} />
-                      </EventTooltipWrapper>
-                    </div>
-                  );
-                },
-              )}
-            </div>
-          );
         })}
       </div>
     </div>

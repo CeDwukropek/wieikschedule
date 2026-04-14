@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   allTimetables,
   defaultTimetable,
@@ -61,31 +61,6 @@ export function useScheduleManager(savedSettings) {
   });
 
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
-  const lastHydratedSignatureRef = useRef("");
-
-  // Rehydrate schedule-related state when saved settings arrive asynchronously.
-  useEffect(() => {
-    if (!savedSettings || typeof savedSettings !== "object") return;
-
-    const nextCurrentSchedule =
-      savedSettings.currentSchedule ?? defaultScheduleId;
-    const nextScheduleGroupSets = buildInitialScheduleGroupSets(savedSettings);
-    const nextActiveGroupSetBySchedule =
-      savedSettings?.activeGroupSetBySchedule ?? {};
-
-    const signature = JSON.stringify({
-      currentSchedule: nextCurrentSchedule,
-      scheduleGroupSets: nextScheduleGroupSets,
-      activeGroupSetBySchedule: nextActiveGroupSetBySchedule,
-    });
-
-    if (!signature || signature === lastHydratedSignatureRef.current) return;
-    lastHydratedSignatureRef.current = signature;
-
-    setCurrentSchedule(nextCurrentSchedule);
-    setScheduleGroupSets(nextScheduleGroupSets);
-    setActiveGroupSetBySchedule(nextActiveGroupSetBySchedule);
-  }, [savedSettings, defaultScheduleId]);
 
   // Load timetable data when currentSchedule changes, if not already loaded
   useEffect(() => {
@@ -155,11 +130,6 @@ export function useScheduleManager(savedSettings) {
     [currentGroupSets, activeGroupSetId],
   );
 
-  const activeExternalSelections = useMemo(
-    () => activeGroupSet?.externalSelections || [],
-    [activeGroupSet],
-  );
-
   // Expose a stable active set name for UI controls.
   const activeGroupSetName = useMemo(
     () => activeGroupSet?.name || "Zestaw 1",
@@ -212,7 +182,6 @@ export function useScheduleManager(savedSettings) {
               id: "set-1",
               name: "Zestaw 1",
               groups: buildDefaultGroupsForTimetable(currentTimetable),
-              externalSelections: [],
             },
           ],
         },
@@ -227,36 +196,6 @@ export function useScheduleManager(savedSettings) {
       };
     });
   }, [currentSchedule, currentTimetable]);
-
-  useEffect(() => {
-    let active = true;
-    const referencedScheduleIds = Array.from(
-      new Set(
-        (activeExternalSelections || [])
-          .map((item) => String(item?.scheduleId || "").trim())
-          .filter(Boolean)
-          .filter((id) => id !== currentSchedule),
-      ),
-    );
-
-    if (!referencedScheduleIds.length) return () => {};
-
-    referencedScheduleIds.forEach((scheduleId) => {
-      if (loadedTimetables[scheduleId]) return;
-
-      loadTimetableById(scheduleId).then((timetable) => {
-        if (!active || !timetable) return;
-        setLoadedTimetables((prev) => {
-          if (prev[scheduleId]) return prev;
-          return { ...prev, [scheduleId]: timetable };
-        });
-      });
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [activeExternalSelections, currentSchedule, loadedTimetables]);
 
   // Normalize and store a single group input change inside the active set.
   const handleGroupChange = useCallback(
@@ -290,7 +229,6 @@ export function useScheduleManager(savedSettings) {
               id: "set-1",
               name: "Zestaw 1",
               groups: defaultGroups,
-              externalSelections: [],
             },
           ],
         };
@@ -302,7 +240,6 @@ export function useScheduleManager(savedSettings) {
                 id: "set-1",
                 name: "Zestaw 1",
                 groups: defaultGroups,
-                externalSelections: [],
               },
             ];
 
@@ -343,119 +280,6 @@ export function useScheduleManager(savedSettings) {
     [currentSchedule],
   );
 
-  const updateActiveSet = useCallback(
-    (updater) => {
-      setScheduleGroupSets((prev) => {
-        const existingConfig = prev[currentSchedule] || {
-          sets: [
-            {
-              id: "set-1",
-              name: "Zestaw 1",
-              groups: defaultGroups,
-              externalSelections: [],
-            },
-          ],
-        };
-
-        const sets = existingConfig.sets?.length
-          ? existingConfig.sets
-          : [
-              {
-                id: "set-1",
-                name: "Zestaw 1",
-                groups: defaultGroups,
-                externalSelections: [],
-              },
-            ];
-
-        const activeId =
-          activeGroupSetBySchedule[currentSchedule] || sets[0]?.id || "set-1";
-
-        const nextSets = sets.map((set) => {
-          if (set.id !== activeId) return set;
-          return updater(set);
-        });
-
-        return {
-          ...prev,
-          [currentSchedule]: {
-            ...existingConfig,
-            sets: nextSets,
-          },
-        };
-      });
-    },
-    [activeGroupSetBySchedule, currentSchedule, defaultGroups],
-  );
-
-  const handleAddExternalSelection = useCallback(
-    (scheduleId = "") => {
-      const normalizedScheduleId = String(scheduleId || "").trim();
-
-      const nextSelection = {
-        id: `ext-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        scheduleId: normalizedScheduleId,
-        groupType: "",
-        groupValue: "",
-        subjectKey: "",
-      };
-
-      updateActiveSet((set) => ({
-        ...set,
-        externalSelections: [...(set.externalSelections || []), nextSelection],
-      }));
-    },
-    [updateActiveSet],
-  );
-
-  const handleUpdateExternalSelection = useCallback(
-    (selectionId, patch) => {
-      if (!selectionId) return;
-
-      updateActiveSet((set) => ({
-        ...set,
-        externalSelections: (set.externalSelections || []).map((item) => {
-          if (item.id !== selectionId) return item;
-          const next = { ...item, ...(patch || {}) };
-
-          if (Object.prototype.hasOwnProperty.call(patch || {}, "scheduleId")) {
-            next.groupType = "";
-            next.groupValue = "";
-            next.subjectKey = "";
-          }
-
-          if (Object.prototype.hasOwnProperty.call(patch || {}, "groupType")) {
-            next.groupValue = "";
-          }
-
-          if (
-            Object.prototype.hasOwnProperty.call(patch || {}, "groupValue") ||
-            Object.prototype.hasOwnProperty.call(patch || {}, "subjectKey")
-          ) {
-            next.subjectKey = String(next.subjectKey || "").trim();
-          }
-
-          return next;
-        }),
-      }));
-    },
-    [updateActiveSet],
-  );
-
-  const handleRemoveExternalSelection = useCallback(
-    (selectionId) => {
-      if (!selectionId) return;
-
-      updateActiveSet((set) => ({
-        ...set,
-        externalSelections: (set.externalSelections || []).filter(
-          (item) => item.id !== selectionId,
-        ),
-      }));
-    },
-    [updateActiveSet],
-  );
-
   // Create a new set by cloning groups from the active (or first) set.
   const handleCreateGroupSet = useCallback(
     (name) => {
@@ -470,9 +294,6 @@ export function useScheduleManager(savedSettings) {
         const clonedGroups = {
           ...(sourceSet?.groups || defaultGroups),
         };
-        const clonedExternalSelections = [
-          ...(sourceSet?.externalSelections || []),
-        ];
 
         const fallbackName = buildNextDefaultSetName(sets);
         const newSetName = String(name || "").trim() || fallbackName;
@@ -481,7 +302,6 @@ export function useScheduleManager(savedSettings) {
           id: nextId,
           name: newSetName,
           groups: clonedGroups,
-          externalSelections: clonedExternalSelections,
         };
 
         return {
@@ -585,8 +405,6 @@ export function useScheduleManager(savedSettings) {
     schedule,
     subjects,
     groupConfigs,
-    loadedTimetables,
-    activeExternalSelections,
     currentTimetable,
     isScheduleLoading,
     handleGroupChange,
@@ -594,9 +412,6 @@ export function useScheduleManager(savedSettings) {
     handleCreateGroupSet,
     handleRenameActiveGroupSet,
     handleDeleteActiveGroupSet,
-    handleAddExternalSelection,
-    handleUpdateExternalSelection,
-    handleRemoveExternalSelection,
     handleScheduleChange,
   };
 }
