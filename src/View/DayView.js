@@ -1,8 +1,12 @@
 import React, { useMemo, forwardRef } from "react";
 import EventCard from "../EventCard";
 import EventTooltipWrapper from "../EventTooltipWrapper";
-import { createTimeSlots } from "../timeSlotUtils";
-import { buildEventLayout } from "../utils/eventLayout";
+import {
+  createTimeSlots,
+  getEventsForSlot,
+  getEventSpan,
+  toMinutes,
+} from "../timeSlotUtils";
 import "./ViewStyles.css";
 
 const DayView = forwardRef(function DayView(
@@ -14,6 +18,7 @@ const DayView = forwardRef(function DayView(
   const slotMinutes = 15;
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
+
   const today = React.useMemo(() => new Date(), []);
   // default selected day index (clamped to 0..4) - used to detect "today"
   const defaultDayIndex = useMemo(
@@ -41,10 +46,6 @@ const DayView = forwardRef(function DayView(
   const timeSlots = useMemo(
     () => createTimeSlots(startHour, endHour, slotMinutes),
     [startHour, endHour, slotMinutes],
-  );
-  const positionedEvents = useMemo(
-    () => buildEventLayout(eventsForDay, { startHour, endHour }),
-    [eventsForDay, startHour, endHour],
   );
 
   // highlight if the displayed day is today in the current week
@@ -82,63 +83,77 @@ const DayView = forwardRef(function DayView(
           </div>
         ))}
 
-        {/* single day column background slots */}
-        {timeSlots.map((slot) => {
-          const isHourBoundary = slot.index % slotsPerHour === 0;
-          const hourBlock = Math.floor(slot.index / slotsPerHour);
+        {/* single day column rendered in slots like week view */}
+        {(() => {
+          const renderedEvents = new Set();
+          const occupiedSlots = new Set();
 
-          return (
-            <div
-              key={`day-${selectedDayIndex}-${slot.index}`}
-              className={`day-time-slot border-l border-neutral-800 border-t ${
-                isHourBoundary ? "border-neutral-700" : "border-neutral-800"
-              } ${hourBlock % 2 === 0 ? "day-hour-even" : ""}`}
-              style={{
-                gridColumn: 2,
-                gridRow: slot.index + 1,
-              }}
-            />
-          );
-        })}
+          return timeSlots.map((slot) => {
+            const slotEvents = getEventsForSlot(
+              eventsForDay,
+              slot.slotStart,
+              slot.slotEnd,
+            );
 
-        {/* absolute overlay with collision-aware event columns */}
-        <div
-          className="day-events-overlay"
-          style={{
-            gridColumn: 2,
-            gridRow: 1,
-            gridRowEnd: `span ${totalSlots}`,
-          }}
-        >
-          {positionedEvents.map(
-            ({ ev, startMinutes, endMinutes, column, columnCount }, idx) => {
-              const startOffset = startMinutes - startHour * 60;
-              const duration = endMinutes - startMinutes;
-              const topSlots = startOffset / slotMinutes;
-              const heightSlots = duration / slotMinutes;
-              const width = 100 / columnCount;
-              const left = column * width;
-              const uniqueKey = `day-${selectedDayIndex}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
+            const newEvents = slotEvents.filter((ev) => {
+              const evStart = toMinutes(ev.start);
+              const eventStartsInThisSlot =
+                evStart >= slot.slotStart && evStart < slot.slotEnd;
+              const notYetRendered = !renderedEvents.has(ev);
 
-              return (
-                <div
-                  key={uniqueKey}
-                  className="day-event-item"
-                  style={{
-                    top: `${topSlots}rem`,
-                    height: `${heightSlots}rem`,
-                    left: `calc(${left}% + 1px)`,
-                    width: `calc(${width}% - 2px)`,
-                  }}
-                >
-                  <EventTooltipWrapper ev={ev}>
-                    <EventCard ev={ev} subjects={subjects} />
-                  </EventTooltipWrapper>
-                </div>
-              );
-            },
-          )}
-        </div>
+              if (eventStartsInThisSlot && notYetRendered) {
+                renderedEvents.add(ev);
+                const span = getEventSpan(ev, slotMinutes);
+                for (let i = 1; i < span; i += 1) {
+                  occupiedSlots.add(slot.index + i);
+                }
+                return true;
+              }
+              return false;
+            });
+
+            if (occupiedSlots.has(slot.index) && newEvents.length === 0) {
+              return null;
+            }
+
+            const maxSpan =
+              newEvents.length > 0
+                ? Math.max(
+                    ...newEvents.map((ev) => getEventSpan(ev, slotMinutes)),
+                  )
+                : 1;
+
+            const isHourBoundary = slot.index % slotsPerHour === 0;
+            const hourBlock = Math.floor(slot.index / slotsPerHour);
+
+            return (
+              <div
+                key={`day-${selectedDayIndex}-${slot.index}`}
+                className={`day-time-slot border-l border-neutral-800 border-t ${
+                  isHourBoundary ? "border-neutral-700" : "border-neutral-800"
+                } ${hourBlock % 2 === 0 ? "day-hour-even" : ""}`}
+                style={{
+                  gridColumn: 2,
+                  gridRow: slot.index + 1,
+                  gridRowEnd: `span ${maxSpan}`,
+                }}
+              >
+                {newEvents.length > 0 && (
+                  <div className="day-event-container">
+                    {newEvents.map((ev, idx) => {
+                      const uniqueKey = `day-${selectedDayIndex}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
+                      return (
+                        <EventTooltipWrapper ev={ev} key={uniqueKey}>
+                          <EventCard ev={ev} subjects={subjects} />
+                        </EventTooltipWrapper>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          });
+        })()}
 
         {isTodayDisplayed ? (
           <div className="pointer-events-none absolute right-3 top-3 z-30 text-xs bg-yellow-400 text-black px-2 py-0.5 rounded">
