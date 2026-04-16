@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   allTimetables,
   defaultTimetable,
@@ -61,6 +61,31 @@ export function useScheduleManager(savedSettings) {
   });
 
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+  const lastHydratedSignatureRef = useRef("");
+
+  // Rehydrate schedule-related state when saved settings arrive asynchronously.
+  useEffect(() => {
+    if (!savedSettings || typeof savedSettings !== "object") return;
+
+    const nextCurrentSchedule =
+      savedSettings.currentSchedule ?? defaultScheduleId;
+    const nextScheduleGroupSets = buildInitialScheduleGroupSets(savedSettings);
+    const nextActiveGroupSetBySchedule =
+      savedSettings?.activeGroupSetBySchedule ?? {};
+
+    const signature = JSON.stringify({
+      currentSchedule: nextCurrentSchedule,
+      scheduleGroupSets: nextScheduleGroupSets,
+      activeGroupSetBySchedule: nextActiveGroupSetBySchedule,
+    });
+
+    if (!signature || signature === lastHydratedSignatureRef.current) return;
+    lastHydratedSignatureRef.current = signature;
+
+    setCurrentSchedule(nextCurrentSchedule);
+    setScheduleGroupSets(nextScheduleGroupSets);
+    setActiveGroupSetBySchedule(nextActiveGroupSetBySchedule);
+  }, [savedSettings, defaultScheduleId]);
 
   // Load timetable data when currentSchedule changes, if not already loaded
   useEffect(() => {

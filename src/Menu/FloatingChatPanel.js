@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Bot, Trash2 } from "lucide-react";
 
 export default function FloatingChatPanel({
@@ -10,6 +11,55 @@ export default function FloatingChatPanel({
   resetError,
   messages,
 }) {
+  const messagesContainerRef = useRef(null);
+  const shouldStickToBottomRef = useRef(true);
+
+  const SCROLL_BOTTOM_THRESHOLD = 56;
+
+  const updateStickToBottom = (container) => {
+    const distanceToBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    shouldStickToBottomRef.current =
+      distanceToBottom <= SCROLL_BOTTOM_THRESHOLD;
+  };
+
+  const scrollToBottom = (container, behavior = "auto") => {
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+  };
+
+  useEffect(() => {
+    if (!isChatWindowOpen) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      scrollToBottom(container, "auto");
+      updateStickToBottom(container);
+    });
+  }, [isChatWindowOpen]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      if (shouldStickToBottomRef.current) {
+        scrollToBottom(container, "smooth");
+      }
+
+      updateStickToBottom(container);
+    });
+  }, [messages, status, isChatWindowOpen]);
+
+  const handleMessagesScroll = (event) => {
+    updateStickToBottom(event.currentTarget);
+  };
+
   if (!isChatMode || !isChatWindowOpen) return null;
 
   return (
@@ -57,7 +107,11 @@ export default function FloatingChatPanel({
         </div>
       ) : null}
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+        className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2"
+      >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-5 text-neutral-400">
             <Bot className="w-8 h-8 mb-2 text-neutral-500" />
