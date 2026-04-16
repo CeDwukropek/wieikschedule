@@ -197,7 +197,7 @@ export default function FloatingChatPanel({
       <div
         ref={messagesContainerRef}
         onScroll={handleMessagesScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2"
+        className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2 floating-select-scrollbar"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-5 text-neutral-400">
