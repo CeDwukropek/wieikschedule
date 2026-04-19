@@ -1,4 +1,70 @@
+import { useEffect, useRef } from "react";
 import { Bot, Trash2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+function MessageContent({ message, isLoading }) {
+  if (isLoading) {
+    return "Thinking...";
+  }
+
+  if (message.role === "assistant") {
+    const assistantText = (message.text || "").replace(/\s+$/g, "");
+
+    return (
+      <div className="leading-relaxed">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ node, ...props }) => (
+              <p className="mb-1.5 last:mb-0" {...props} />
+            ),
+            ul: ({ node, ...props }) => (
+              <ul className="list-disc pl-5 mb-1.5 last:mb-0" {...props} />
+            ),
+            ol: ({ node, ...props }) => (
+              <ol className="list-decimal pl-5 mb-1.5 last:mb-0" {...props} />
+            ),
+            li: ({ node, ...props }) => (
+              <li className="mb-1 last:mb-0" {...props} />
+            ),
+            a: ({ node, children, href, ...props }) => (
+              <a
+                className="underline underline-offset-2 break-all"
+                target="_blank"
+                rel="noreferrer"
+                href={href}
+                {...props}
+              >
+                {children || href}
+              </a>
+            ),
+            code: ({ node, inline, className, children, ...props }) =>
+              inline ? (
+                <code
+                  className="px-1 py-0.5 rounded bg-neutral-700/80"
+                  {...props}
+                >
+                  {children}
+                </code>
+              ) : (
+                <code
+                  className="block p-2 rounded bg-neutral-950/80 overflow-x-auto"
+                  {...props}
+                >
+                  {children}
+                </code>
+              ),
+          }}
+        >
+          {assistantText}
+        </ReactMarkdown>
+      </div>
+    );
+  }
+
+  return message.text;
+}
 
 export default function FloatingChatPanel({
   isChatMode,
@@ -10,6 +76,77 @@ export default function FloatingChatPanel({
   resetError,
   messages,
 }) {
+  const messagesContainerRef = useRef(null);
+  const shouldStickToBottomRef = useRef(true);
+  const previousMessagesMetaRef = useRef({
+    count: 0,
+    lastId: null,
+    lastStage: null,
+  });
+
+  const SCROLL_BOTTOM_THRESHOLD = 56;
+
+  const updateStickToBottom = (container) => {
+    const distanceToBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    shouldStickToBottomRef.current =
+      distanceToBottom <= SCROLL_BOTTOM_THRESHOLD;
+  };
+
+  const scrollToBottom = (container, behavior = "auto") => {
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+  };
+
+  useEffect(() => {
+    if (!isChatWindowOpen) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      scrollToBottom(container, "auto");
+      updateStickToBottom(container);
+    });
+  }, [isChatWindowOpen]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const previousMeta = previousMessagesMetaRef.current;
+
+    const hasNewMessage = messages.length > previousMeta.count;
+    const thinkingStarted =
+      lastMessage?.stage === "loading" &&
+      (lastMessage.id !== previousMeta.lastId ||
+        previousMeta.lastStage !== "loading");
+
+    const shouldAutoScroll = hasNewMessage || thinkingStarted;
+
+    previousMessagesMetaRef.current = {
+      count: messages.length,
+      lastId: lastMessage?.id ?? null,
+      lastStage: lastMessage?.stage ?? null,
+    };
+
+    requestAnimationFrame(() => {
+      if (shouldAutoScroll) {
+        scrollToBottom(container, "smooth");
+      }
+
+      updateStickToBottom(container);
+    });
+  }, [messages]);
+
+  const handleMessagesScroll = (event) => {
+    updateStickToBottom(event.currentTarget);
+  };
+
   if (!isChatMode || !isChatWindowOpen) return null;
 
   return (
@@ -57,7 +194,11 @@ export default function FloatingChatPanel({
         </div>
       ) : null}
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+        className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2 floating-select-scrollbar"
+      >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-5 text-neutral-400">
             <Bot className="w-8 h-8 mb-2 text-neutral-500" />
@@ -75,12 +216,16 @@ export default function FloatingChatPanel({
                 ? "mr-10 bg-rose-900/40 border border-rose-700 text-rose-100"
                 : "mr-10 bg-neutral-800 text-neutral-100";
 
+            const whitespaceClass = isUser
+              ? "whitespace-pre-wrap"
+              : "whitespace-normal";
+
             return (
               <div
                 key={message.id}
-                className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${className}`}
+                className={`rounded-2xl px-3 py-2 text-sm ${whitespaceClass} ${className}`}
               >
-                {isLoading ? "Thinking..." : message.text}
+                <MessageContent message={message} isLoading={isLoading} />
               </div>
             );
           })
