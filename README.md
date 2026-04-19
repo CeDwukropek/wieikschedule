@@ -34,6 +34,13 @@ REACT_APP_ENABLE_AI_CHAT=true
 
 Set it to `false` (or omit it) on Beta/public to keep unified navigation without AI chat integration in the UI.
 
+Schedule data is now loaded from Supabase. Configure frontend read access with:
+
+```bash
+REACT_APP_SUPABASE_URL=https://your-project-id.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-public-anon-key
+```
+
 ## Firebase Auth (Google)
 
 Google login uses Firebase Auth redirect flow (`signInWithRedirect`), so credentials are handled by Google/Firebase and are not processed by this app backend.
@@ -96,8 +103,8 @@ What these rules enforce:
 2. In Firestore, confirm write appears in `userSettings/{uid-of-user-a}`.
 3. Log in with User B and confirm User B does not see User A settings.
 
-4. Create `.env.local` in the project root.
-5. Add your n8n webhook URL:
+1. Create `.env.local` in the project root.
+2. Add your n8n webhook URL:
 
 ```bash
 REACT_APP_N8N_CHAT_WEBHOOK=https://your-n8n-instance/webhook/your-chat-endpoint

@@ -37,6 +37,9 @@ export default function Timetable() {
 
   // Schedule and group management
   const {
+    timetableOptions,
+    timetableOptionsMessage,
+    timetableDataSourceLabel,
     currentSchedule,
     scheduleGroupSets,
     activeGroupSetBySchedule,
@@ -51,6 +54,7 @@ export default function Timetable() {
     loadedTimetables,
     activeExternalSelections,
     currentTimetable,
+    isScheduleLoading,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
@@ -559,7 +563,11 @@ export default function Timetable() {
     },
     scheduleState: {
       schedule,
+      timetableOptions,
+      timetableOptionsMessage,
+      timetableDataSourceLabel,
       currentSchedule,
+      isScheduleLoading,
       activeGroupSetId,
       activeGroupSetName,
       groupSetOptions,

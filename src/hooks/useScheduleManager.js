@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
-  allTimetables,
-  defaultTimetable,
   getCachedTimetableById,
+  getCachedTimetableOptions,
+  loadAllTimetableOptions,
   loadTimetableById,
 } from "../timetables";
+import { isSupabaseConfigured } from "../supabaseClient";
 
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
@@ -31,8 +32,15 @@ function buildNextDefaultSetName(sets) {
 }
 
 export function useScheduleManager(savedSettings) {
+  const [timetableOptions, setTimetableOptions] = useState(() =>
+    getCachedTimetableOptions(),
+  );
+
   // Resolve the fallback timetable id used during initial load.
-  const defaultScheduleId = defaultTimetable?.id || allTimetables[0]?.id || "";
+  const defaultScheduleId = useMemo(
+    () => timetableOptions[0]?.id || "",
+    [timetableOptions],
+  );
 
   // Persist currently selected timetable id.
   const [currentSchedule, setCurrentSchedule] = useState(
@@ -61,6 +69,65 @@ export function useScheduleManager(savedSettings) {
   });
 
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+  const [isTimetableOptionsLoading, setIsTimetableOptionsLoading] =
+    useState(false);
+  const [hasLoadedTimetableOptions, setHasLoadedTimetableOptions] =
+    useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setIsTimetableOptionsLoading(true);
+
+    loadAllTimetableOptions()
+      .then((options) => {
+        if (!active) return;
+        const normalizedOptions = Array.isArray(options) ? options : [];
+        setTimetableOptions(normalizedOptions);
+
+        setCurrentSchedule((prev) => {
+          const current = String(prev || "").trim();
+          if (!normalizedOptions.length) {
+            return current;
+          }
+
+          const exists = normalizedOptions.some(
+            (option) => option.id === current,
+          );
+          if (exists) return current;
+          return normalizedOptions[0].id;
+        });
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error("[schedule] Failed to load timetable options", err);
+      })
+      .finally(() => {
+        if (!active) return;
+        setHasLoadedTimetableOptions(true);
+        setIsTimetableOptionsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const timetableOptionsMessage = useMemo(() => {
+    if (!isSupabaseConfigured) {
+      return "Brak konfiguracji Supabase (REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_ANON_KEY).";
+    }
+
+    if (isTimetableOptionsLoading) {
+      return "Ładowanie listy planów...";
+    }
+
+    if (hasLoadedTimetableOptions && timetableOptions.length === 0) {
+      return "Nie znaleziono planów w bazie Supabase (tabela events).";
+    }
+
+    return "";
+  }, [hasLoadedTimetableOptions, isTimetableOptionsLoading, timetableOptions]);
+
   const lastHydratedSignatureRef = useRef("");
 
   // Rehydrate schedule-related state when saved settings arrive asynchronously.
@@ -118,8 +185,8 @@ export function useScheduleManager(savedSettings) {
     () =>
       loadedTimetables[currentSchedule] ||
       loadedTimetables[defaultScheduleId] || {
-        id: currentSchedule || defaultScheduleId,
-        name: currentSchedule || defaultScheduleId,
+        id: currentSchedule || defaultScheduleId || "",
+        name: currentSchedule || defaultScheduleId || "",
         schedule: [],
         subjects: {},
         groups: [],
@@ -128,6 +195,14 @@ export function useScheduleManager(savedSettings) {
       },
     [loadedTimetables, currentSchedule, defaultScheduleId],
   );
+
+  const timetableDataSourceLabel = useMemo(() => {
+    if (isTimetableOptionsLoading || isScheduleLoading) {
+      return "Supabase · ładowanie";
+    }
+
+    return "";
+  }, [isScheduleLoading, isTimetableOptionsLoading]);
 
   // Build default groups for the current timetable - memoized to prevent infinite loops
   const defaultGroups = useMemo(
@@ -574,6 +649,9 @@ export function useScheduleManager(savedSettings) {
 
   // Public API consumed by App and nested UI panels.
   return {
+    timetableOptions,
+    timetableOptionsMessage,
+    timetableDataSourceLabel,
     currentSchedule,
     scheduleGroupSets,
     activeGroupSetBySchedule,
