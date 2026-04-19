@@ -5,7 +5,6 @@ import GroupSetManager from "./GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
 import { ExportPngBtn } from "./ExportPngBtn";
 import { exportICS } from "./exportICS";
-import { allTimetables } from "./timetables";
 import { HideLectures } from "./HideLectures";
 import ExternalGroupSelectionManager from "./ExternalGroupSelectionManager";
 
@@ -20,6 +19,9 @@ export default function ControlsPanel({
 }) {
   const { isOpen, onToggle, mobileFloatingClose = false } = panelState || {};
   const {
+    timetableOptions = [],
+    timetableOptionsMessage = "",
+    timetableDataSourceLabel = "",
     currentSchedule,
     onScheduleChange,
     isScheduleLoading = false,
@@ -61,6 +63,24 @@ export default function ControlsPanel({
   } = lektoratState || {};
   const { exportRef, viewedWeekRange, selection, combinedOptions } =
     exportState || {};
+
+  const scheduleOptions =
+    timetableOptions.length > 0
+      ? timetableOptions
+      : currentSchedule
+        ? [
+            {
+              id: currentSchedule,
+              name: `${currentSchedule} (zapisany lokalnie)`,
+            },
+          ]
+        : [];
+
+  const scheduleValue = scheduleOptions.some(
+    (option) => option.id === currentSchedule,
+  )
+    ? currentSchedule
+    : "";
 
   const handleExportICS = () => {
     // Export should include ALL events from the schedule with user's group filters applied
@@ -145,18 +165,36 @@ export default function ControlsPanel({
           <div className="p-6 space-y-6 ">
             {/* Schedule selector */}
             <div className="space-y-2">
-              <label className="text-xs text-gray-400">Plan zajęć</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs text-gray-400">Plan zajęć</label>
+                {timetableDataSourceLabel ? (
+                  <span className="rounded-full border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-300">
+                    {timetableDataSourceLabel}
+                  </span>
+                ) : null}
+              </div>
               <select
-                value={currentSchedule}
+                value={scheduleValue}
                 onChange={(e) => onScheduleChange(e.target.value)}
                 className="w-full px-3 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-sm"
+                disabled={isScheduleLoading || timetableOptions.length === 0}
               >
-                {allTimetables.map((tt) => (
+                {!scheduleOptions.length ? (
+                  <option value="">Brak planów</option>
+                ) : null}
+
+                {scheduleOptions.map((tt) => (
                   <option key={tt.id} value={tt.id}>
                     {tt.name}
                   </option>
                 ))}
               </select>
+
+              {timetableOptionsMessage ? (
+                <p className="text-[11px] text-amber-300">
+                  {timetableOptionsMessage}
+                </p>
+              ) : null}
             </div>
 
             {/* Group filters */}
@@ -176,6 +214,7 @@ export default function ControlsPanel({
             <div className="space-y-2 pb-4 border-b border-neutral-800">
               <ExternalGroupSelectionManager
                 currentSchedule={currentSchedule}
+                timetableOptions={timetableOptions}
                 externalSelections={externalSelections}
                 loadedTimetables={loadedTimetables}
                 onAddExternalSelection={onAddExternalSelection}

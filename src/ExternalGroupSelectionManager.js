@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { allTimetables } from "./timetables";
 
 function isHolidayEvent(event) {
   const normalizedType = String(event?.type || "")
@@ -142,6 +141,7 @@ function getGroupValuesForTypeAndSubject(timetable, groupType, subjectKey) {
 
 export default function ExternalGroupSelectionManager({
   currentSchedule,
+  timetableOptions = [],
   externalSelections = [],
   loadedTimetables = {},
   onAddExternalSelection,
@@ -149,8 +149,8 @@ export default function ExternalGroupSelectionManager({
   onRemoveExternalSelection,
 }) {
   const scheduleOptions = useMemo(
-    () => allTimetables.filter((tt) => tt.id !== currentSchedule),
-    [currentSchedule],
+    () => timetableOptions.filter((tt) => tt.id !== currentSchedule),
+    [currentSchedule, timetableOptions],
   );
 
   const groupedSelections = useMemo(() => {

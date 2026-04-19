@@ -1,3 +1,5 @@
+import { supabase } from "../supabaseClient";
+
 const SUBJECT_COLORS = [
   "bg-indigo-900",
   "bg-sky-500",
@@ -344,21 +346,136 @@ function buildTimetableFromSemesterJson(fileId, json) {
   };
 }
 
-const jsonContext = require.context("./", false, /\.json$/);
+function normalizeDbTime(value) {
+  // Convert DB TIME format (HH:mm:ss) to HH:mm used by existing UI logic.
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+  if (!match) return "";
+  return `${String(Number(match[1])).padStart(2, "0")}:${match[2]}`;
+}
 
-const timetableIds = jsonContext
-  .keys()
-  .map((key) => key.replace(/^\.\//, "").replace(/\.json$/i, ""))
-  .sort((a, b) => a.localeCompare(b, "pl"));
+function mapDbEventToLegacyShape(row) {
+  // Keep compatibility with existing normalization function.
+  return {
+    date: String(row?.date || "").trim(),
+    startTime: normalizeDbTime(row?.start_time),
+    durationMin: Number(row?.duration_min) > 0 ? Number(row.duration_min) : 90,
+    subject: String(row?.subject || "").trim(),
+    instructor: String(row?.instructor || "").trim(),
+    room: String(row?.room || "").trim(),
+    group: String(row?.group || "").trim(),
+    type: String(row?.type || "").trim(),
+    status: String(row?.status || "").trim() || "aktywne",
+  };
+}
 
-export const allTimetables = timetableIds.map((id) => ({
-  id,
-  name: id,
-}));
+function buildEmptyTimetable(id) {
+  return {
+    id,
+    name: id,
+    schedule: [],
+    subjects: {},
+    groups: [],
+    minDate: null,
+    maxDate: null,
+  };
+}
 
-export const defaultTimetable = allTimetables[0] || null;
+export const allTimetables = [];
+export const defaultTimetable = null;
 
 const timetableCache = new Map();
+const timetableInFlight = new Map();
+let timetableOptionsCache = [];
+let timetableOptionsPromise = null;
+
+const TIMETABLE_OPTIONS_TTL_MS = 10 * 60 * 1000;
+const TIMETABLE_TTL_MS = 10 * 60 * 1000;
+const TIMETABLE_OPTIONS_STORAGE_KEY = "wieik:timetable-options:v1";
+const TIMETABLE_STORAGE_PREFIX = "wieik:timetable:v1:";
+
+function getLocalStorage() {
+  try {
+    if (typeof window === "undefined") return null;
+    return window.localStorage || null;
+  } catch {
+    return null;
+  }
+}
+
+function readTtlCacheEntry(key) {
+  const storage = getLocalStorage();
+  if (!storage) return null;
+
+  try {
+    const raw = storage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    const savedAt = Number(parsed?.savedAt || 0);
+    if (!savedAt) {
+      return null;
+    }
+
+    return {
+      data: parsed?.data ?? null,
+      savedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getTtlCacheInfo(key, ttlMs) {
+  const entry = readTtlCacheEntry(key);
+  if (!entry) return null;
+
+  const ageMs = Date.now() - entry.savedAt;
+  return {
+    data: entry.data,
+    savedAt: entry.savedAt,
+    ageMs,
+    isStale: ageMs > ttlMs,
+  };
+}
+
+function readTtlCache(key, ttlMs, { allowStale = false } = {}) {
+  const entry = readTtlCacheEntry(key);
+  if (!entry) return null;
+
+  const ageMs = Date.now() - entry.savedAt;
+  if (ageMs <= ttlMs) {
+    return entry.data;
+  }
+
+  return allowStale ? entry.data : null;
+}
+
+function isTtlCacheStale(key, ttlMs) {
+  const info = getTtlCacheInfo(key, ttlMs);
+  return !info || info.isStale;
+}
+
+function writeTtlCache(key, data) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(
+      key,
+      JSON.stringify({
+        savedAt: Date.now(),
+        data,
+      }),
+    );
+  } catch {
+    // Ignore write failures (private mode/full quota).
+  }
+}
+
+function buildTimetableStorageKey(id) {
+  return `${TIMETABLE_STORAGE_PREFIX}${id}`;
+}
 
 function normalizeLoadedTimetable(id, json) {
   // Ensure loaded timetable has normalized shape and final metadata.
@@ -373,27 +490,252 @@ function normalizeLoadedTimetable(id, json) {
 
 export function getCachedTimetableById(id) {
   // Return timetable from in-memory cache when available.
-  return timetableCache.get(id) || null;
+  const scheduleId = String(id || "").trim();
+  if (!scheduleId) return null;
+
+  if (timetableCache.has(scheduleId)) {
+    return timetableCache.get(scheduleId) || null;
+  }
+
+  const cached = readTtlCache(
+    buildTimetableStorageKey(scheduleId),
+    TIMETABLE_TTL_MS,
+    { allowStale: true },
+  );
+  if (!cached || typeof cached !== "object") {
+    return null;
+  }
+
+  timetableCache.set(scheduleId, cached);
+
+  if (!timetableOptionsCache.some((option) => option.id === scheduleId)) {
+    timetableOptionsCache = [
+      ...timetableOptionsCache,
+      { id: scheduleId, name: String(cached?.name || scheduleId) },
+    ].sort((a, b) => a.name.localeCompare(b.name, "pl"));
+  }
+
+  return cached;
+}
+
+export function getCachedTimetableInfoById(id) {
+  const scheduleId = String(id || "").trim();
+  if (!scheduleId) return null;
+
+  if (timetableCache.has(scheduleId)) {
+    const cached = timetableCache.get(scheduleId);
+    return {
+      source: "cache",
+      data: cached,
+      savedAt: null,
+      isStale: false,
+    };
+  }
+
+  const info = getTtlCacheInfo(
+    buildTimetableStorageKey(scheduleId),
+    TIMETABLE_TTL_MS,
+  );
+  if (!info || !info.data || typeof info.data !== "object") {
+    return null;
+  }
+
+  return {
+    source: "cache",
+    data: info.data,
+    savedAt: info.savedAt,
+    ageMs: info.ageMs,
+    isStale: info.isStale,
+  };
+}
+
+export function getCachedTimetableOptions() {
+  // Return cached timetable options used by schedule selectors.
+  if (!timetableOptionsCache.length) {
+    const persistent = readTtlCache(
+      TIMETABLE_OPTIONS_STORAGE_KEY,
+      TIMETABLE_OPTIONS_TTL_MS,
+      { allowStale: true },
+    );
+    if (Array.isArray(persistent)) {
+      timetableOptionsCache = persistent;
+    }
+  }
+
+  return timetableOptionsCache;
+}
+
+export async function loadAllTimetableOptions() {
+  // Load unique faculties from DB; each faculty maps to one selectable timetable.
+  if (timetableOptionsCache.length > 0) {
+    if (
+      isTtlCacheStale(TIMETABLE_OPTIONS_STORAGE_KEY, TIMETABLE_OPTIONS_TTL_MS)
+    ) {
+      void refreshAllTimetableOptions();
+    }
+    return timetableOptionsCache;
+  }
+
+  const persistentOptions = readTtlCache(
+    TIMETABLE_OPTIONS_STORAGE_KEY,
+    TIMETABLE_OPTIONS_TTL_MS,
+    { allowStale: true },
+  );
+  if (Array.isArray(persistentOptions) && persistentOptions.length > 0) {
+    timetableOptionsCache = persistentOptions;
+    if (
+      isTtlCacheStale(TIMETABLE_OPTIONS_STORAGE_KEY, TIMETABLE_OPTIONS_TTL_MS)
+    ) {
+      void refreshAllTimetableOptions();
+    }
+    return timetableOptionsCache;
+  }
+
+  if (timetableOptionsPromise) {
+    return timetableOptionsPromise;
+  }
+
+  if (!supabase) {
+    return [];
+  }
+
+  return refreshAllTimetableOptions();
+}
+
+async function refreshAllTimetableOptions() {
+  if (timetableOptionsPromise) {
+    return timetableOptionsPromise;
+  }
+
+  if (!supabase) {
+    return Promise.resolve(timetableOptionsCache);
+  }
+
+  timetableOptionsPromise = (async () => {
+    const uniqueFaculties = new Set();
+    const pageSize = 1000;
+    let from = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const to = from + pageSize - 1;
+      const { data, error } = await supabase
+        .from("events")
+        .select("faculty")
+        .order("faculty", { ascending: true })
+        .range(from, to);
+
+      if (error) {
+        console.error(
+          "[timetables] Failed to load faculties from Supabase",
+          error,
+        );
+        return [];
+      }
+
+      (data || []).forEach((row) => {
+        const faculty = String(row?.faculty || "").trim();
+        if (faculty) uniqueFaculties.add(faculty);
+      });
+
+      hasMore = Array.isArray(data) && data.length === pageSize;
+      from += pageSize;
+    }
+
+    const unique = Array.from(uniqueFaculties).sort((a, b) =>
+      a.localeCompare(b, "pl"),
+    );
+
+    timetableOptionsCache = unique.map((id) => ({ id, name: id }));
+    writeTtlCache(TIMETABLE_OPTIONS_STORAGE_KEY, timetableOptionsCache);
+    return timetableOptionsCache;
+  })();
+
+  try {
+    return await timetableOptionsPromise;
+  } finally {
+    timetableOptionsPromise = null;
+  }
 }
 
 export async function loadTimetableById(id) {
-  // Lazy-load a timetable JSON file, normalize it, and cache the result.
+  // Load a faculty timetable from Supabase, normalize, and cache the result.
   const scheduleId = String(id || "").trim();
   if (!scheduleId) return null;
+
+  const cachedTimetable = getCachedTimetableById(scheduleId);
+  if (cachedTimetable) {
+    if (
+      isTtlCacheStale(buildTimetableStorageKey(scheduleId), TIMETABLE_TTL_MS)
+    ) {
+      void refreshTimetableById(scheduleId);
+    }
+    return cachedTimetable;
+  }
+
   if (timetableCache.has(scheduleId)) {
     return timetableCache.get(scheduleId);
   }
+  if (timetableInFlight.has(scheduleId)) {
+    return timetableInFlight.get(scheduleId);
+  }
+
+  if (!supabase) {
+    return buildEmptyTimetable(scheduleId);
+  }
+
+  return refreshTimetableById(scheduleId);
+}
+
+async function refreshTimetableById(scheduleId) {
+  if (timetableInFlight.has(scheduleId)) {
+    return timetableInFlight.get(scheduleId);
+  }
+
+  const requestPromise = (async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status",
+      )
+      .eq("faculty", scheduleId)
+      .or("status.is.null,status.eq.aktywne")
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      console.error(
+        `[timetables] Failed to load timetable '${scheduleId}'`,
+        error,
+      );
+      return null;
+    }
+
+    const mappedEvents = (data || []).map(mapDbEventToLegacyShape);
+    const timetable = normalizeLoadedTimetable(scheduleId, {
+      facultyName: scheduleId,
+      events: mappedEvents,
+    });
+
+    timetableCache.set(scheduleId, timetable);
+    writeTtlCache(buildTimetableStorageKey(scheduleId), timetable);
+
+    if (!timetableOptionsCache.some((option) => option.id === scheduleId)) {
+      timetableOptionsCache = [
+        ...timetableOptionsCache,
+        { id: scheduleId, name: scheduleId },
+      ].sort((a, b) => a.name.localeCompare(b.name, "pl"));
+      writeTtlCache(TIMETABLE_OPTIONS_STORAGE_KEY, timetableOptionsCache);
+    }
+
+    return timetable;
+  })();
+
+  timetableInFlight.set(scheduleId, requestPromise);
 
   try {
-    const mod = await import(
-      /* webpackInclude: /\.json$/ */
-      `./${scheduleId}.json`
-    );
-    const json = mod?.default || mod;
-    const timetable = normalizeLoadedTimetable(scheduleId, json);
-    timetableCache.set(scheduleId, timetable);
-    return timetable;
-  } catch {
-    return null;
+    return await requestPromise;
+  } finally {
+    timetableInFlight.delete(scheduleId);
   }
 }

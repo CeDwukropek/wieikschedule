@@ -34,6 +34,13 @@ REACT_APP_ENABLE_AI_CHAT=true
 
 Set it to `false` (or omit it) on Beta/public to keep unified navigation without AI chat integration in the UI.
 
+Schedule data is now loaded from Supabase. Configure frontend read access with:
+
+```bash
+REACT_APP_SUPABASE_URL=https://your-project-id.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-public-anon-key
+```
+
 1. Create `.env.local` in the project root.
 2. Add your n8n webhook URL:
 

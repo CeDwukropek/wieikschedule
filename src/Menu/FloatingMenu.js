@@ -73,7 +73,11 @@ export default function FloatingMenu({
   const { computeFiltered } = filtering || {};
   const {
     schedule,
+    timetableOptions = [],
+    timetableOptionsMessage = "",
+    timetableDataSourceLabel = "",
     currentSchedule,
+    isScheduleLoading = false,
     activeGroupSetId,
     activeGroupSetName,
     groupSetOptions = [],
@@ -462,8 +466,12 @@ export default function FloatingMenu({
           mobileFloatingClose: true,
         }}
         scheduleState={{
+          timetableOptions,
+          timetableOptionsMessage,
+          timetableDataSourceLabel,
           currentSchedule,
           onScheduleChange,
+          isScheduleLoading,
         }}
         groupSetState={{
           activeGroupSetId,
