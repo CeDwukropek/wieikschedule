@@ -1,4 +1,5 @@
 import { MapPin, Users, Clock, UserRound, Tag } from "lucide-react";
+import { useState } from "react";
 import { splitTeacherDisplay } from "./utils";
 
 const EVENT_TINT_BY_BG_CLASS = {
@@ -18,7 +19,14 @@ const EVENT_TINT_BY_BG_CLASS = {
   "bg-gray-600": "rgba(75, 85, 99, 0.1)",
 };
 
-export default function EventCard({ ev, subjects = {} }) {
+export default function EventCard({
+  ev,
+  subjects = {},
+  onRemoveAddedEvent,
+  removingAddedEventId,
+}) {
+  const [removeError, setRemoveError] = useState("");
+
   const subj = subjects[ev.subj] ||
     subjects[ev.title] || {
       name: ev.title || ev.subj,
@@ -30,6 +38,31 @@ export default function EventCard({ ev, subjects = {} }) {
   const colorText = colorBg.replace(/^bg-/, "text-");
   const eventTint = EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
   const isExternal = Boolean(ev?._isExternal && ev?._sourceScheduleId);
+  const isAdded = ev?.origin === "added";
+  const canRemoveAdded =
+    isAdded &&
+    typeof onRemoveAddedEvent === "function" &&
+    Boolean(String(ev?.added_event_id || "").trim());
+  const isRemoving =
+    canRemoveAdded && removingAddedEventId === ev?.added_event_id;
+
+  const handleRemoveClick = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!canRemoveAdded) return;
+
+    setRemoveError("");
+
+    try {
+      await onRemoveAddedEvent(ev.added_event_id);
+    } catch (error) {
+      setRemoveError(
+        error?.message ||
+          "Nie udalo sie usunac tego wydarzenia. Sprobuj ponownie.",
+      );
+    }
+  };
 
   return (
     <div
@@ -49,6 +82,33 @@ export default function EventCard({ ev, subjects = {} }) {
           <div className="mt-1 inline-flex w-fit items-center rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-200">
             {ev._sourceScheduleId}
           </div>
+        ) : null}
+
+        {isAdded ? (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            <div className="inline-flex w-fit items-center rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-medium text-sky-200">
+              Odrobienie
+            </div>
+
+            {canRemoveAdded ? (
+              <button
+                type="button"
+                onClick={handleRemoveClick}
+                disabled={isRemoving}
+                className={`inline-flex w-fit items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                  isRemoving
+                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+                    : "bg-rose-500/20 text-rose-200 hover:bg-rose-500/30"
+                }`}
+              >
+                {isRemoving ? "Usuwanie..." : "Usun z mojego planu"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {removeError ? (
+          <div className="mt-1 text-[10px] text-rose-300">{removeError}</div>
         ) : null}
 
         <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">

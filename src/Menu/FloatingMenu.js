@@ -103,6 +103,7 @@ export default function FloatingMenu({
     enabled: isAiChatEnabled = false,
     scheduleName,
     selectedGroups,
+    onMyPlanChanged,
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
@@ -125,9 +126,14 @@ export default function FloatingMenu({
     sendMessage,
     resetError,
     clearConversation,
+    addSlotToMyPlan,
+    addingEventId,
+    addedEventIds,
+    slotErrors,
   } = useChatbot({
     scheduleName,
     selectedGroups,
+    onMyPlanChanged,
   });
 
   const isWeek = viewMode === "week";
@@ -285,6 +291,10 @@ export default function FloatingMenu({
           error={error}
           resetError={resetError}
           messages={messages}
+          onAddSlot={addSlotToMyPlan}
+          addingEventId={addingEventId}
+          addedEventIds={addedEventIds}
+          slotErrors={slotErrors}
         />
 
         <div className="relative rounded-full border-none bg-neutral-950 px-3 py-3 shadow-2xl">

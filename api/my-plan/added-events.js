@@ -1,0 +1,123 @@
+const { verifyRequestUser } = require("../_lib/requestAuth");
+const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
+
+function respond(res, status, body) {
+  res.status(status).json(body);
+}
+
+function getDateRangeFromQuery(query) {
+  const dateFrom = String(query?.date_from || "")
+    .trim()
+    .slice(0, 10);
+  const dateTo = String(query?.date_to || "")
+    .trim()
+    .slice(0, 10);
+
+  return {
+    dateFrom,
+    dateTo,
+  };
+}
+
+async function getUserIdByFirebaseUid(supabase, firebaseUid) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("firebase_uid", firebaseUid)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.id || null;
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method !== "GET") {
+    return respond(res, 405, {
+      ok: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Dozwolona metoda: GET.",
+    });
+  }
+
+  try {
+    const { uid } = await verifyRequestUser(req);
+    const supabase = getSupabaseAdminClient();
+    const { dateFrom, dateTo } = getDateRangeFromQuery(req.query || {});
+
+    const userId = await getUserIdByFirebaseUid(supabase, uid);
+
+    if (!userId) {
+      return respond(res, 200, {
+        ok: true,
+        events: [],
+      });
+    }
+
+    let query = supabase
+      .from("user_added_events")
+      .select(
+        "id,reason,status,event_id,events!inner(id,date,start_time,duration_min,subject,type,room,group,instructor,status)",
+      )
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .eq("events.status", "aktywne")
+      .order("created_at", { ascending: false });
+
+    if (dateFrom) {
+      query = query.gte("events.date", dateFrom);
+    }
+
+    if (dateTo) {
+      query = query.lte("events.date", dateTo);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    const events = (data || [])
+      .map((row) => {
+        const event = row?.events;
+        if (!event?.id) return null;
+
+        return {
+          added_event_id: row.id,
+          event_id: event.id,
+          origin: "added",
+          reason: row.reason || "makeup",
+          date: event.date,
+          start_time: event.start_time,
+          duration_min:
+            Number(event.duration_min) > 0 ? Number(event.duration_min) : 90,
+          subject: event.subject,
+          type: event.type,
+          room: event.room,
+          group: event.group,
+          instructor: event.instructor,
+          status: event.status,
+        };
+      })
+      .filter(Boolean);
+
+    return respond(res, 200, {
+      ok: true,
+      events,
+    });
+  } catch (error) {
+    const statusCode = Number(error?.statusCode) || 500;
+
+    return respond(res, statusCode, {
+      ok: false,
+      error: statusCode === 401 ? "UNAUTHORIZED" : "LOAD_ADDED_EVENTS_FAILED",
+      message:
+        statusCode === 401
+          ? "Brak autoryzacji. Zaloguj sie ponownie."
+          : "Nie udalo sie pobrac dopisanych wydarzen.",
+    });
+  }
+};

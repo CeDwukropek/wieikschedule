@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Bot, Trash2 } from "lucide-react";
+import SlotChoicesMessage from "../chatbot/SlotChoicesMessage";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -75,6 +76,10 @@ export default function FloatingChatPanel({
   error,
   resetError,
   messages,
+  onAddSlot,
+  addingEventId,
+  addedEventIds,
+  slotErrors,
 }) {
   const messagesContainerRef = useRef(null);
   const shouldStickToBottomRef = useRef(true);
@@ -225,7 +230,17 @@ export default function FloatingChatPanel({
                 key={message.id}
                 className={`rounded-2xl px-3 py-2 text-sm ${whitespaceClass} ${className}`}
               >
-                <MessageContent message={message} isLoading={isLoading} />
+                {message?.payload?.ui?.type === "slot_choices" ? (
+                  <SlotChoicesMessage
+                    message={message}
+                    onAddSlot={onAddSlot}
+                    addingEventId={addingEventId}
+                    addedEventIds={addedEventIds}
+                    slotErrors={slotErrors}
+                  />
+                ) : (
+                  <MessageContent message={message} isLoading={isLoading} />
+                )}
               </div>
             );
           })

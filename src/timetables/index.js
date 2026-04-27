@@ -276,6 +276,7 @@ function buildTimetableFromSemesterJson(fileId, json) {
     }
 
     const eventKey = [
+      String(item?.event_id || "").trim(),
       weekInfo.day,
       start,
       end,
@@ -290,6 +291,7 @@ function buildTimetableFromSemesterJson(fileId, json) {
     if (!merged.has(eventKey)) {
       merged.set(eventKey, {
         id: `${fileId}-${idx + 1}`,
+        event_id: String(item?.event_id || "").trim() || undefined,
         subj: subjCode,
         title: subjectName,
         type: eventType,
@@ -357,6 +359,7 @@ function normalizeDbTime(value) {
 function mapDbEventToLegacyShape(row) {
   // Keep compatibility with existing normalization function.
   return {
+    event_id: String(row?.id || "").trim(),
     date: String(row?.date || "").trim(),
     startTime: normalizeDbTime(row?.start_time),
     durationMin: Number(row?.duration_min) > 0 ? Number(row.duration_min) : 90,
