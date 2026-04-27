@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 130000;
+const DEFAULT_TIMEOUT_MS = 150000;
 
 export class ChatbotApiError extends Error {
   constructor(message, code = "CHATBOT_API_ERROR") {

@@ -41,6 +41,68 @@ REACT_APP_SUPABASE_URL=https://your-project-id.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=your-public-anon-key
 ```
 
+## Firebase Auth (Google)
+
+Google login uses Firebase Auth redirect flow (`signInWithRedirect`), so credentials are handled by Google/Firebase and are not processed by this app backend.
+
+Add these variables to `.env.local` (or Vercel Environment Variables):
+
+```bash
+REACT_APP_FIREBASE_API_KEY=...
+REACT_APP_FIREBASE_AUTH_DOMAIN=...
+REACT_APP_FIREBASE_PROJECT_ID=...
+REACT_APP_FIREBASE_APP_ID=...
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=...
+REACT_APP_FIREBASE_STORAGE_BUCKET=...
+REACT_APP_FIREBASE_MEASUREMENT_ID=...
+```
+
+Required keys for login are:
+
+- `REACT_APP_FIREBASE_API_KEY`
+- `REACT_APP_FIREBASE_AUTH_DOMAIN`
+- `REACT_APP_FIREBASE_PROJECT_ID`
+- `REACT_APP_FIREBASE_APP_ID`
+
+### Vercel setup
+
+1. Open project in Vercel.
+2. Go to `Settings` -> `Environment Variables`.
+3. Add all `REACT_APP_FIREBASE_*` variables.
+4. Scope them to the environment/branch you want (for example: `Preview` + `alpha`).
+5. Redeploy that branch.
+
+Important: in CRA, `REACT_APP_*` values are bundled into client JS and can be visible in the browser. This is expected for Firebase Web config and does not grant admin access by itself. Security must be enforced with Firebase Auth settings, authorized domains, and Firestore/Storage security rules.
+
+## Firestore rules for user settings
+
+This app stores logged-in user settings in one document per user:
+
+- Collection: `userSettings`
+- Document ID: `auth.uid`
+
+A starter ruleset is included in [firestore.rules](firestore.rules).
+
+What these rules enforce:
+
+1. Only authenticated users can access settings documents.
+2. A user can only read/write their own document (`request.auth.uid == userId`).
+3. Only `settings` and `updatedAt` fields are allowed at top level.
+4. `updatedAt` must be server time (`request.time`).
+
+### How to publish rules (Firebase Console)
+
+1. Open Firebase Console.
+2. Go to Firestore Database -> Rules.
+3. Replace current rules with contents of [firestore.rules](firestore.rules).
+4. Click Publish.
+
+### Quick verification
+
+1. Log in with User A and change any app setting.
+2. In Firestore, confirm write appears in `userSettings/{uid-of-user-a}`.
+3. Log in with User B and confirm User B does not see User A settings.
+
 1. Create `.env.local` in the project root.
 2. Add your n8n webhook URL:
 

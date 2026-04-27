@@ -9,7 +9,7 @@ import WeekView from "./View/WeekView";
 import DayView from "./View/DayView";
 import FloatingMenu from "./Menu/FloatingMenu";
 import FAQ from "./FAQ";
-import { useSettings } from "./hooks/useSettings";
+import { usePersistSettings, useSettings } from "./hooks/useSettings";
 import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
@@ -95,11 +95,13 @@ function mapAddedEventToViewShape(event) {
 
 export default function Timetable() {
   const exportRef = useRef(null);
+  const appliedSettingsSignatureRef = useRef("");
   const [open, setOpen] = useState(false);
   const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
 
   // Load saved settings from localStorage
-  const savedSettings = useSettings({});
+  const { savedSettings } = useSettings();
+  const [settingsReady, setSettingsReady] = useState(false);
 
   // View and filter states
   const [viewMode, setViewMode] = useState(savedSettings?.viewMode ?? "week");
@@ -173,6 +175,50 @@ export default function Timetable() {
           ? 1
           : 0,
   );
+
+  useEffect(() => {
+    if (!savedSettings || typeof savedSettings !== "object") {
+      setSettingsReady(true);
+      return;
+    }
+
+    const signature = JSON.stringify({
+      viewMode: savedSettings.viewMode,
+      hideLectures: savedSettings.hideLectures,
+      showAll: savedSettings.showAll,
+      weekOffset: savedSettings.weekOffset,
+      selectedLectoratBySchedule: savedSettings.selectedLectoratBySchedule,
+    });
+
+    if (signature && signature !== appliedSettingsSignatureRef.current) {
+      appliedSettingsSignatureRef.current = signature;
+
+      if (typeof savedSettings.viewMode === "string") {
+        setViewMode(savedSettings.viewMode);
+      }
+
+      if (typeof savedSettings.hideLectures === "boolean") {
+        setHideLectures(savedSettings.hideLectures);
+      }
+
+      if (typeof savedSettings.showAll === "boolean") {
+        setShowAll(savedSettings.showAll);
+      }
+
+      if (Number.isFinite(Number(savedSettings.weekOffset))) {
+        setWeekOffset(Number(savedSettings.weekOffset));
+      }
+
+      if (
+        savedSettings.selectedLectoratBySchedule &&
+        typeof savedSettings.selectedLectoratBySchedule === "object"
+      ) {
+        setSelectedLectoratBySchedule(savedSettings.selectedLectoratBySchedule);
+      }
+    }
+
+    setSettingsReady(true);
+  }, [savedSettings]);
 
   const viewedWeekRange = useMemo(
     () => getRangeByOffset(weekOffset),
@@ -456,17 +502,20 @@ export default function Timetable() {
   );
 
   // Persist all settings
-  useSettings({
-    viewMode,
-    weekOffset,
-    hideLectures,
-    showAll,
-    currentSchedule,
-    scheduleGroupSets,
-    activeGroupSetBySchedule,
-    selectedLectoratBySchedule,
-    scheduleGroups,
-  });
+  usePersistSettings(
+    {
+      viewMode,
+      weekOffset,
+      hideLectures,
+      showAll,
+      currentSchedule,
+      scheduleGroupSets,
+      activeGroupSetBySchedule,
+      selectedLectoratBySchedule,
+      scheduleGroups,
+    },
+    settingsReady,
+  );
 
   const dayOptions = useMemo(() => {
     const names = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
