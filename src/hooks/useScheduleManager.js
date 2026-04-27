@@ -7,6 +7,8 @@ import {
 } from "../timetables";
 import { isSupabaseConfigured } from "../supabaseClient";
 
+const SCHEDULE_LOAD_RETRY_COOLDOWN_MS = 15000;
+
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
   const groups = {};
@@ -73,6 +75,7 @@ export function useScheduleManager(savedSettings) {
     useState(false);
   const [hasLoadedTimetableOptions, setHasLoadedTimetableOptions] =
     useState(false);
+  const scheduleLoadRequestIdRef = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -129,6 +132,7 @@ export function useScheduleManager(savedSettings) {
   }, [hasLoadedTimetableOptions, isTimetableOptionsLoading, timetableOptions]);
 
   const lastHydratedSignatureRef = useRef("");
+  const failedScheduleLoadsRef = useRef(new Map());
 
   // Rehydrate schedule-related state when saved settings arrive asynchronously.
   useEffect(() => {
@@ -162,17 +166,37 @@ export function useScheduleManager(savedSettings) {
 
     if (loadedTimetables[targetId]) return () => {};
 
+    const lastFailedAt = failedScheduleLoadsRef.current.get(targetId);
+    if (
+      Number.isFinite(lastFailedAt) &&
+      Date.now() - Number(lastFailedAt) < SCHEDULE_LOAD_RETRY_COOLDOWN_MS
+    ) {
+      return () => {};
+    }
+
+    const requestId = scheduleLoadRequestIdRef.current + 1;
+    scheduleLoadRequestIdRef.current = requestId;
+
     setIsScheduleLoading(true);
     loadTimetableById(targetId)
       .then((timetable) => {
-        if (!active || !timetable) return;
+        if (!active) return;
+
+        if (!timetable) {
+          failedScheduleLoadsRef.current.set(targetId, Date.now());
+          return;
+        }
+
+        failedScheduleLoadsRef.current.delete(targetId);
         setLoadedTimetables((prev) => {
           if (prev[targetId]) return prev;
           return { ...prev, [targetId]: timetable };
         });
       })
       .finally(() => {
-        if (active) setIsScheduleLoading(false);
+        if (scheduleLoadRequestIdRef.current === requestId) {
+          setIsScheduleLoading(false);
+        }
       });
 
     return () => {
@@ -644,7 +668,11 @@ export function useScheduleManager(savedSettings) {
 
   // Update selected schedule id from UI controls.
   const handleScheduleChange = useCallback((scheduleId) => {
-    setCurrentSchedule(scheduleId);
+    const normalizedId = String(scheduleId || "").trim();
+    if (normalizedId) {
+      failedScheduleLoadsRef.current.delete(normalizedId);
+    }
+    setCurrentSchedule(normalizedId);
   }, []);
 
   // Public API consumed by App and nested UI panels.
