@@ -5,6 +5,12 @@ function respond(res, status, body) {
   res.status(status).json(body);
 }
 
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "authorization,content-type");
+}
+
 async function getUserIdByFirebaseUid(supabase, firebaseUid) {
   const { data, error } = await supabase
     .from("users")
@@ -20,6 +26,12 @@ async function getUserIdByFirebaseUid(supabase, firebaseUid) {
 }
 
 module.exports = async function handler(req, res) {
+  setCors(res);
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
     return respond(res, 405, {
       ok: false,

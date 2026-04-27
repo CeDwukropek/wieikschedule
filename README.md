@@ -74,6 +74,114 @@ Required keys for login are:
 
 Important: in CRA, `REACT_APP_*` values are bundled into client JS and can be visible in the browser. This is expected for Firebase Web config and does not grant admin access by itself. Security must be enforced with Firebase Auth settings, authorized domains, and Firestore/Storage security rules.
 
+## System map (what is where and why)
+
+Frontend (React):
+
+- App logic and schedule merge: [src/App.js](src/App.js)
+- Views: [src/View/WeekView.js](src/View/WeekView.js), [src/View/DayView.js](src/View/DayView.js)
+- Event tile UI: [src/EventCard.js](src/EventCard.js)
+- Chat UI: [src/chatbot/ChatPopup.js](src/chatbot/ChatPopup.js), [src/Menu/FloatingChatPanel.js](src/Menu/FloatingChatPanel.js)
+- Chat integration + parsing: [src/chatbot/useChatbot.js](src/chatbot/useChatbot.js), [src/chatbot/n8nClient.js](src/chatbot/n8nClient.js)
+- API client (frontend -> backend): [src/myPlanApi.js](src/myPlanApi.js)
+
+Backend (Vercel serverless):
+
+- Add event: [api/my-plan/add-event.js](api/my-plan/add-event.js)
+- Remove event: [api/my-plan/remove-event.js](api/my-plan/remove-event.js)
+- List added events: [api/my-plan/added-events.js](api/my-plan/added-events.js)
+- Firebase Admin auth: [api/\_lib/firebaseAdmin.js](api/_lib/firebaseAdmin.js)
+- Request auth helper: [api/\_lib/requestAuth.js](api/_lib/requestAuth.js)
+- Supabase Admin client: [api/\_lib/supabaseAdmin.js](api/_lib/supabaseAdmin.js)
+
+Config:
+
+- Local env: [.env.local](.env.local)
+- Build and scripts: [package.json](package.json)
+
+Flow overview:
+
+1. Frontend calls `/api/my-plan/*` with `Authorization: Bearer <Firebase ID token>`.
+2. Backend verifies token via Firebase Admin.
+3. Backend reads/writes Supabase using the service role key.
+4. Frontend merges base schedule with added events for display.
+
+## Deploy to Vercel (end-to-end)
+
+1. Connect repo in Vercel (New Project -> Import from GitHub).
+2. Set environment variables in Vercel (Project -> Settings -> Environment Variables).
+3. Deploy the branch.
+
+Environment variables to add in Vercel:
+
+Frontend (build/runtime):
+
+- `REACT_APP_FIREBASE_API_KEY`
+- `REACT_APP_FIREBASE_AUTH_DOMAIN`
+- `REACT_APP_FIREBASE_PROJECT_ID`
+- `REACT_APP_FIREBASE_APP_ID`
+- `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`
+- `REACT_APP_FIREBASE_STORAGE_BUCKET`
+- `REACT_APP_FIREBASE_MEASUREMENT_ID`
+- `REACT_APP_SUPABASE_URL`
+- `REACT_APP_SUPABASE_ANON_KEY`
+- `REACT_APP_N8N_CHAT_WEBHOOK`
+- `REACT_APP_API_BASE_URL`
+
+Server-only (runtime for serverless):
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+
+Notes:
+
+- On Vercel, set `REACT_APP_API_BASE_URL` to empty or to your Vercel domain so `/api` is same-origin.
+- `FIREBASE_PRIVATE_KEY` must keep `\n` line breaks.
+- `REACT_APP_*` values are bundled into client JS, so only put public config there.
+
+## Request flow diagram (high level)
+
+```
+Browser (React)
+  │
+  │  1) POST /api/my-plan/add-event (Bearer Firebase ID token)
+  ▼
+Vercel Serverless
+  │  2) verifyIdToken (Firebase Admin)
+  │  3) read/write Supabase (service role)
+  ▼
+Supabase (Postgres)
+  ▲
+  │  4) response back to client
+  └────────────────────────────────────────────
+```
+
+## Go-live checklist (Vercel)
+
+Pre-deploy:
+
+- [ ] Local build passes: `npm run build`
+- [ ] API runs locally: `npx vercel dev --listen 3001`
+- [ ] Login works in UI (token present in request headers)
+- [ ] Add/remove event flow returns 200 (no 401/405)
+
+Vercel config:
+
+- [ ] Project imported from GitHub
+- [ ] All env vars set for Preview + Production
+- [ ] `REACT_APP_API_BASE_URL` empty or set to Vercel domain
+- [ ] `FIREBASE_PRIVATE_KEY` stored with `\n` line breaks
+
+Post-deploy:
+
+- [ ] Login works on Vercel domain
+- [ ] `/api/my-plan/added-events` returns 200 for logged-in user
+- [ ] Add/remove event works end-to-end
+- [ ] Chat webhook reachable (if AI chat enabled)
+
 ## Firestore rules for user settings
 
 This app stores logged-in user settings in one document per user:
@@ -103,8 +211,8 @@ What these rules enforce:
 2. In Firestore, confirm write appears in `userSettings/{uid-of-user-a}`.
 3. Log in with User B and confirm User B does not see User A settings.
 
-1. Create `.env.local` in the project root.
-2. Add your n8n webhook URL:
+4. Create `.env.local` in the project root.
+5. Add your n8n webhook URL:
 
 ```bash
 REACT_APP_N8N_CHAT_WEBHOOK=https://your-n8n-instance/webhook/your-chat-endpoint
