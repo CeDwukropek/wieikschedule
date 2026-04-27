@@ -32,6 +32,8 @@ async function verifyRequestUser(req) {
 
     return { uid };
   } catch (err) {
+    // Temporary: log auth verification details in dev
+    console.error("verifyIdToken failed", err?.code || "", err?.message || "");
     const error = new Error(
       "Nie udalo sie zweryfikowac tozsamosci uzytkownika.",
     );
