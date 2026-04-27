@@ -14,6 +14,84 @@ import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
 import { formatDate } from "./utils/dateUtils";
+import {
+  getAddedEventsFromMyPlan,
+  removeAddedEventFromMyPlan,
+} from "./myPlanApi";
+
+function toIsoDate(dateValue) {
+  if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
+    return "";
+  }
+
+  const y = String(dateValue.getFullYear());
+  const m = String(dateValue.getMonth() + 1).padStart(2, "0");
+  const d = String(dateValue.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function toDayIndex(dateValue) {
+  const date = new Date(`${String(dateValue || "").slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  return (date.getDay() + 6) % 7;
+}
+
+function normalizeHm(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  return `${String(Number(match[1])).padStart(2, "0")}:${match[2]}`;
+}
+
+function addMinutes(startHm, durationMin) {
+  const match = String(startHm || "").match(/^(\d{2}):(\d{2})$/);
+  if (!match) return "";
+  const base = Number(match[1]) * 60 + Number(match[2]);
+  const duration = Number(durationMin);
+  const safeDuration =
+    Number.isFinite(duration) && duration > 0 ? duration : 90;
+  const end = (base + safeDuration) % (24 * 60);
+  return `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(
+    end % 60,
+  ).padStart(2, "0")}`;
+}
+
+function mapAddedEventToViewShape(event) {
+  const day = toDayIndex(event?.date);
+  const start = normalizeHm(event?.start_time);
+
+  if (day == null || day < 0 || day > 4 || !start) {
+    return null;
+  }
+
+  const duration = Number(event?.duration_min);
+  const safeDuration =
+    Number.isFinite(duration) && duration > 0 ? duration : 90;
+
+  return {
+    id: `added-${
+      event?.added_event_id ||
+      event?.event_id ||
+      [event?.date, start, event?.subject].filter(Boolean).join("-")
+    }`,
+    event_id: String(event?.event_id || "").trim() || undefined,
+    added_event_id: String(event?.added_event_id || "").trim() || undefined,
+    origin: "added",
+    reason: String(event?.reason || "makeup").trim() || "makeup",
+    subj: String(event?.subject || "").trim() || "ADDED_EVENT",
+    title: String(event?.subject || "").trim() || "Dopisane zajecia",
+    type: String(event?.type || "").trim() || "Zajecia",
+    status: String(event?.status || "").trim() || "aktywne",
+    teacher: String(event?.instructor || "").trim(),
+    groups: event?.group ? [String(event.group).trim()] : [],
+    appliesToAllGroups: false,
+    day,
+    start,
+    end: addMinutes(start, safeDuration),
+    room: String(event?.room || "").trim(),
+    dates: [String(event?.date || "").trim()],
+  };
+}
 
 export default function Timetable() {
   const exportRef = useRef(null);
@@ -104,6 +182,34 @@ export default function Timetable() {
   const viewedWeekStart = useMemo(
     () => getWeekStartByOffset(weekOffset),
     [getWeekStartByOffset, weekOffset],
+  );
+
+  const [addedEventsByWeek, setAddedEventsByWeek] = useState({});
+  const [myPlanRefreshNonce, setMyPlanRefreshNonce] = useState(0);
+  const [removingAddedEventId, setRemovingAddedEventId] = useState(null);
+
+  const refreshMyPlanEvents = useCallback(() => {
+    setMyPlanRefreshNonce((prev) => prev + 1);
+  }, []);
+
+  const handleRemoveAddedEvent = useCallback(
+    async (addedEventId) => {
+      const cleanId = String(addedEventId || "").trim();
+      if (!cleanId) {
+        throw new Error("Brak identyfikatora dopisanego wydarzenia.");
+      }
+
+      setRemovingAddedEventId(cleanId);
+      try {
+        await removeAddedEventFromMyPlan(cleanId);
+        refreshMyPlanEvents();
+      } finally {
+        setRemovingAddedEventId((current) =>
+          current === cleanId ? null : current,
+        );
+      }
+    },
+    [refreshMyPlanEvents],
   );
 
   const weekOptions = useMemo(() => {
@@ -234,11 +340,23 @@ export default function Timetable() {
       );
 
       const merged = new Map();
+      const baseEventIds = new Set();
+
       baseEvents.forEach((ev) => {
+        const baseEvent = {
+          ...ev,
+          origin: "base",
+        };
+
+        const eventId = String(ev?.event_id || "").trim();
+        if (eventId) {
+          baseEventIds.add(eventId);
+        }
+
         const key = ["base", ev.id, ev.day, ev.start, ev.end, ev.room].join(
           "::",
         );
-        merged.set(key, ev);
+        merged.set(key, baseEvent);
       });
 
       (activeExternalSelections || []).forEach((item) => {
@@ -271,6 +389,7 @@ export default function Timetable() {
         externalEvents.forEach((ev) => {
           const taggedEvent = {
             ...ev,
+            origin: "base",
             _sourceScheduleId: scheduleId,
             _isExternal: true,
           };
@@ -292,6 +411,26 @@ export default function Timetable() {
         });
       });
 
+      const weekKey = toIsoDate(weekStartDate);
+      const addedEvents = weekKey ? addedEventsByWeek[weekKey] || [] : [];
+
+      addedEvents.forEach((event) => {
+        const eventId = String(event?.event_id || "").trim();
+        if (eventId && baseEventIds.has(eventId)) return;
+
+        const dedupeKey = [
+          "added",
+          event?.added_event_id || "",
+          event?.event_id || "",
+          event?.day,
+          event?.start,
+          event?.end,
+          event?.room,
+        ].join("::");
+
+        merged.set(dedupeKey, event);
+      });
+
       return Array.from(merged.values()).sort((a, b) => {
         if (a.day !== b.day) return a.day - b.day;
         if (a.start !== b.start) return a.start.localeCompare(b.start);
@@ -307,6 +446,7 @@ export default function Timetable() {
       selectedLectoratSubject,
       activeExternalSelections,
       loadedTimetables,
+      addedEventsByWeek,
     ],
   );
 
@@ -397,6 +537,68 @@ export default function Timetable() {
 
   // Day view selection
   const [selection, setSelection] = useState(`0:${defaultDayIndex}`);
+
+  const selectedDayWeekStart = useMemo(() => {
+    const { selectedWeekOffset } = parseDaySelection(selection);
+    return getWeekStartByOffset(selectedWeekOffset);
+  }, [parseDaySelection, selection, getWeekStartByOffset]);
+
+  const loadAddedEventsForWeek = useCallback(async (weekStartDate) => {
+    if (
+      !(weekStartDate instanceof Date) ||
+      Number.isNaN(weekStartDate.getTime())
+    ) {
+      return;
+    }
+
+    const dateFrom = toIsoDate(weekStartDate);
+    if (!dateFrom) return;
+
+    const endDate = new Date(weekStartDate);
+    endDate.setDate(endDate.getDate() + 6);
+    const dateTo = toIsoDate(endDate);
+
+    try {
+      const response = await getAddedEventsFromMyPlan({ dateFrom, dateTo });
+      const mapped = (response?.events || [])
+        .map(mapAddedEventToViewShape)
+        .filter(Boolean);
+
+      setAddedEventsByWeek((prev) => ({
+        ...prev,
+        [dateFrom]: mapped,
+      }));
+    } catch (err) {
+      const message = String(err?.message || "").toLowerCase();
+      const isAuthMissing =
+        message.includes("zalogowany") ||
+        message.includes("autoryz") ||
+        message.includes("unauthorized");
+
+      if (isAuthMissing) {
+        setAddedEventsByWeek((prev) => ({
+          ...prev,
+          [dateFrom]: [],
+        }));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const weeksToLoad = [viewedWeekStart, selectedDayWeekStart];
+    const uniqueWeekStarts = Array.from(
+      new Set(weeksToLoad.map((date) => toIsoDate(date)).filter(Boolean)),
+    );
+
+    uniqueWeekStarts.forEach((isoDate) => {
+      loadAddedEventsForWeek(new Date(`${isoDate}T12:00:00`));
+    });
+  }, [
+    viewedWeekStart,
+    selectedDayWeekStart,
+    loadAddedEventsForWeek,
+    myPlanRefreshNonce,
+  ]);
 
   useEffect(() => {
     if (!dayOptions.length) return;
@@ -546,6 +748,7 @@ export default function Timetable() {
       enabled: isAiChatEnabled,
       scheduleName: currentSchedule,
       selectedGroups: studentGroups,
+      onMyPlanChanged: refreshMyPlanEvents,
     },
   };
 
@@ -560,6 +763,8 @@ export default function Timetable() {
           events={mergedWeekEvents}
           subjects={subjects}
           viewedWeekStart={viewedWeekStart}
+          onRemoveAddedEvent={handleRemoveAddedEvent}
+          removingAddedEventId={removingAddedEventId}
           ref={exportRef}
         />
       ) : (
@@ -576,6 +781,8 @@ export default function Timetable() {
           options={dayOptions}
           selection={selection}
           onSelectionChange={setSelection}
+          onRemoveAddedEvent={handleRemoveAddedEvent}
+          removingAddedEventId={removingAddedEventId}
           ref={exportRef}
         />
       )}

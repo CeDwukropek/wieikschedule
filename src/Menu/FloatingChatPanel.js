@@ -1,4 +1,5 @@
 import { Bot, Trash2 } from "lucide-react";
+import SlotChoicesMessage from "../chatbot/SlotChoicesMessage";
 
 export default function FloatingChatPanel({
   isChatMode,
@@ -9,6 +10,10 @@ export default function FloatingChatPanel({
   error,
   resetError,
   messages,
+  onAddSlot,
+  addingEventId,
+  addedEventIds,
+  slotErrors,
 }) {
   if (!isChatMode || !isChatWindowOpen) return null;
 
@@ -80,7 +85,19 @@ export default function FloatingChatPanel({
                 key={message.id}
                 className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${className}`}
               >
-                {isLoading ? "Thinking..." : message.text}
+                {isLoading ? (
+                  "Thinking..."
+                ) : message?.payload?.ui?.type === "slot_choices" ? (
+                  <SlotChoicesMessage
+                    message={message}
+                    onAddSlot={onAddSlot}
+                    addingEventId={addingEventId}
+                    addedEventIds={addedEventIds}
+                    slotErrors={slotErrors}
+                  />
+                ) : (
+                  message.text
+                )}
               </div>
             );
           })

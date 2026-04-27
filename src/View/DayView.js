@@ -6,7 +6,13 @@ import { buildEventLayout } from "../utils/eventLayout";
 import "./ViewStyles.css";
 
 const DayView = forwardRef(function DayView(
-  { events, subjects = {}, selection: externalSelection },
+  {
+    events,
+    subjects = {},
+    selection: externalSelection,
+    onRemoveAddedEvent,
+    removingAddedEventId,
+  },
   ref,
 ) {
   const startHour = 7;
@@ -132,7 +138,12 @@ const DayView = forwardRef(function DayView(
                   }}
                 >
                   <EventTooltipWrapper ev={ev}>
-                    <EventCard ev={ev} subjects={subjects} />
+                    <EventCard
+                      ev={ev}
+                      subjects={subjects}
+                      onRemoveAddedEvent={onRemoveAddedEvent}
+                      removingAddedEventId={removingAddedEventId}
+                    />
                   </EventTooltipWrapper>
                 </div>
               );

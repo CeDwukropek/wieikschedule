@@ -8,7 +8,13 @@ import "./ViewStyles.css";
 const DAYS = [0, 1, 2, 3, 4]; // Pon–Pt
 
 const WeekView = forwardRef(function WeekView(
-  { events, subjects = {}, viewedWeekStart },
+  {
+    events,
+    subjects = {},
+    viewedWeekStart,
+    onRemoveAddedEvent,
+    removingAddedEventId,
+  },
   ref,
 ) {
   const startHour = 7;
@@ -186,7 +192,12 @@ const WeekView = forwardRef(function WeekView(
                       }}
                     >
                       <EventTooltipWrapper ev={ev}>
-                        <EventCard ev={ev} subjects={subjects} />
+                        <EventCard
+                          ev={ev}
+                          subjects={subjects}
+                          onRemoveAddedEvent={onRemoveAddedEvent}
+                          removingAddedEventId={removingAddedEventId}
+                        />
                       </EventTooltipWrapper>
                     </div>
                   );

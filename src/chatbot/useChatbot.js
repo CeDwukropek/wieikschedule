@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { sendN8nChatMessage } from "./n8nClient";
+import { addEventToMyPlan } from "../myPlanApi";
 
 function generateSessionId() {
   if (
@@ -12,22 +13,32 @@ function generateSessionId() {
   return `sess-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function createMessage({ role, text, stage = "done", errorCode = null }) {
+function createMessage({
+  role,
+  text,
+  stage = "done",
+  errorCode = null,
+  payload = null,
+}) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     text,
     stage,
     errorCode,
+    payload,
     createdAt: new Date().toISOString(),
   };
 }
 
-export function useChatbot({ scheduleName, selectedGroups }) {
+export function useChatbot({ scheduleName, selectedGroups, onMyPlanChanged }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
+  const [addingEventId, setAddingEventId] = useState(null);
+  const [addedEventIds, setAddedEventIds] = useState(() => new Set());
+  const [slotErrors, setSlotErrors] = useState({});
   const abortRef = useRef(null);
   const sessionIdRef = useRef(generateSessionId());
 
@@ -72,7 +83,8 @@ export function useChatbot({ scheduleName, selectedGroups }) {
           msg.id === loadingMessage.id
             ? {
                 ...msg,
-                text: reply,
+                text: reply.output,
+                payload: reply,
                 stage: "done",
                 errorCode: null,
               }
@@ -115,7 +127,59 @@ export function useChatbot({ scheduleName, selectedGroups }) {
     setMessages([]);
     setInput("");
     setError(null);
+    setAddingEventId(null);
+    setAddedEventIds(new Set());
+    setSlotErrors({});
     setStatus("idle");
+  };
+
+  const addSlotToMyPlan = async (slot) => {
+    const eventId = String(slot?.event_id || "").trim();
+
+    if (!eventId) {
+      setSlotErrors((prev) => ({
+        ...prev,
+        "": "Nie udalo sie dodac tego terminu. Sprobuj ponownie.",
+      }));
+      return;
+    }
+
+    setSlotErrors((prev) => {
+      const next = { ...prev };
+      delete next[eventId];
+      return next;
+    });
+    setAddingEventId(eventId);
+
+    try {
+      const response = await addEventToMyPlan(eventId);
+
+      setAddedEventIds((prev) => {
+        const next = new Set(prev);
+        next.add(eventId);
+        return next;
+      });
+
+      if (response?.already_added) {
+        setSlotErrors((prev) => ({
+          ...prev,
+          [eventId]: "Ten termin jest juz w Twoim planie.",
+        }));
+      }
+
+      if (typeof onMyPlanChanged === "function") {
+        onMyPlanChanged();
+      }
+    } catch (addError) {
+      setSlotErrors((prev) => ({
+        ...prev,
+        [eventId]:
+          addError?.message ||
+          "Nie udalo sie dodac tego terminu. Sprobuj ponownie.",
+      }));
+    } finally {
+      setAddingEventId((current) => (current === eventId ? null : current));
+    }
   };
 
   const cancelPending = () => {
@@ -136,5 +200,9 @@ export function useChatbot({ scheduleName, selectedGroups }) {
     resetError,
     clearConversation,
     cancelPending,
+    addSlotToMyPlan,
+    addingEventId,
+    addedEventIds,
+    slotErrors,
   };
 }

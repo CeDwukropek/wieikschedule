@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { useChatbot } from "./useChatbot";
+import SlotChoicesMessage from "./SlotChoicesMessage";
 
 function StageBadge({ status }) {
   if (status === "sending") {
@@ -32,7 +33,13 @@ function EmptyState() {
   );
 }
 
-function MessageBubble({ message }) {
+function MessageBubble({
+  message,
+  onAddSlot,
+  addingEventId,
+  addedEventIds,
+  slotErrors,
+}) {
   const isUser = message.role === "user";
   const isLoading = message.stage === "loading";
   const isError = message.stage === "error";
@@ -56,6 +63,14 @@ function MessageBubble({ message }) {
           </span>
           <span>Thinking...</span>
         </div>
+      ) : message?.payload?.ui?.type === "slot_choices" ? (
+        <SlotChoicesMessage
+          message={message}
+          onAddSlot={onAddSlot}
+          addingEventId={addingEventId}
+          addedEventIds={addedEventIds}
+          slotErrors={slotErrors}
+        />
       ) : (
         message.text
       )}
@@ -63,7 +78,13 @@ function MessageBubble({ message }) {
   );
 }
 
-function MessagesList({ messages }) {
+function MessagesList({
+  messages,
+  onAddSlot,
+  addingEventId,
+  addedEventIds,
+  slotErrors,
+}) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -77,7 +98,14 @@ function MessagesList({ messages }) {
   return (
     <div className="h-full overflow-y-auto px-3 py-3 space-y-2">
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+        <MessageBubble
+          key={message.id}
+          message={message}
+          onAddSlot={onAddSlot}
+          addingEventId={addingEventId}
+          addedEventIds={addedEventIds}
+          slotErrors={slotErrors}
+        />
       ))}
       <div ref={bottomRef} />
     </div>
@@ -96,6 +124,10 @@ export default function ChatPopup({ scheduleName, selectedGroups }) {
     sendMessage,
     resetError,
     clearConversation,
+    addSlotToMyPlan,
+    addingEventId,
+    addedEventIds,
+    slotErrors,
   } = useChatbot({ scheduleName, selectedGroups });
 
   const scheduleLabel = useMemo(
@@ -146,7 +178,13 @@ export default function ChatPopup({ scheduleName, selectedGroups }) {
           ) : null}
 
           <div className="flex-1 min-h-0">
-            <MessagesList messages={messages} />
+            <MessagesList
+              messages={messages}
+              onAddSlot={addSlotToMyPlan}
+              addingEventId={addingEventId}
+              addedEventIds={addedEventIds}
+              slotErrors={slotErrors}
+            />
           </div>
 
           <form

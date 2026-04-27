@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 130000;
 
 export class ChatbotApiError extends Error {
   constructor(message, code = "CHATBOT_API_ERROR") {
@@ -35,9 +35,36 @@ function withTimeout(signal, timeoutMs) {
   };
 }
 
+function normalizeTextCandidate(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  return trimmed;
+}
+
+function normalizeSlotChoice(slot) {
+  if (!slot || typeof slot !== "object") return null;
+
+  const duration = Number(slot.duration_min);
+
+  return {
+    event_id: normalizeTextCandidate(slot.event_id),
+    date: normalizeTextCandidate(slot.date),
+    start_time: normalizeTextCandidate(slot.start_time),
+    duration_min: Number.isFinite(duration) && duration > 0 ? duration : 90,
+    subject: normalizeTextCandidate(slot.subject),
+    type: normalizeTextCandidate(slot.type),
+    room: slot.room == null ? null : String(slot.room).trim() || null,
+    group: slot.group == null ? null : String(slot.group).trim() || null,
+    instructor:
+      slot.instructor == null ? null : String(slot.instructor).trim() || null,
+    conflict_status: normalizeTextCandidate(slot.conflict_status) || "free",
+  };
+}
+
 function normalizeResponsePayload(payload) {
-  if (typeof payload === "string" && payload.trim()) {
-    return payload.trim();
+  if (typeof payload === "string") {
+    const output = normalizeTextCandidate(payload);
+    return output ? { output } : null;
   }
 
   if (Array.isArray(payload)) {
@@ -46,20 +73,50 @@ function normalizeResponsePayload(payload) {
   }
 
   if (payload && typeof payload === "object") {
-    const candidate =
+    const output = normalizeTextCandidate(
       payload.reply ||
-      payload.response ||
-      payload.answer ||
-      payload.output ||
-      payload.message ||
-      payload.text;
+        payload.response ||
+        payload.answer ||
+        payload.output ||
+        payload.message ||
+        payload.text,
+    );
 
-    if (typeof candidate === "string" && candidate.trim()) {
-      return candidate.trim();
+    if (!output) return null;
+
+    const intent = normalizeTextCandidate(payload.intent);
+    const ui = payload.ui && typeof payload.ui === "object" ? payload.ui : null;
+    const data =
+      payload.data && typeof payload.data === "object" ? payload.data : null;
+
+    const isSlotChoices =
+      ui?.type === "slot_choices" && Array.isArray(data?.slots);
+
+    if (!isSlotChoices) {
+      return {
+        output,
+        intent: intent || undefined,
+      };
     }
+
+    return {
+      output,
+      intent: "SLOTS",
+      ui: {
+        type: "slot_choices",
+        actions: Boolean(ui.actions),
+      },
+      data: {
+        subject: normalizeTextCandidate(data.subject),
+        requested_type:
+          normalizeTextCandidate(data.requested_type) || undefined,
+        resolved_type: normalizeTextCandidate(data.resolved_type),
+        slots: data.slots.map(normalizeSlotChoice).filter(Boolean),
+      },
+    };
   }
 
-  return "";
+  return null;
 }
 
 function normalizeSelectedGroups(selectedGroups) {
@@ -137,7 +194,7 @@ export async function sendN8nChatMessage({
 
     const reply = normalizeResponsePayload(payload);
 
-    if (!reply) {
+    if (!reply?.output) {
       throw new ChatbotApiError(
         "Could not read chatbot response.",
         "CHATBOT_BAD_RESPONSE",
