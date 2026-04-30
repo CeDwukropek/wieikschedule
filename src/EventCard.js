@@ -39,6 +39,9 @@ export default function EventCard({
   const eventTint = EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
   const isExternal = Boolean(ev?._isExternal && ev?._sourceScheduleId);
   const isAdded = ev?.origin === "added";
+
+  // Eventy pochodzące z "Mój plan" mają origin='added' i posiadają added_event_id,
+  // który jest używany do soft-remove w API (/api/my-plan/remove-event).
   const canRemoveAdded =
     isAdded &&
     typeof onRemoveAddedEvent === "function" &&
@@ -68,7 +71,7 @@ export default function EventCard({
     <div
       className={`w-full h-full flex overflow-hidden shadow-sm ${
         isExternal ? "border border-amber-400/70" : ""
-      }`}
+      } ${ev?.__optimistic === "adding" ? "event-card-optimistic" : ""}`}
       style={{ backgroundColor: eventTint }}
     >
       <div className={`${colorBg} w-1 shrink-0`} />

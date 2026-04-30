@@ -25,3 +25,32 @@
 .floating-select-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(163, 163, 163, 0.85);
 }
+
+.event-card-optimistic {
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.55),
+    0 0 10px rgba(56, 189, 248, 0.25);
+  animation: event-card-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes event-card-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.45),
+      0 0 8px rgba(56, 189, 248, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.8),
+      0 0 10px rgba(56, 189, 248, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card-optimistic {
+    animation: none;
+  }
+}

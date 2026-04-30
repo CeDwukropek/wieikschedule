@@ -1,6 +1,23 @@
 const { verifyRequestUser } = require("../_lib/requestAuth");
 const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
 
+/*
+  GET /api/my-plan/added-events
+
+  Cel:
+  - Zwrócić listę eventów dopisanych przez użytkownika (user_added_events)
+    wraz z danymi z tabeli `events` (join), przefiltrowaną po planie i dacie.
+
+  Query:
+  - scheduleName: string (wymagane, odpowiada `events.faculty`)
+  - date_from: YYYY-MM-DD (opcjonalnie)
+  - date_to: YYYY-MM-DD (opcjonalnie)
+
+  Zwracany kształt:
+  - eventy są mapowane do formatu, który frontend umie wprost przerobić
+    na "slot" w tygodniu (day/start/duration itd.).
+*/
+
 function respond(res, status, body) {
   res.status(status).json(body);
 }
@@ -12,6 +29,7 @@ function setCors(res) {
 }
 
 function getDateRangeFromQuery(query) {
+  // Przyjmujemy tylko część YYYY-MM-DD (bez czasu), aby unikać problemów stref.
   const dateFrom = String(query?.date_from || "")
     .trim()
     .slice(0, 10);
@@ -26,6 +44,8 @@ function getDateRangeFromQuery(query) {
 }
 
 async function getUserIdByFirebaseUid(supabase, firebaseUid) {
+  // Użytkownik może nie istnieć w tabeli `users` (np. pierwszy request).
+  // Wtedy zwracamy pustą listę dopisanych eventów.
   const { data, error } = await supabase
     .from("users")
     .select("id")
@@ -55,9 +75,19 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // 1) Auth: zidentyfikuj użytkownika.
     const { uid } = await verifyRequestUser(req);
     const supabase = getSupabaseAdminClient();
     const { dateFrom, dateTo } = getDateRangeFromQuery(req.query || {});
+    const scheduleName = String(req.query?.scheduleName || "").trim();
+
+    if (!scheduleName) {
+      return respond(res, 400, {
+        ok: false,
+        error: "BAD_REQUEST",
+        message: "Brak parametru scheduleName.",
+      });
+    }
 
     const userId = await getUserIdByFirebaseUid(supabase, uid);
 
@@ -68,13 +98,19 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // 2) Query do `user_added_events` + inner join do `events`.
+    // Filtrujemy:
+    // - tylko aktywne dopiski użytkownika,
+    // - tylko aktywne eventy bazowe,
+    // - tylko eventy należące do aktualnie oglądanego planu (`events.faculty`).
     let query = supabase
       .from("user_added_events")
       .select(
-        "id,reason,status,event_id,events!inner(id,date,start_time,duration_min,subject,type,room,group,instructor,status)",
+        "id,reason,status,event_id,created_at,events!inner(id,faculty,date,start_time,duration_min,subject,type,room,group,instructor,status)",
       )
       .eq("user_id", userId)
       .eq("status", "active")
+      .eq("events.faculty", scheduleName)
       .eq("events.status", "aktywne")
       .order("created_at", { ascending: false });
 
@@ -92,6 +128,7 @@ module.exports = async function handler(req, res) {
       throw error;
     }
 
+    // 3) Mapowanie do formatu czytelnego dla UI.
     const events = (data || [])
       .map((row) => {
         const event = row?.events;
@@ -102,6 +139,13 @@ module.exports = async function handler(req, res) {
           event_id: event.id,
           origin: "added",
           reason: row.reason || "makeup",
+
+          // Zachowane dla kompatybilności z frontendem.
+          // W bazie nie ma już `user_added_events.schedule_name`;
+          // źródłem prawdy dla planu jest `events.faculty`.
+          schedule_name: event.faculty,
+
+          faculty: event.faculty,
           date: event.date,
           start_time: event.start_time,
           duration_min:

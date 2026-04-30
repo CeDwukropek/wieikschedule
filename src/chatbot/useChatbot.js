@@ -31,7 +31,12 @@ function createMessage({
   };
 }
 
-export function useChatbot({ scheduleName, selectedGroups, onMyPlanChanged }) {
+export function useChatbot({
+  scheduleName,
+  selectedGroups,
+  onMyPlanChanged,
+  onOptimisticAdd,
+}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle");
@@ -151,8 +156,14 @@ export function useChatbot({ scheduleName, selectedGroups, onMyPlanChanged }) {
     });
     setAddingEventId(eventId);
 
+    // Inform parent to optimistically render this slot immediately
     try {
-      const response = await addEventToMyPlan(eventId);
+      if (typeof onOptimisticAdd === "function") onOptimisticAdd(slot);
+    } catch (e) {
+      // ignore
+    }
+    try {
+      const response = await addEventToMyPlan({ eventId, scheduleName });
 
       setAddedEventIds((prev) => {
         const next = new Set(prev);

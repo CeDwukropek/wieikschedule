@@ -1,5 +1,18 @@
 import { supabase } from "../supabaseClient";
 
+// Timetables loader
+//
+// Ten moduł odpowiada za "wczytywanie eventów" z Supabase (tabela `events`) oraz
+// przygotowanie danych w kształcie wymaganym przez UI (WeekView/DayView).
+//
+// Dane są cache'owane dwupoziomowo:
+// - pamięć (Map) w trakcie działania aplikacji
+// - localStorage z TTL (żeby szybciej startować i ograniczać liczbę zapytań)
+//
+// Publiczne API używane przez hooki:
+// - getCachedTimetableOptions(), loadAllTimetableOptions()
+// - getCachedTimetableById(), loadTimetableById()
+
 const SUBJECT_COLORS = [
   "bg-indigo-900",
   "bg-sky-500",
@@ -396,6 +409,11 @@ const TIMETABLE_OPTIONS_TTL_MS = 10 * 60 * 1000;
 const TIMETABLE_TTL_MS = 10 * 60 * 1000;
 const TIMETABLE_OPTIONS_STORAGE_KEY = "wieik:timetable-options:v1";
 const TIMETABLE_STORAGE_PREFIX = "wieik:timetable:v1:";
+
+// localStorage schema:
+// - value: { savedAt: number(ms), data: any }
+// - stale dane mogą być zwracane natychmiast (allowStale=true), a refresh leci w tle
+//   (żeby UI nie "migało" i było responsywne nawet przy wolnej sieci).
 
 function getLocalStorage() {
   try {
