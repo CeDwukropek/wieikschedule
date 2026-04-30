@@ -1,5 +1,14 @@
 const { createClient } = require("@supabase/supabase-js");
 
+// Supabase Admin client (service-role)
+//
+// Używane WYŁĄCZNIE po stronie API (serverless) do operacji wymagających
+// uprawnień wyższych niż anon key (np. zapis do tabel user_added_events).
+//
+// Ważne:
+// - Klient jest cachowany w pamięci procesu (na czas życia instancji funkcji).
+// - Wyłączamy persistSession/autoRefreshToken, bo to środowisko serwerowe.
+
 let cachedClient = null;
 
 function getSupabaseAdminClient() {

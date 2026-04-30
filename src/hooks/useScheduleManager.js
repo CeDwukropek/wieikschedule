@@ -9,6 +9,12 @@ import { isSupabaseConfigured } from "../supabaseClient";
 
 const SCHEDULE_LOAD_RETRY_COOLDOWN_MS = 15000;
 
+// useScheduleManager odpowiada za "wczytywanie eventów" (planów) do aplikacji.
+//
+// Źródło danych:
+// - src/timetables/index.js: loadTimetableById/loadAllTimetableOptions
+//   pobiera eventy z Supabase (`events`) i cache'uje je (memory + localStorage TTL).
+
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
   const groups = {};

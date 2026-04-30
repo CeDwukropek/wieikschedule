@@ -1,6 +1,7 @@
 const { getFirebaseAdminAuth } = require("./firebaseAdmin");
 
 function getBearerToken(req) {
+  // Odczytuje token z nagłówka: Authorization: Bearer <idToken>
   const authHeader = String(req.headers.authorization || "").trim();
   if (!authHeader.toLowerCase().startsWith("bearer ")) {
     return "";
@@ -9,6 +10,8 @@ function getBearerToken(req) {
 }
 
 async function verifyRequestUser(req) {
+  // Weryfikuje Firebase ID token i zwraca uid użytkownika.
+  // Rzuca błąd z { statusCode: 401, code: 'UNAUTHORIZED' } jeśli brak/niepoprawny.
   const token = getBearerToken(req);
 
   if (!token) {
