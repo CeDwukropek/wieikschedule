@@ -1,13 +1,26 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
+  areCachedTimetableOptionsStale,
   getCachedTimetableById,
   getCachedTimetableOptions,
+  isCachedTimetableStale,
   loadAllTimetableOptions,
   loadTimetableById,
+  TIMETABLE_REFRESH_INTERVAL_MS,
 } from "../timetables";
 import { isSupabaseConfigured } from "../supabaseClient";
 
 const SCHEDULE_LOAD_RETRY_COOLDOWN_MS = 15000;
+const SCHEDULE_REFRESH_CHECK_INTERVAL_MS = Math.min(
+  60 * 1000,
+  TIMETABLE_REFRESH_INTERVAL_MS,
+);
+
+// useScheduleManager odpowiada za "wczytywanie eventów" (planów) do aplikacji.
+//
+// Źródło danych:
+// - src/timetables/index.js: loadTimetableById/loadAllTimetableOptions
+//   pobiera eventy z Supabase (`events`) i cache'uje je (memory + localStorage TTL).
 
 // Build default groups from timetable group configurations
 function buildDefaultGroupsForTimetable(timetable) {
@@ -75,7 +88,38 @@ export function useScheduleManager(savedSettings) {
     useState(false);
   const [hasLoadedTimetableOptions, setHasLoadedTimetableOptions] =
     useState(false);
+  const [scheduleRefreshTick, setScheduleRefreshTick] = useState(0);
   const scheduleLoadRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setScheduleRefreshTick((value) => value + 1);
+    }, SCHEDULE_REFRESH_CHECK_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedTimetableOptions) return () => {};
+    if (!areCachedTimetableOptionsStale()) return () => {};
+
+    let active = true;
+    loadAllTimetableOptions({ forceRefresh: true })
+      .then((options) => {
+        if (!active) return;
+        setTimetableOptions(Array.isArray(options) ? options : []);
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error("[schedule] Failed to refresh timetable options", err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [hasLoadedTimetableOptions, scheduleRefreshTick]);
 
   useEffect(() => {
     let active = true;
@@ -164,7 +208,10 @@ export function useScheduleManager(savedSettings) {
     const targetId = currentSchedule || defaultScheduleId;
     if (!targetId) return () => {};
 
-    if (loadedTimetables[targetId]) return () => {};
+    const hasLoadedTarget = Boolean(loadedTimetables[targetId]);
+    const shouldRefreshLoadedTarget =
+      hasLoadedTarget && isCachedTimetableStale(targetId);
+    if (hasLoadedTarget && !shouldRefreshLoadedTarget) return () => {};
 
     const lastFailedAt = failedScheduleLoadsRef.current.get(targetId);
     if (
@@ -178,7 +225,7 @@ export function useScheduleManager(savedSettings) {
     scheduleLoadRequestIdRef.current = requestId;
 
     setIsScheduleLoading(true);
-    loadTimetableById(targetId)
+    loadTimetableById(targetId, { forceRefresh: shouldRefreshLoadedTarget })
       .then((timetable) => {
         if (!active) return;
 
@@ -189,7 +236,7 @@ export function useScheduleManager(savedSettings) {
 
         failedScheduleLoadsRef.current.delete(targetId);
         setLoadedTimetables((prev) => {
-          if (prev[targetId]) return prev;
+          if (prev[targetId] === timetable) return prev;
           return { ...prev, [targetId]: timetable };
         });
       })
@@ -202,7 +249,7 @@ export function useScheduleManager(savedSettings) {
     return () => {
       active = false;
     };
-  }, [currentSchedule, defaultScheduleId, loadedTimetables]);
+  }, [currentSchedule, defaultScheduleId, loadedTimetables, scheduleRefreshTick]);
 
   // Get current schedule's data - memoized to prevent infinite loops
   const currentTimetable = useMemo(
@@ -341,12 +388,17 @@ export function useScheduleManager(savedSettings) {
     if (!referencedScheduleIds.length) return () => {};
 
     referencedScheduleIds.forEach((scheduleId) => {
-      if (loadedTimetables[scheduleId]) return;
+      const hasLoadedReference = Boolean(loadedTimetables[scheduleId]);
+      const shouldRefreshLoadedReference =
+        hasLoadedReference && isCachedTimetableStale(scheduleId);
+      if (hasLoadedReference && !shouldRefreshLoadedReference) return;
 
-      loadTimetableById(scheduleId).then((timetable) => {
+      loadTimetableById(scheduleId, {
+        forceRefresh: shouldRefreshLoadedReference,
+      }).then((timetable) => {
         if (!active || !timetable) return;
         setLoadedTimetables((prev) => {
-          if (prev[scheduleId]) return prev;
+          if (prev[scheduleId] === timetable) return prev;
           return { ...prev, [scheduleId]: timetable };
         });
       });
@@ -355,7 +407,12 @@ export function useScheduleManager(savedSettings) {
     return () => {
       active = false;
     };
-  }, [activeExternalSelections, currentSchedule, loadedTimetables]);
+  }, [
+    activeExternalSelections,
+    currentSchedule,
+    loadedTimetables,
+    scheduleRefreshTick,
+  ]);
 
   // Normalize and store a single group input change inside the active set.
   const handleGroupChange = useCallback(

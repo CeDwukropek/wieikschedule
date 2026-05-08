@@ -104,6 +104,7 @@ export default function FloatingMenu({
     scheduleName,
     selectedGroups,
     onMyPlanChanged,
+    onOptimisticAdd,
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
@@ -134,6 +135,7 @@ export default function FloatingMenu({
     scheduleName,
     selectedGroups,
     onMyPlanChanged,
+    onOptimisticAdd,
   });
 
   const isWeek = viewMode === "week";

@@ -20,6 +20,9 @@ export function useEventFiltering(
     [userId],
   );
 
+  // Cache w localStorage jest per-user (useUserId) i ma TTL.
+  // To przyspiesza UI, ale nie jest źródłem prawdy: zawsze da się przeliczyć.
+
   const computeFiltered = useCallback(function computeFiltered(
     schedule,
     groups,

@@ -2,6 +2,11 @@ import { useMemo } from "react";
 
 const USER_KEY = "wieikschedule.userId";
 
+// Generuje stabilny identyfikator "gościa" dla użytkowników bez logowania.
+// Używamy go do:
+// - namespacingu wpisów w localStorage (cache / ustawienia),
+// - odseparowania danych między różnymi przeglądarkami/użytkownikami.
+
 function generateUserId() {
   try {
     let id = localStorage.getItem(USER_KEY);

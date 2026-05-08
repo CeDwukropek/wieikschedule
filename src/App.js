@@ -14,10 +14,64 @@ import { useScheduleManager } from "./hooks/useScheduleManager";
 import { useEventFiltering } from "./hooks/useEventFiltering";
 import { useDateHelpers } from "./hooks/useDateHelpers";
 import { formatDate } from "./utils/dateUtils";
+import { useFirebaseAuth } from "./hooks/useFirebaseAuth";
+import { useUserId } from "./hooks/useUserId";
 import {
   getAddedEventsFromMyPlan,
   removeAddedEventFromMyPlan,
 } from "./myPlanApi";
+
+const ADDED_EVENTS_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+
+function getLocalStorage() {
+  try {
+    if (typeof window === "undefined") return null;
+    return window.localStorage || null;
+  } catch {
+    return null;
+  }
+}
+
+function getAddedEventsCacheKey(scopeId, scheduleName, weekStartIso) {
+  return `wieikschedule.${scopeId}.added-events.${scheduleName}.${weekStartIso}`;
+}
+
+function readAddedEventsCache(cacheKey) {
+  const storage = getLocalStorage();
+  if (!storage) return null;
+
+  try {
+    const raw = storage.getItem(cacheKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const savedAt = Number(parsed?.savedAt || 0);
+    if (!savedAt) return null;
+    if (Date.now() - savedAt > ADDED_EVENTS_CACHE_TTL_MS) return null;
+    return Array.isArray(parsed?.events) ? parsed.events : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAddedEventsCache(cacheKey, events) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(
+      cacheKey,
+      JSON.stringify({ savedAt: Date.now(), events: events || [] }),
+    );
+  } catch {}
+}
+
+function removeAddedEventsCache(cacheKey) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+  try {
+    storage.removeItem(cacheKey);
+  } catch {}
+}
 
 function toIsoDate(dateValue) {
   if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
@@ -98,6 +152,12 @@ export default function Timetable() {
   const appliedSettingsSignatureRef = useRef("");
   const [open, setOpen] = useState(false);
   const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
+  const { user: firebaseUser } = useFirebaseAuth();
+  const guestUserId = useUserId();
+  const addedEventsCacheScope = useMemo(
+    () => firebaseUser?.uid || guestUserId || "guest",
+    [firebaseUser?.uid, guestUserId],
+  );
 
   // Load saved settings from localStorage
   const { savedSettings } = useSettings();
@@ -234,9 +294,78 @@ export default function Timetable() {
   const [myPlanRefreshNonce, setMyPlanRefreshNonce] = useState(0);
   const [removingAddedEventId, setRemovingAddedEventId] = useState(null);
 
+  // addedEventsByWeek: cache dopisanych eventów z "Mój plan".
+  // Klucz: ISO data poniedziałku (YYYY-MM-DD) dla danego tygodnia.
+  // Wartość: lista eventów w kształcie kompatybilnym z WeekView/DayView.
+
   const refreshMyPlanEvents = useCallback(() => {
     setMyPlanRefreshNonce((prev) => prev + 1);
   }, []);
+
+  // Convert a chatbot slot (or added-event row) into the timetable view shape
+  function mapSlotToViewShape(slot) {
+    const date = String(slot?.date || "").slice(0, 10);
+    const match = String(slot?.start_time || "").match(/^(\d{1,2}:\d{2})/);
+    const start = match ? match[1] : "";
+    if (!date || !start) return null;
+
+    const duration = Number(slot?.duration_min);
+    const safeDuration =
+      Number.isFinite(duration) && duration > 0 ? duration : 90;
+
+    const toDayIndex = (dateValue) => {
+      const d = new Date(`${String(dateValue).slice(0, 10)}T12:00:00`);
+      if (Number.isNaN(d.getTime())) return null;
+      return (d.getDay() + 6) % 7;
+    };
+
+    const addMinutes = (timeValue, durationMin) => {
+      const m = String(timeValue || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return "";
+      const hh = Number(m[1]);
+      const mm = Number(m[2]);
+      const base = hh * 60 + mm;
+      const dur =
+        Number.isFinite(Number(durationMin)) && Number(durationMin) > 0
+          ? Number(durationMin)
+          : 90;
+      const total = (base + dur) % (24 * 60);
+      const rh = String(Math.floor(total / 60)).padStart(2, "0");
+      const rm = String(total % 60).padStart(2, "0");
+      return `${rh}:${rm}`;
+    };
+
+    const day = toDayIndex(date);
+    if (day == null || day < 0 || day > 4) return null;
+
+    return {
+      id: `added-${slot?.event_id || date + "-" + start}`,
+      event_id: String(slot?.event_id || "").trim() || undefined,
+      added_event_id: String(
+        slot?.added_event_id ||
+          `pending-${slot?.event_id || Math.random().toString(36).slice(2, 8)}-${Date.now()}`,
+      ),
+      origin: "added",
+      reason: String(slot?.reason || "makeup").trim() || "makeup",
+      subj:
+        String(slot?.subject || slot?.title || "ADDED_EVENT").trim() ||
+        "ADDED_EVENT",
+      title:
+        String(slot?.subject || slot?.title || "Dopisane zajecia").trim() ||
+        "Dopisane zajecia",
+      type: String(slot?.type || "Zajecia").trim() || "Zajecia",
+      status: String(slot?.status || "aktywne").trim() || "aktywne",
+      teacher: String(slot?.instructor || "").trim(),
+      groups: slot?.group ? [String(slot.group).trim()] : [],
+      appliesToAllGroups: false,
+      day,
+      start,
+      end: addMinutes(start, safeDuration),
+      room: String(slot?.room || "").trim(),
+      dates: [String(date)],
+      __optimistic: "adding",
+    };
+  }
 
   const handleRemoveAddedEvent = useCallback(
     async (addedEventId) => {
@@ -245,17 +374,100 @@ export default function Timetable() {
         throw new Error("Brak identyfikatora dopisanego wydarzenia.");
       }
 
+      const scheduleName = String(currentSchedule || "").trim();
+      if (!scheduleName) {
+        throw new Error("Brak nazwy aktualnego planu.");
+      }
+
+      // Optimistycznie usuń z lokalnego cache, żeby UI zareagowało natychmiast.
+      // W przypadku błędu robimy refresh z backendu, by przywrócić spójność.
+      setAddedEventsByWeek((prev) => {
+        const next = {};
+        Object.keys(prev || {}).forEach((weekKey) => {
+          const list = Array.isArray(prev[weekKey]) ? prev[weekKey] : [];
+          const filtered = list.filter((ev) => ev.added_event_id !== cleanId);
+          next[weekKey] = filtered;
+          if (scheduleName && weekKey) {
+            const cacheKey = getAddedEventsCacheKey(
+              addedEventsCacheScope,
+              scheduleName,
+              weekKey,
+            );
+            writeAddedEventsCache(cacheKey, filtered);
+          }
+        });
+        return next;
+      });
+
       setRemovingAddedEventId(cleanId);
       try {
-        await removeAddedEventFromMyPlan(cleanId);
+        await removeAddedEventFromMyPlan({
+          addedEventId: cleanId,
+          scheduleName,
+        });
         refreshMyPlanEvents();
+      } catch (err) {
+        // On failure, trigger full refresh to restore state and surface error elsewhere
+        refreshMyPlanEvents();
+        throw err;
       } finally {
         setRemovingAddedEventId((current) =>
           current === cleanId ? null : current,
         );
       }
     },
-    [refreshMyPlanEvents],
+    [currentSchedule, refreshMyPlanEvents, addedEventsCacheScope],
+  );
+
+  // Dodaje optimistic event do cache tygodnia, zanim backend potwierdzi zapis.
+  // Uwaga: backend generuje realne `added_event_id`; tu tworzymy tymczasowy.
+  const handleOptimisticAdd = useCallback(
+    (slot) => {
+      try {
+        const viewEvent = mapSlotToViewShape(slot);
+        if (!viewEvent) return null;
+
+        // Wyznacz poniedziałek tygodnia, aby klucze cache pokrywały się z loaderem.
+        const rawDate = String(slot?.date || "").slice(0, 10);
+        const d = new Date(`${rawDate}T12:00:00`);
+        if (Number.isNaN(d.getTime())) return null;
+        const jsDay = d.getDay();
+        const mondayIndex = (jsDay + 6) % 7; // 0..6 where 0=Mon
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - mondayIndex);
+        const isoDate = toIsoDate(weekStart);
+
+        const scheduleName = String(currentSchedule || "").trim();
+
+        setAddedEventsByWeek((prev) => {
+          const prevList = Array.isArray(prev[isoDate]) ? prev[isoDate] : [];
+          const exists = prevList.some(
+            (ev) => ev.added_event_id === viewEvent.added_event_id,
+          );
+          if (exists) return prev;
+
+          const nextList = [viewEvent, ...prevList];
+          if (scheduleName) {
+            const cacheKey = getAddedEventsCacheKey(
+              addedEventsCacheScope,
+              scheduleName,
+              isoDate,
+            );
+            writeAddedEventsCache(cacheKey, nextList);
+          }
+
+          return {
+            ...prev,
+            [isoDate]: nextList,
+          };
+        });
+
+        return viewEvent;
+      } catch (e) {
+        return null;
+      }
+    },
+    [currentSchedule, addedEventsCacheScope],
   );
 
   const weekOptions = useMemo(() => {
@@ -592,46 +804,80 @@ export default function Timetable() {
     return getWeekStartByOffset(selectedWeekOffset);
   }, [parseDaySelection, selection, getWeekStartByOffset]);
 
-  const loadAddedEventsForWeek = useCallback(async (weekStartDate) => {
-    if (
-      !(weekStartDate instanceof Date) ||
-      Number.isNaN(weekStartDate.getTime())
-    ) {
-      return;
-    }
+  const loadAddedEventsForWeek = useCallback(
+    async (weekStartDate) => {
+      if (
+        !(weekStartDate instanceof Date) ||
+        Number.isNaN(weekStartDate.getTime())
+      ) {
+        return;
+      }
 
-    const dateFrom = toIsoDate(weekStartDate);
-    if (!dateFrom) return;
+      const scheduleName = String(currentSchedule || "").trim();
+      if (!scheduleName) {
+        return;
+      }
 
-    const endDate = new Date(weekStartDate);
-    endDate.setDate(endDate.getDate() + 6);
-    const dateTo = toIsoDate(endDate);
+      const dateFrom = toIsoDate(weekStartDate);
+      if (!dateFrom) return;
 
-    try {
-      const response = await getAddedEventsFromMyPlan({ dateFrom, dateTo });
-      const mapped = (response?.events || [])
-        .map(mapAddedEventToViewShape)
-        .filter(Boolean);
+      const endDate = new Date(weekStartDate);
+      endDate.setDate(endDate.getDate() + 6);
+      const dateTo = toIsoDate(endDate);
 
-      setAddedEventsByWeek((prev) => ({
-        ...prev,
-        [dateFrom]: mapped,
-      }));
-    } catch (err) {
-      const message = String(err?.message || "").toLowerCase();
-      const isAuthMissing =
-        message.includes("zalogowany") ||
-        message.includes("autoryz") ||
-        message.includes("unauthorized");
-
-      if (isAuthMissing) {
+      const cacheKey = getAddedEventsCacheKey(
+        addedEventsCacheScope,
+        scheduleName,
+        dateFrom,
+      );
+      const cached = readAddedEventsCache(cacheKey);
+      if (cached) {
         setAddedEventsByWeek((prev) => ({
           ...prev,
-          [dateFrom]: [],
+          [dateFrom]: cached,
         }));
       }
-    }
-  }, []);
+
+      // Wczytanie dopisanych eventów na dany tydzień z backendu (Supabase przez API).
+      try {
+        const response = await getAddedEventsFromMyPlan({
+          scheduleName,
+          dateFrom,
+          dateTo,
+        });
+        const mapped = (response?.events || [])
+          .map(mapAddedEventToViewShape)
+          .filter(Boolean);
+
+        setAddedEventsByWeek((prev) => ({
+          ...prev,
+          [dateFrom]: mapped,
+        }));
+        writeAddedEventsCache(cacheKey, mapped);
+      } catch (err) {
+        const message = String(err?.message || "").toLowerCase();
+        const isAuthMissing =
+          message.includes("zalogowany") ||
+          message.includes("autoryz") ||
+          message.includes("unauthorized");
+
+        if (isAuthMissing) {
+          setAddedEventsByWeek((prev) => ({
+            ...prev,
+            [dateFrom]: [],
+          }));
+          removeAddedEventsCache(cacheKey);
+        }
+      }
+    },
+    [currentSchedule, addedEventsCacheScope],
+  );
+
+  useEffect(() => {
+    if (!currentSchedule) return;
+    setAddedEventsByWeek({});
+    refreshMyPlanEvents();
+  }, [currentSchedule, refreshMyPlanEvents]);
 
   useEffect(() => {
     const weeksToLoad = [viewedWeekStart, selectedDayWeekStart];
@@ -798,6 +1044,7 @@ export default function Timetable() {
       scheduleName: currentSchedule,
       selectedGroups: studentGroups,
       onMyPlanChanged: refreshMyPlanEvents,
+      onOptimisticAdd: handleOptimisticAdd,
     },
   };
 
