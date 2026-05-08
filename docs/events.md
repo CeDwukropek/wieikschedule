@@ -55,7 +55,7 @@ Główna ścieżka:
   - `wieik:timetable-options:v1` — lista planów (unikalne `faculty`).
   - `wieik:timetable:v1:<faculty>` — dane konkretnego planu.
 - Wartość jest opakowana w obiekt `{ savedAt, data }`.
-- TTL domyślnie: 10 minut.
+- TTL domyślnie: 15 minut.
 - Dopuszczone jest zwrócenie danych przeterminowanych, a następnie odświeżenie w tle
   (żeby UI było responsywne).
 
