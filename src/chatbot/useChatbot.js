@@ -36,6 +36,7 @@ export function useChatbot({
   selectedGroups,
   onMyPlanChanged,
   onOptimisticAdd,
+  onOptimisticAddConfirmed,
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -157,13 +158,28 @@ export function useChatbot({
     setAddingEventId(eventId);
 
     // Inform parent to optimistically render this slot immediately
+    let optimisticEvent = null;
     try {
-      if (typeof onOptimisticAdd === "function") onOptimisticAdd(slot);
+      if (typeof onOptimisticAdd === "function") {
+        optimisticEvent = onOptimisticAdd(slot);
+      }
     } catch (e) {
       // ignore
     }
     try {
       const response = await addEventToMyPlan({ eventId, scheduleName });
+      const addedEvent = response?.added_event || null;
+
+      if (
+        optimisticEvent?.added_event_id &&
+        addedEvent?.id &&
+        typeof onOptimisticAddConfirmed === "function"
+      ) {
+        onOptimisticAddConfirmed({
+          temporaryAddedEventId: optimisticEvent.added_event_id,
+          confirmedAddedEvent: addedEvent,
+        });
+      }
 
       setAddedEventIds((prev) => {
         const next = new Set(prev);

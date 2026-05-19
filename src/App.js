@@ -470,6 +470,62 @@ export default function Timetable() {
     [currentSchedule, addedEventsCacheScope],
   );
 
+  const handleOptimisticAddConfirmed = useCallback(
+    ({ temporaryAddedEventId, confirmedAddedEvent }) => {
+      const temporaryId = String(temporaryAddedEventId || "").trim();
+      const confirmedId = String(confirmedAddedEvent?.id || "").trim();
+      if (!temporaryId || !confirmedId) return;
+
+      const scheduleName = String(currentSchedule || "").trim();
+
+      setAddedEventsByWeek((prev) => {
+        let changed = false;
+        const next = {};
+
+        Object.entries(prev || {}).forEach(([weekKey, events]) => {
+          const list = Array.isArray(events) ? events : [];
+          let weekChanged = false;
+          const nextList = list.map((event) => {
+            if (event?.added_event_id !== temporaryId) return event;
+
+            changed = true;
+            weekChanged = true;
+            const confirmedEvent = { ...event };
+            delete confirmedEvent.__optimistic;
+            return {
+              ...confirmedEvent,
+              id: `added-${confirmedId}`,
+              added_event_id: confirmedId,
+              event_id:
+                String(confirmedAddedEvent?.event_id || "").trim() ||
+                confirmedEvent.event_id,
+              reason:
+                String(confirmedAddedEvent?.reason || "").trim() ||
+                confirmedEvent.reason,
+              status:
+                String(confirmedAddedEvent?.status || "").trim() ||
+                confirmedEvent.status,
+            };
+          });
+
+          next[weekKey] = nextList;
+
+          if (scheduleName && weekChanged) {
+            const cacheKey = getAddedEventsCacheKey(
+              addedEventsCacheScope,
+              scheduleName,
+              weekKey,
+            );
+            writeAddedEventsCache(cacheKey, nextList);
+          }
+        });
+
+        return changed ? next : prev;
+      });
+    },
+    [currentSchedule, addedEventsCacheScope],
+  );
+
   const weekOptions = useMemo(() => {
     if (
       !Number.isFinite(minAllowedOffset) ||
@@ -1045,6 +1101,7 @@ export default function Timetable() {
       selectedGroups: studentGroups,
       onMyPlanChanged: refreshMyPlanEvents,
       onOptimisticAdd: handleOptimisticAdd,
+      onOptimisticAddConfirmed: handleOptimisticAddConfirmed,
     },
   };
 

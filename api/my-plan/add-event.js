@@ -133,7 +133,7 @@ module.exports = async function handler(req, res) {
     // 5) Idempotencja: jeśli już jest active, nie duplikujemy wpisów.
     const { data: existingActive, error: existingError } = await supabase
       .from("user_added_events")
-      .select("id")
+      .select("id,event_id,status,reason,created_at")
       .eq("user_id", userId)
       .eq("event_id", eventId)
       .eq("status", "active")
@@ -147,6 +147,7 @@ module.exports = async function handler(req, res) {
       return respond(res, 200, {
         ok: true,
         already_added: true,
+        added_event: existingActive,
         message: "Ten termin jest juz dodany do Twojego planu.",
       });
     }

@@ -105,6 +105,7 @@ export default function FloatingMenu({
     selectedGroups,
     onMyPlanChanged,
     onOptimisticAdd,
+    onOptimisticAddConfirmed,
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
@@ -136,6 +137,7 @@ export default function FloatingMenu({
     selectedGroups,
     onMyPlanChanged,
     onOptimisticAdd,
+    onOptimisticAddConfirmed,
   });
 
   const isWeek = viewMode === "week";
