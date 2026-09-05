@@ -1,4 +1,4 @@
-import { WEEKDAYS, getWeekStart } from "../../../utils/date";
+import { getWeekStart } from "../../../utils/date";
 import EventCard from "./EventCard";
 import React, { forwardRef } from "react";
 import EventTooltipWrapper from "./EventTooltipWrapper";
@@ -27,7 +27,10 @@ const WeekView = forwardRef(function WeekView(
 
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
 
-  const monday = viewedWeekStart instanceof Date ? new Date(viewedWeekStart) : getWeekStart(new Date());
+  const monday =
+    viewedWeekStart instanceof Date
+      ? new Date(viewedWeekStart)
+      : getWeekStart(new Date());
 
   const getDayDate = (dayOffset) => {
     const date = new Date(monday);
