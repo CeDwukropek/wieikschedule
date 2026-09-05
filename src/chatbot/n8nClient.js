@@ -148,7 +148,7 @@ export async function sendN8nChatMessage({
 
   if (!endpoint) {
     throw new ChatbotApiError(
-      "Missing webhook URL. Set REACT_APP_N8N_CHAT_WEBHOOK.",
+      "Czat jest chwilowo niedostępny. Spróbuj ponownie później.",
       "CHATBOT_NOT_CONFIGURED",
     );
   }

@@ -1,8 +1,28 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { fireEvent, render, screen } from "@testing-library/react";
+import App from "./App";
 
-test('renders learn react link', () => {
+jest.mock("./hooks/useFirebaseAuth", () => ({
+  useFirebaseAuth: () => ({ user: null, isConfigured: false, isLoading: false }),
+}));
+jest.mock("./hooks/useSettings", () => ({
+  useSettings: () => ({ savedSettings: null }),
+  usePersistSettings: () => {},
+}));
+jest.mock("./supabaseClient", () => ({ isSupabaseConfigured: false, supabase: null }));
+jest.mock("./firebaseClient", () => ({ auth: null }));
+jest.mock("react-markdown", () => ({ children }) => <div>{children}</div>);
+jest.mock("remark-gfm", () => () => {});
+
+test("the app connects floating navigation to day view, settings and AI", async () => {
+  HTMLElement.prototype.scrollTo = jest.fn();
+  HTMLElement.prototype.scrollIntoView = jest.fn();
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Przełącz na widok dnia" }));
+  expect(screen.getByRole("button", { name: "Wróć do dzisiaj" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Otwórz menu" }));
+  expect(screen.getByRole("dialog", { name: "Menu i ustawienia" })).toBeInTheDocument();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Otwórz AI chat" }));
+  expect(await screen.findByRole("textbox", { name: "Wiadomość do AI" })).toHaveFocus();
 });

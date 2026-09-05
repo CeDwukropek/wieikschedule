@@ -26,13 +26,15 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 ## n8n Chatbot Setup
 
-AI chat can be enabled per branch/environment with a feature flag:
+AI chat is visible by default and can be controlled per environment with a feature flag:
 
 ```bash
 REACT_APP_ENABLE_AI_CHAT=true
 ```
 
-Set it to `false` (or omit it) on Beta/public to keep unified navigation without AI chat integration in the UI.
+Set it to `false` to hide AI chat. Configure `REACT_APP_N8N_CHAT_WEBHOOK` to receive assistant responses.
+
+The floating navigation has a refresh button, a central island (day/week view, previous period, today, next period, menu), and an AI button. Click the date above the island to select a day or week. Opening AI expands the same central island into an input, while the side buttons become back and send. Conversation history opens by default: the input's curved connection and gap appear first, then the separate history panel rises above it. Escape collapses the history and then returns to navigation. Manual refresh bypasses the timetable cache for the active schedule and schedules included through external group selections.
 
 Schedule data is now loaded from Supabase. Configure frontend read access with:
 
