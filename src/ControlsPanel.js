@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { ChevronRight, Book, CalendarOff, X, LogOut } from "lucide-react";
 import GroupFiltersPanel from "./GroupFiltersPanel";
 import GroupSetManager from "./GroupSetManager";
@@ -42,6 +42,41 @@ export default function ControlsPanel({
   exportState,
 }) {
   const { isOpen, onToggle, mobileFloatingClose = false } = panelState || {};
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onToggle);
+  onCloseRef.current = onToggle;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    const panel = panelRef.current;
+    const getFocusable = () => [...panel.querySelectorAll(
+      'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), [tabindex="0"]',
+    )].filter((element) => element.getClientRects().length > 0);
+    getFocusable()[0]?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current?.();
+      }
+      if (event.key !== "Tab") return;
+      const elements = getFocusable();
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [isOpen]);
   const {
     timetableOptions = [],
     timetableOptionsMessage = "",
@@ -171,6 +206,13 @@ export default function ControlsPanel({
 
       {/* Side panel */}
       <div
+        id="schedule-settings-panel"
+        ref={panelRef}
+        role="dialog"
+        aria-modal={isOpen ? true : undefined}
+        aria-label="Menu i ustawienia"
+        aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
         className={`fixed right-0 top-0 bottom-0 bg-neutral-900 border-l border-neutral-800 shadow-2xl transition-transform duration-300 ease-out z-50 w-80 flex flex-col ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -192,7 +234,7 @@ export default function ControlsPanel({
         {/* Scrollable content */}
         <div
           className="flex-1 overflow-y-auto "
-          style={{ "scrollbar-width": "none" }}
+          style={{ scrollbarWidth: "none" }}
         >
           <div className="p-6 space-y-6 ">
             <div className="space-y-2">

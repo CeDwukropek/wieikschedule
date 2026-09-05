@@ -1,0 +1,352 @@
+.schedule-dock {
+  --dock-surface: #2c2c2c;
+  --dock-accent: #62f52b;
+  --dock-side: clamp(44px, 14vw, 60px);
+  --dock-gap: 5px;
+  --dock-height: 60px;
+  --dock-radius: 14px;
+  --dock-curve: calc(var(--dock-radius) + var(--dock-gap));
+  --dock-history-height: min(300px, 36dvh, max(0px, calc(100dvh - var(--keyboard-offset, 0px) - 150px)));
+  --dock-ease: cubic-bezier(.22, .8, .24, 1);
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--keyboard-offset, 0px));
+  left: 50%;
+  width: min(calc(100% - 32px), 420px);
+  transform: translateX(-50%);
+  color: #f5f5f5;
+  isolation: isolate;
+}
+
+/* One persistent row: the centre grows into the right island to become the input. */
+.dock-navigation {
+  position: relative;
+  height: var(--dock-height);
+  z-index: 1;
+}
+.dock-island {
+  background: var(--dock-surface);
+  border-radius: var(--dock-radius);
+  box-shadow: 0 6px 24px #0003;
+}
+.dock-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--dock-height);
+  min-width: 0;
+  flex-shrink: 0;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 180ms ease, color 180ms ease, opacity 180ms ease;
+}
+.dock-button:disabled { opacity: .35; cursor: default; }
+.schedule-dock button:focus-visible {
+  outline: 2px solid var(--dock-accent);
+  outline-offset: -3px;
+}
+.dock-left-action,
+.dock-right-action {
+  position: absolute;
+  bottom: 0;
+  width: var(--dock-side);
+  z-index: 2;
+}
+.dock-left-action { left: 0; }
+.dock-right-action {
+  right: 0;
+  transition: background 520ms var(--dock-ease), box-shadow 520ms var(--dock-ease), opacity 180ms ease;
+}
+.is-chat .dock-right-action {
+  background: transparent;
+  box-shadow: none;
+}
+.dock-center {
+  position: absolute;
+  left: calc(var(--dock-side) + var(--dock-gap));
+  right: calc(var(--dock-side) + var(--dock-gap));
+  height: var(--dock-height);
+  transition: right 520ms var(--dock-ease) 280ms;
+}
+.is-chat .dock-center,
+.without-ai .dock-center {
+  right: 0;
+  transition-delay: 0ms;
+}
+.dock-center-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--dock-radius);
+  visibility: visible;
+  transition: width 520ms var(--dock-ease) 280ms, visibility 0s;
+}
+.is-chat .dock-center-buttons {
+  width: 0%;
+  visibility: hidden;
+  transition: width 420ms var(--dock-ease), visibility 0s 420ms;
+}
+.dock-center-buttons .dock-button { border-radius: 12px; overflow: hidden; }
+.dock-center-buttons .dock-button > * { transition: opacity 100ms ease; }
+.is-chat .dock-center-buttons .dock-button > * { opacity: 0; }
+.dock-center-buttons svg { flex-shrink: 0; }
+.dock-edge-button { background: #00000014; }
+.dock-today-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid #a3a3a3;
+}
+.dock-today-dot.is-current {
+  background: var(--dock-accent);
+  border-color: var(--dock-accent);
+  box-shadow: 0 0 12px #62f52b25;
+}
+.dock-accent {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dock-accent);
+  color: #10240a;
+  box-shadow: 0 0 18px #62f52b24;
+}
+.dock-icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: transform 420ms var(--dock-ease), opacity 220ms ease;
+}
+.dock-icon-chat { transform: rotate(-60deg); opacity: 0; }
+.is-chat .dock-icon-default { transform: rotate(60deg); opacity: 0; }
+.is-chat .dock-icon-chat { transform: rotate(0); opacity: 1; }
+
+.dock-composer {
+  position: absolute;
+  inset: 0 var(--dock-side) 0 0;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  clip-path: inset(0 0 0 100%);
+  visibility: hidden;
+  transition: clip-path 360ms var(--dock-ease), visibility 0s 360ms;
+}
+.is-chat .dock-composer {
+  clip-path: inset(0 0 0 0);
+  visibility: visible;
+  transition: clip-path 520ms var(--dock-ease), visibility 0s;
+}
+.dock-composer input {
+  width: 0;
+  min-width: 0;
+  flex: 1;
+  height: 46px;
+  margin-left: 4px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: #f5f5f5;
+  font-size: 16px;
+}
+.dock-composer input::placeholder { color: #aaa; }
+.dock-composer input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 -1px 0 #62f52b66;
+}
+
+/* The pop-up is separate from the input and back button. Its own height moves the cap. */
+.dock-popover {
+  position: absolute;
+  bottom: 100%;
+  left: calc(var(--dock-side) + var(--dock-gap));
+  width: calc(100% - 2 * (var(--dock-side) + var(--dock-gap)));
+  margin-bottom: 0;
+  z-index: 2;
+  transition:
+    left 520ms var(--dock-ease) 280ms,
+    width 520ms var(--dock-ease) 280ms,
+    margin-bottom 220ms var(--dock-ease) 400ms;
+}
+.without-ai .dock-popover {
+  width: calc(100% - var(--dock-side) - var(--dock-gap));
+}
+.is-chat .dock-popover {
+  left: 0;
+  width: 100%;
+  transition-delay: 0ms, 0ms, 400ms;
+}
+.is-expanded .dock-popover {
+  margin-bottom: var(--dock-gap);
+  transition-delay: 0ms;
+}
+.dock-cap {
+  position: absolute;
+  bottom: calc(100% - 1px);
+  left: 50%;
+  width: min(170px, calc(100% - 24px));
+  height: 34px;
+  transform: translateX(-50%);
+  background: var(--dock-surface);
+  color: var(--dock-surface);
+  border-radius: 13px 13px 0 0;
+  transition: width 520ms var(--dock-ease), background 220ms ease 400ms, color 220ms ease 400ms;
+}
+.is-chat .dock-cap { width: 54px; }
+.is-expanded .dock-cap {
+  background: #181818;
+  color: #181818;
+  transition-delay: 0ms, 200ms, 200ms;
+}
+.dock-cap-corner {
+  position: absolute;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.dock-cap-corner-left { right: 100%; }
+.dock-cap-corner-right { left: 100%; transform: scaleX(-1); }
+.dock-tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  color: #bcbcbc;
+  cursor: pointer;
+  font-size: 12px;
+}
+.dock-cap-date {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  white-space: nowrap;
+  transition: transform 400ms var(--dock-ease), opacity 180ms ease;
+}
+.dock-cap-date > span { overflow: hidden; text-overflow: ellipsis; }
+.dock-cap-date svg { flex-shrink: 0; }
+.dock-cap-chevron {
+  color: #f5f5f5;
+  transform: translateY(28px);
+  transition: transform 520ms var(--dock-ease);
+}
+.is-chat .dock-cap-date { transform: translateY(-28px); opacity: 0; }
+.is-chat .dock-cap-chevron { transform: translateY(0); }
+.is-chat .dock-cap-chevron.is-rotated { transform: translateY(0) rotate(180deg); }
+.dock-cap-date .is-rotated { transform: rotate(180deg); }
+
+.dock-history-popup {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  border-radius: var(--dock-radius) var(--dock-radius) 0 var(--dock-radius);
+  background: var(--dock-surface);
+  transition: height 400ms var(--dock-ease), visibility 0s 400ms;
+}
+.is-expanded .dock-history-popup {
+  height: var(--dock-history-height);
+  visibility: visible;
+  transition: height 520ms var(--dock-ease) 200ms, visibility 0s;
+}
+/* The radius is the button radius + the gap, so the entire cut-out has equal clearance. */
+.dock-history-bridge {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - var(--dock-radius));
+  width: calc(100% - var(--dock-side) - var(--dock-gap));
+  height: calc(var(--dock-radius) + var(--dock-gap));
+  background: var(--dock-surface);
+  color: var(--dock-surface);
+  clip-path: inset(100% 0 0 calc(-1 * var(--dock-curve)));
+  pointer-events: none;
+  z-index: 0;
+  transition: clip-path 220ms var(--dock-ease) 400ms;
+}
+.is-expanded .dock-history-bridge {
+  clip-path: inset(0 0 0 calc(-1 * var(--dock-curve)));
+  transition-delay: 0ms;
+}
+.dock-history-corner {
+  position: absolute;
+  right: 100%;
+  top: 0;
+  width: var(--dock-curve);
+  height: var(--dock-curve);
+  transform: scaleY(-1);
+}
+.dock-chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: var(--dock-history-height);
+  min-height: 0;
+  overflow: hidden;
+}
+.dock-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #181818;
+  border-bottom: 1px solid #ffffff08;
+}
+.dock-chat-messages { overscroll-behavior: contain; overflow-wrap: anywhere; }
+.dock-chat-messages table { display: block; max-width: 100%; overflow-x: auto; }
+.dock-chat-messages pre { max-width: 100%; overflow-x: auto; }
+.dock-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dock-accent); }
+.dock-status-dot.is-busy { background: #fbbf24; }
+.dock-status-dot.is-error { background: #fb7185; }
+
+.dock-selection-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  visibility: hidden;
+  background: var(--dock-surface);
+  border-radius: 14px 14px 0 0;
+  transition: grid-template-rows 400ms var(--dock-ease), visibility 0s 400ms;
+}
+.dock-selection-reveal.is-open { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
+.dock-selection-clip { min-height: 0; overflow: hidden; }
+.dock-selection { display: flex; flex-direction: column; gap: 6px; max-height: min(46dvh, 360px); overflow-y: auto; overscroll-behavior: contain; padding: 10px 8px; }
+.dock-date-option { display: flex; align-items: center; justify-content: space-between; gap: 5px; min-height: 44px; flex-shrink: 0; padding: 9px 12px; border-radius: 7px; background: #242424; text-align: left; font-size: 13px; color: #d4d4d4; }
+.dock-date-option small { display: block; margin-top: 2px; color: #a3a3a3; font-size: 11px; }
+.dock-date-option.is-selected { background: #3a4235; color: #cbffb7; box-shadow: inset 0 0 0 1px #62f52b30; }
+.dock-date-option svg { flex-shrink: 0; }
+.dock-option-dot { width: 6px; height: 6px; flex-shrink: 0; background: var(--dock-accent); border-radius: 50%; }
+.dock-selection-empty { padding: 16px 6px; color: #bcbcbc; font-size: 12px; }
+.dock-notice { position: absolute; bottom: calc(100% + 48px); width: 100%; display: flex; justify-content: center; pointer-events: none; }
+.dock-notice-content { display: flex; align-items: center; gap: 8px; border: 1px solid #ffffff14; background: #242424; box-shadow: 0 6px 24px #0003; color: #d4f9c5; padding: 9px 14px; border-radius: 12px; font-size: 12px; }
+.dock-notice-content.is-error { color: #fecdd3; }
+.dock-spin { animation: dock-spin 1s linear infinite; }
+@keyframes dock-spin { to { transform: rotate(360deg); } }
+@media (hover: hover) {
+  .dock-button:hover:not(:disabled) { background: #3c3c3c; }
+  .is-chat .dock-right-action:hover:not(:disabled) { background: transparent; }
+  .dock-tab:hover { color: white; }
+  .dock-date-option:hover { background: #404040; }
+}
+@media (max-width: 360px) {
+  .schedule-dock { width: calc(100% - 24px); --dock-side: 44px; --dock-gap: 4px; --dock-height: 56px; }
+  .dock-tab { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .schedule-dock *, .schedule-dock *::before, .schedule-dock *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

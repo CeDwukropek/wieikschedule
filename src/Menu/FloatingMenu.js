@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Menu,
-  X,
+  RotateCw,
+  Check,
+  LoaderCircle,
   Calendar,
   List,
   ChevronLeft,
@@ -12,10 +15,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 import ControlsPanel from "../ControlsPanel";
-import { ReactComponent as Substract } from "./Subtract.svg";
+import "./FloatingMenu.css";
 import { useChatbot } from "../chatbot/useChatbot";
 import FloatingSelectionPanel from "./FloatingSelectionPanel";
 import FloatingChatPanel from "./FloatingChatPanel";
+import { ReactComponent as RoundedCorner } from "./Subtract.svg";
 
 export default function FloatingMenu({
   panelState,
@@ -78,6 +82,8 @@ export default function FloatingMenu({
     timetableDataSourceLabel = "",
     currentSchedule,
     isScheduleLoading = false,
+    isScheduleRefreshing = false,
+    onRefreshSchedule,
     activeGroupSetId,
     activeGroupSetName,
     groupSetOptions = [],
@@ -109,14 +115,19 @@ export default function FloatingMenu({
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
-  const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
+  const [isChatWindowOpen, setIsChatWindowOpen] = useState(true);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
-  const [selectionTab, setSelectionTab] = useState("day");
+  const [refreshNotice, setRefreshNotice] = useState(null);
+  const dockRef = useRef(null);
+  const inputRef = useRef(null);
+  const aiButtonRef = useRef(null);
+  const dateButtonRef = useRef(null);
+  const backButtonRef = useRef(null);
+  const composerId = useId();
+  const refreshPendingRef = useRef(false);
 
   const dayActiveRef = useRef(null);
   const weekActiveRef = useRef(null);
-  const longPressTimerRef = useRef(null);
-  const longPressTriggeredRef = useRef(false);
 
   const {
     input,
@@ -193,22 +204,47 @@ export default function FloatingMenu({
 
   useEffect(() => {
     if (!selectionOpen) return;
-    setSelectionTab(isWeek ? "week" : "day");
+    const active = isWeek ? weekActiveRef.current : dayActiveRef.current;
+    const frame = requestAnimationFrame(() => {
+      active?.scrollIntoView({ block: "nearest" });
+      active?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [selectionOpen, isWeek]);
 
   useEffect(() => {
-    if (!selectionOpen) return;
+    if (!selectionOpen && !isChatMode) return;
+    const handlePointer = (event) => {
+      if (!dockRef.current?.contains(event.target)) {
+        setSelectionOpen(false);
+      }
+    };
+    const handleKey = (event) => {
+      if (event.key !== "Escape") return;
+      if (selectionOpen) {
+        setSelectionOpen(false);
+        dateButtonRef.current?.focus();
+      } else if (isChatWindowOpen) {
+        setIsChatWindowOpen(false);
+        dateButtonRef.current?.focus();
+      } else {
+        flushSync(() => setIsChatMode(false));
+        backButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [selectionOpen, isChatMode, isChatWindowOpen]);
 
-    const activeRef = selectionTab === "week" ? weekActiveRef : dayActiveRef;
-    if (!activeRef.current) return;
-
-    requestAnimationFrame(() => {
-      activeRef.current?.scrollIntoView({
-        block: "nearest",
-        behavior: "smooth",
-      });
-    });
-  }, [selectionOpen, selectionTab, selection, weekSelectionValue]);
+  useEffect(() => {
+    if (!refreshNotice) return;
+    const timer = setTimeout(() => setRefreshNotice(null), 5000);
+    return () => clearTimeout(timer);
+  }, [refreshNotice]);
 
   useEffect(() => {
     if (!isChatMode) return;
@@ -227,250 +263,206 @@ export default function FloatingMenu({
     await sendMessage();
   };
 
-  const clearLongPressTimer = () => {
-    if (!longPressTimerRef.current) return;
-    clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = null;
-  };
-
-  const startLabelPress = () => {
-    longPressTriggeredRef.current = false;
-    clearLongPressTimer();
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      setSelectionTab(isWeek ? "week" : "day");
-      setSelectionOpen(true);
-    }, 420);
-  };
-
-  const cancelLabelPress = () => {
-    clearLongPressTimer();
-  };
-
-  const handleLabelClick = () => {
-    clearLongPressTimer();
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
-      return;
+  const handleRefresh = async () => {
+    if (refreshPendingRef.current || isScheduleLoading || isScheduleRefreshing) return;
+    refreshPendingRef.current = true;
+    setRefreshNotice(null);
+    try {
+      await onRefreshSchedule?.();
+      setRefreshNotice({ kind: "success", text: "Plan jest aktualny" });
+    } catch (refreshError) {
+      setRefreshNotice({ kind: "error", text: refreshError.message || "Nie udało się odświeżyć planu." });
+    } finally {
+      refreshPendingRef.current = false;
     }
-
-    if (selectionOpen) {
-      setSelectionOpen(false);
-      return;
-    }
-
-    handleReset?.();
   };
+
+  const closeSelection = () => {
+    setSelectionOpen(false);
+    dateButtonRef.current?.focus();
+  };
+  const chatActive = isAiChatEnabled && isChatMode;
+  const historyExpanded = chatActive && isChatWindowOpen;
+  const closeChat = () => {
+    flushSync(() => setIsChatMode(false));
+    // The right action can be disabled while it is the send button.
+    backButtonRef.current?.focus();
+  };
+  const busy = status === "sending" || status === "waiting";
+  const refreshing = isScheduleLoading || isScheduleRefreshing;
+  const resetLabel = isWeek ? "Wróć do bieżącego tygodnia" : "Wróć do dzisiaj";
+  const dateLabel = isWeek ? "Wybierz tydzień" : "Wybierz dzień";
 
   return (
     <div>
-      <FloatingSelectionPanel
-        open={selectionOpen}
-        isChatMode={isChatMode}
-        selectionTab={selectionTab}
-        setSelectionTab={setSelectionTab}
-        setViewMode={setViewMode}
-        options={options}
-        selection={selection}
-        onChange={onChange}
-        currentDayValue={currentDayValue}
-        dayActiveRef={dayActiveRef}
-        weekOptions={weekOptions}
-        weekSelectionValue={weekSelectionValue}
-        onWeekChange={onWeekChange}
-        weekActiveRef={weekActiveRef}
-        setSelectionOpen={setSelectionOpen}
-      />
-
       <div
-        className={`fixed inset-x-4 md:left-1/2 md:right-auto md:w-[min(92vw,460px)] md:-translate-x-1/2 ${isSettingsOpen ? "z-30" : "z-[200]"}`}
-        style={{ bottom: `${16 + keyboardOffset}px` }}
+        ref={dockRef}
+        className={`schedule-dock ${chatActive ? "is-chat" : ""} ${historyExpanded ? "is-expanded" : ""} ${!isAiChatEnabled ? "without-ai" : ""}`}
+        style={{ "--keyboard-offset": `${keyboardOffset}px`, zIndex: isSettingsOpen ? 30 : 200 }}
+        inert={isSettingsOpen ? true : undefined}
       >
-        <FloatingChatPanel
-          isChatMode={isAiChatEnabled && isChatMode}
-          isChatWindowOpen={isChatWindowOpen}
-          scheduleName={scheduleName}
-          status={status}
-          clearConversation={clearConversation}
-          error={error}
-          resetError={resetError}
-          messages={messages}
-          onAddSlot={addSlotToMyPlan}
-          addingEventId={addingEventId}
-          addedEventIds={addedEventIds}
-          slotErrors={slotErrors}
-        />
+        <div className="dock-notice" role="status" aria-live="polite">
+          {refreshNotice && !chatActive && (
+            <span className={`dock-notice-content ${refreshNotice.kind === "error" ? "is-error" : ""}`}>
+              {refreshNotice.kind === "success" && <Check size={15} aria-hidden="true" />}
+              {refreshNotice.text}
+            </span>
+          )}
+        </div>
 
-        <div className="relative rounded-full border-none bg-neutral-950 px-3 py-3 shadow-2xl">
-          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[100%]">
-            <div className="absolute bottom-0 left-[-14px]">
-              <Substract className="text-neutral-950" />
-            </div>
-            <div className="absolute bottom-0 right-[-14px]">
-              <Substract className="text-neutral-950 [transform:scaleX(-1)]" />
+        <nav className="dock-navigation" aria-label="Nawigacja planu">
+          <button
+            ref={backButtonRef}
+            type="button"
+            className="dock-button dock-island dock-left-action"
+            onClick={chatActive ? closeChat : handleRefresh}
+            disabled={!chatActive && (refreshing || !currentSchedule || !onRefreshSchedule)}
+            aria-label={chatActive ? "Wróć do nawigacji planu" : refreshing ? "Odświeżanie planu" : "Odśwież plan"}
+            title={chatActive ? "Wróć do planu" : "Pobierz aktualny plan"}
+            aria-busy={!chatActive && refreshing}
+          >
+            <span className="dock-icon dock-icon-default" aria-hidden="true">
+              <RotateCw size={20} className={refreshing ? "dock-spin" : ""} />
+            </span>
+            <span className="dock-icon dock-icon-chat" aria-hidden="true">
+              <ChevronRight size={23} />
+            </span>
+          </button>
+
+          <div className="dock-center dock-island">
+            <div className="dock-center-buttons" inert={chatActive ? true : undefined} aria-hidden={chatActive}>
+              <button type="button" className="dock-button dock-edge-button"
+                onClick={() => setViewMode(isWeek ? "day" : "week")}
+                aria-label={isWeek ? "Przełącz na widok dnia" : "Przełącz na widok tygodnia"}
+                title={isWeek ? "Widok dnia" : "Widok tygodnia"}>
+                {isWeek ? <Calendar size={19} aria-hidden="true" /> : <List size={19} aria-hidden="true" />}
+              </button>
+              <button type="button" className="dock-button" onClick={handlePrev} disabled={!canGoPrev}
+                aria-label={isWeek ? "Poprzedni tydzień" : "Poprzedni dzień"} title={isWeek ? "Poprzedni tydzień" : "Poprzedni dzień"}>
+                <ChevronLeft size={22} aria-hidden="true" />
+              </button>
+              <button type="button" className="dock-button" onClick={handleReset}
+                aria-label={resetLabel} title={isCurrent ? (isWeek ? "Bieżący tydzień" : "Dzisiaj") : resetLabel}>
+                <span className={`dock-today-dot ${isCurrent ? "is-current" : ""}`} />
+              </button>
+              <button type="button" className="dock-button" onClick={handleNext} disabled={!canGoNext}
+                aria-label={isWeek ? "Następny tydzień" : "Następny dzień"} title={isWeek ? "Następny tydzień" : "Następny dzień"}>
+                <ChevronRight size={22} aria-hidden="true" />
+              </button>
+              <button type="button" className="dock-button dock-edge-button" aria-label="Otwórz menu" title="Menu i ustawienia"
+                aria-expanded={isSettingsOpen} aria-controls="schedule-settings-panel"
+                onClick={() => { setSelectionOpen(false); setIsSettingsOpen(true); }}>
+                <Menu size={20} aria-hidden="true" />
+              </button>
             </div>
 
-            {isAiChatEnabled && isChatMode ? (
-              <button
-                onClick={() => setIsChatWindowOpen((prev) => !prev)}
-                aria-label={isChatWindowOpen ? "Zwiń chat" : "Rozwiń chat"}
-                className="pointer-events-auto  -mb-[2px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide text-neutral-300 shadow-lg border-b-neutral-950"
-              >
-                <span>AI Chat</span>
-                {isChatWindowOpen ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                )}
-              </button>
-            ) : (
-              <button
-                onMouseDown={startLabelPress}
-                onMouseUp={cancelLabelPress}
-                onMouseLeave={cancelLabelPress}
-                onTouchStart={startLabelPress}
-                onTouchEnd={cancelLabelPress}
-                onTouchCancel={cancelLabelPress}
-                onClick={handleLabelClick}
-                aria-label={
-                  isCurrent ? "Aktualny okres" : "Przejdź do bieżącego okresu"
-                }
-                className={`pointer-events-auto -mb-[3px] inline-flex items-center gap-1 rounded-t-[1rem] border-none bg-neutral-950 px-5 pt-2 text-center text-xs tracking-wide ${
-                  isCurrent ? "text-lime-400" : "text-neutral-300"
-                } shadow-lg border-b-neutral-950`}
-              >
-                <span>{label}</span>
-                {selectionOpen ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-              </button>
+            {isAiChatEnabled && (
+              <form id={composerId} className="dock-composer"
+                inert={!chatActive ? true : undefined} aria-hidden={!chatActive}
+                onSubmit={(event) => { event.preventDefault(); handleChatSend(); }}>
+                <input ref={inputRef} value={input} aria-label="Wiadomość do AI" placeholder="Zapytaj o swój plan…"
+                  onChange={(event) => { if (status === "error") resetError(); setInput(event.target.value); }}
+                  onKeyDown={(event) => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }}
+                  autoComplete="off" />
+              </form>
             )}
-
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[3px] bg-neutral-950" />
           </div>
 
-          {isAiChatEnabled && isChatMode ? (
-            <div className="flex items-center gap-2">
-              <button
-                aria-label="Ukryj chat"
-                onClick={() => setIsChatMode(false)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
-              >
-                <X className="h-5 w-5" strokeWidth={2.4} />
-              </button>
-
-              <input
-                value={input}
-                onChange={(e) => {
-                  if (status === "error") resetError();
-                  setInput(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleChatSend();
-                  }
-                }}
-                placeholder="Zapytaj AI o plan..."
-                className="h-10 flex-1 rounded-full border border-neutral-700 bg-neutral-900 px-4 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none"
-              />
-
-              <button
-                aria-label="Wyślij wiadomość"
-                onClick={handleChatSend}
-                disabled={!canSend}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95 disabled:opacity-40"
-              >
-                <SendHorizontal className="h-5 w-5" strokeWidth={2.4} />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-2">
-              <button
-                onClick={() => setViewMode(isWeek ? "day" : "week")}
-                aria-label={
-                  isWeek
-                    ? "Przełącz na widok dnia"
-                    : "Przełącz na widok tygodnia"
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
-              >
-                {isWeek ? (
-                  <Calendar className="h-5 w-5" strokeWidth={2.4} />
-                ) : (
-                  <List className="h-5 w-5" strokeWidth={2.4} />
-                )}
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrev}
-                  disabled={!canGoPrev}
-                  aria-label="Poprzedni"
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-100 transition hover:bg-neutral-800 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent"
-                >
-                  <ChevronLeft className="h-5 w-5" strokeWidth={2.6} />
-                </button>
-
-                {isAiChatEnabled ? (
-                  <button
-                    onClick={() => {
-                      setSelectionOpen(false);
-                      setIsChatMode(true);
-                    }}
-                    aria-label="Otwórz AI chat"
-                    className="bg-lime-400 flex h-10 w-10 items-center justify-center rounded-full shadow-[0_0_16px_rgba(163,230,53,0.45)] transition hover:bg-lime-300 hover:shadow-[0_0_22px_rgba(163,230,53,0.62)] active:scale-95"
-                  >
-                    <Sparkles
-                      className="h-5 w-5 text-neutral-950"
-                      strokeWidth={2.4}
-                    />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleReset}
-                    aria-label={
-                      isCurrent
-                        ? "Aktualny okres"
-                        : "Przejdź do bieżącego okresu"
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-neutral-800 active:scale-95"
-                  >
-                    <span
-                      className={`h-3 w-3 rounded-full ${
-                        isCurrent
-                          ? "bg-lime-400 shadow-[0_0_18px_rgba(163,230,53,0.6)]"
-                          : "bg-neutral-500"
-                      }`}
-                    />
-                  </button>
-                )}
-
-                <button
-                  onClick={handleNext}
-                  disabled={!canGoNext}
-                  aria-label="Następny"
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-100 transition hover:bg-neutral-800 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent"
-                >
-                  <ChevronRight className="h-5 w-5" strokeWidth={2.6} />
-                </button>
-              </div>
-
-              <button
-                aria-label="Otwórz ustawienia"
-                onClick={() => {
+          {isAiChatEnabled && (
+            <button ref={aiButtonRef} type={chatActive ? "submit" : "button"}
+              form={chatActive ? composerId : undefined}
+              className="dock-button dock-island dock-right-action"
+              aria-label={chatActive ? "Wyślij wiadomość" : "Otwórz AI chat"}
+              title={chatActive ? "Wyślij wiadomość" : "Zapytaj AI o plan"}
+              disabled={chatActive && !canSend}
+              onClick={(event) => {
+                if (chatActive) return;
+                // Keep the opening click from submitting the newly connected form.
+                event.preventDefault();
+                flushSync(() => {
                   setSelectionOpen(false);
-                  setIsSettingsOpen(true);
-                }}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-white shadow-lg transition hover:bg-neutral-700 active:scale-95"
-              >
-                <Menu className="h-5 w-5" strokeWidth={2.4} />
-              </button>
+                  setIsChatWindowOpen(true);
+                  setIsChatMode(true);
+                });
+                inputRef.current?.focus({ preventScroll: true });
+              }}>
+              <span className="dock-accent">
+                <span className="dock-icon dock-icon-default" aria-hidden="true"><Sparkles size={19} /></span>
+                <span className="dock-icon dock-icon-chat" aria-hidden="true">
+                  {busy ? <LoaderCircle size={19} className="dock-spin" /> : <SendHorizontal size={19} />}
+                </span>
+              </span>
+            </button>
+          )}
+        </nav>
+
+        <div className="dock-popover">
+          <div className="dock-cap">
+            <RoundedCorner className="dock-cap-corner dock-cap-corner-left" aria-hidden="true" />
+            <RoundedCorner className="dock-cap-corner dock-cap-corner-right" aria-hidden="true" />
+            <button
+              ref={dateButtonRef}
+              type="button"
+              className="dock-tab"
+              onClick={() => {
+                if (chatActive) setIsChatWindowOpen((prev) => !prev);
+                else setSelectionOpen((prev) => !prev);
+              }}
+              aria-label={chatActive ? (isChatWindowOpen ? "Zwiń chat" : "Rozwiń chat") : `${dateLabel}: ${label || ""}`}
+              aria-expanded={chatActive ? isChatWindowOpen : selectionOpen}
+              aria-controls={chatActive ? "dock-chat-history" : "dock-date-options"}
+              title={chatActive ? (isChatWindowOpen ? "Zwiń rozmowę" : "Pokaż rozmowę") : dateLabel}
+            >
+              <span className="dock-cap-date" aria-hidden="true">
+                <span>{label}</span>
+                <ChevronDown size={12} className={selectionOpen ? "is-rotated" : ""} />
+              </span>
+              <ChevronUp size={23} className={`dock-cap-chevron ${historyExpanded ? "is-rotated" : ""}`} aria-hidden="true" />
+            </button>
+          </div>
+
+          <FloatingSelectionPanel
+            open={selectionOpen && !chatActive}
+            isWeek={isWeek}
+            options={options}
+            selection={selection}
+            onChange={onChange}
+            currentDayValue={currentDayValue}
+            dayActiveRef={dayActiveRef}
+            weekOptions={weekOptions}
+            weekSelectionValue={weekSelectionValue}
+            onWeekChange={onWeekChange}
+            weekActiveRef={weekActiveRef}
+            onClose={closeSelection}
+          />
+
+          {isAiChatEnabled && (
+            <div className="dock-history-popup"
+              inert={!historyExpanded ? true : undefined} aria-hidden={!historyExpanded}>
+              <FloatingChatPanel
+                isChatMode={chatActive}
+                isChatWindowOpen={isChatWindowOpen}
+                scheduleName={scheduleName}
+                status={status}
+                clearConversation={clearConversation}
+                error={error}
+                resetError={resetError}
+                messages={messages}
+                onAddSlot={addSlotToMyPlan}
+                addingEventId={addingEventId}
+                addedEventIds={addedEventIds}
+                slotErrors={slotErrors}
+              />
             </div>
           )}
         </div>
+
+        {isAiChatEnabled && (
+          <div className="dock-history-bridge" aria-hidden="true">
+            <RoundedCorner className="dock-history-corner" />
+          </div>
+        )}
+
       </div>
 
       <ControlsPanel

@@ -84,6 +84,8 @@ export function useScheduleManager(savedSettings) {
   });
 
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+  const [isScheduleRefreshing, setIsScheduleRefreshing] = useState(false);
+  const manualRefreshRef = useRef(false);
   const [isTimetableOptionsLoading, setIsTimetableOptionsLoading] =
     useState(false);
   const [hasLoadedTimetableOptions, setHasLoadedTimetableOptions] =
@@ -305,6 +307,38 @@ export function useScheduleManager(savedSettings) {
     () => activeGroupSet?.externalSelections || [],
     [activeGroupSet],
   );
+
+  const handleRefreshSchedule = useCallback(async () => {
+    if (manualRefreshRef.current || !currentSchedule) return;
+    if (!isSupabaseConfigured) {
+      throw new Error("Brak połączenia ze źródłem planu.");
+    }
+    manualRefreshRef.current = true;
+    setIsScheduleRefreshing(true);
+    try {
+      const ids = [...new Set([
+        currentSchedule,
+        ...activeExternalSelections.map((item) => item.scheduleId),
+      ].filter(Boolean))];
+      const results = await Promise.allSettled(
+        ids.map((id) => loadTimetableById(id, { forceRefresh: true })),
+      );
+      const updates = {};
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled" && result.value) {
+          updates[ids[index]] = result.value;
+          failedScheduleLoadsRef.current.delete(ids[index]);
+        }
+      });
+      setLoadedTimetables((prev) => ({ ...prev, ...updates }));
+      if (Object.keys(updates).length !== ids.length) {
+        throw new Error("Nie udało się odświeżyć całego planu. Spróbuj ponownie.");
+      }
+    } finally {
+      manualRefreshRef.current = false;
+      setIsScheduleRefreshing(false);
+    }
+  }, [currentSchedule, activeExternalSelections]);
 
   // Expose a stable active set name for UI controls.
   const activeGroupSetName = useMemo(
@@ -752,6 +786,8 @@ export function useScheduleManager(savedSettings) {
     activeExternalSelections,
     currentTimetable,
     isScheduleLoading,
+    isScheduleRefreshing,
+    handleRefreshSchedule,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,

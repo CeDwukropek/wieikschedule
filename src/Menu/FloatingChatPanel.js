@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 
 function MessageContent({ message, isLoading }) {
   if (isLoading) {
-    return "Thinking...";
+    return "Zastanawiam się…";
   }
 
   if (message.role === "assistant") {
@@ -107,16 +107,17 @@ export default function FloatingChatPanel({
   };
 
   useEffect(() => {
-    if (!isChatWindowOpen) return;
+    if (!isChatMode || !isChatWindowOpen) return;
 
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
       scrollToBottom(container, "auto");
       updateStickToBottom(container);
     });
-  }, [isChatWindowOpen]);
+    return () => cancelAnimationFrame(frame);
+  }, [isChatMode, isChatWindowOpen]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -131,7 +132,9 @@ export default function FloatingChatPanel({
       (lastMessage.id !== previousMeta.lastId ||
         previousMeta.lastStage !== "loading");
 
-    const shouldAutoScroll = hasNewMessage || thinkingStarted;
+    const shouldAutoScroll =
+      (hasNewMessage && lastMessage?.role === "user") ||
+      thinkingStarted || shouldStickToBottomRef.current;
 
     previousMessagesMetaRef.current = {
       count: messages.length,
@@ -139,40 +142,41 @@ export default function FloatingChatPanel({
       lastStage: lastMessage?.stage ?? null,
     };
 
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
       if (shouldAutoScroll) {
-        scrollToBottom(container, "smooth");
+        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        scrollToBottom(container, reducedMotion ? "auto" : "smooth");
       }
 
       updateStickToBottom(container);
     });
+    return () => cancelAnimationFrame(frame);
   }, [messages]);
 
   const handleMessagesScroll = (event) => {
     updateStickToBottom(event.currentTarget);
   };
 
-  if (!isChatMode || !isChatWindowOpen) return null;
-
   return (
-    <div className="mb-3 h-[42vh] max-h-[360px] min-h-[220px] rounded-2xl border border-neutral-700 bg-neutral-900 shadow-2xl overflow-hidden flex flex-col">
-      <div className="px-3 py-2 border-b border-neutral-700 bg-neutral-950/80 flex items-center justify-between">
+    <section id="dock-chat-history" aria-label="Rozmowa z AI" className="dock-chat-panel">
+      <div className="dock-chat-header">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-white">Schedule Assistant</p>
+          <p className="text-sm font-semibold text-white">Chat AI</p>
           <p className="truncate text-[11px] text-neutral-400">
-            {scheduleName ? `Plan: ${scheduleName}` : "No schedule selected"}
+            {scheduleName ? `Plan: ${scheduleName}` : "Asystent Twojego planu"}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-300">
+          <span className={`dock-status-dot ${status === "sending" || status === "waiting" ? "is-busy" : status === "error" ? "is-error" : ""}`} aria-hidden="true" />
+          <span className="sr-only" role="status">
             {status === "sending"
-              ? "Sending..."
+              ? "Wysyłanie…"
               : status === "waiting"
-                ? "Waiting..."
+                ? "AI przygotowuje odpowiedź…"
                 : status === "error"
-                  ? "Error"
-                  : "Ready"}
+                  ? "Błąd odpowiedzi"
+                  : "Gotowy"}
           </span>
 
           <button
@@ -180,6 +184,8 @@ export default function FloatingChatPanel({
             onClick={clearConversation}
             className="h-8 w-8 rounded-full bg-neutral-800 text-neutral-200 flex items-center justify-center"
             aria-label="Wyczyść konwersację"
+            title="Wyczyść konwersację"
+            disabled={messages.length === 0 || status === "sending" || status === "waiting"}
           >
             <Trash2 size={14} />
           </button>
@@ -188,13 +194,13 @@ export default function FloatingChatPanel({
 
       {error ? (
         <div className="px-3 py-2 text-xs bg-rose-900/30 text-rose-200 border-b border-rose-800 flex items-center justify-between gap-3">
-          <span className="truncate">{error}</span>
+          <span role="alert">{error}</span>
           <button
             type="button"
             onClick={resetError}
             className="text-rose-100 underline underline-offset-2"
           >
-            Dismiss
+            Zamknij
           </button>
         </div>
       ) : null}
@@ -202,12 +208,18 @@ export default function FloatingChatPanel({
       <div
         ref={messagesContainerRef}
         onScroll={handleMessagesScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2 floating-select-scrollbar"
+        className="dock-chat-messages flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2 floating-select-scrollbar"
+        role="log"
+        aria-label="Wiadomości"
+        aria-live={isChatMode && isChatWindowOpen ? "polite" : "off"}
+        aria-relevant="additions text"
+        tabIndex={0}
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-5 text-neutral-400">
             <Bot className="w-8 h-8 mb-2 text-neutral-500" />
-            <p className="text-sm">Ask anything about your schedule.</p>
+            <p className="text-sm text-neutral-200">W czym mogę pomóc?</p>
+            <p className="mt-1 text-xs">Zapytaj o zajęcia, wolne okienko lub termin odrobienia.</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -216,10 +228,10 @@ export default function FloatingChatPanel({
             const isErrorMsg = message.stage === "error";
 
             const className = isUser
-              ? "ml-10 bg-white text-black"
+              ? "ml-10 bg-neutral-600 text-white rounded-br-md"
               : isErrorMsg
                 ? "mr-10 bg-rose-900/40 border border-rose-700 text-rose-100"
-                : "mr-10 bg-neutral-800 text-neutral-100";
+                : "mr-10 bg-neutral-950 text-neutral-100 rounded-bl-md";
 
             const whitespaceClass = isUser
               ? "whitespace-pre-wrap"
@@ -246,6 +258,6 @@ export default function FloatingChatPanel({
           })
         )}
       </div>
-    </div>
+    </section>
   );
 }

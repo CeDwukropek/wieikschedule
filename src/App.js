@@ -151,7 +151,7 @@ export default function Timetable() {
   const exportRef = useRef(null);
   const appliedSettingsSignatureRef = useRef("");
   const [open, setOpen] = useState(false);
-  const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT === "true";
+  const isAiChatEnabled = process.env.REACT_APP_ENABLE_AI_CHAT !== "false";
   const { user: firebaseUser } = useFirebaseAuth();
   const guestUserId = useUserId();
   const addedEventsCacheScope = useMemo(
@@ -193,6 +193,8 @@ export default function Timetable() {
     activeExternalSelections,
     currentTimetable,
     isScheduleLoading,
+    isScheduleRefreshing,
+    handleRefreshSchedule,
     handleGroupChange,
     handleGroupSetChange,
     handleCreateGroupSet,
@@ -1072,6 +1074,11 @@ export default function Timetable() {
       timetableDataSourceLabel,
       currentSchedule,
       isScheduleLoading,
+      isScheduleRefreshing,
+      onRefreshSchedule: async () => {
+        await handleRefreshSchedule();
+        refreshMyPlanEvents();
+      },
       activeGroupSetId,
       activeGroupSetName,
       groupSetOptions,
@@ -1106,7 +1113,7 @@ export default function Timetable() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen bg-black text-white p-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       {/* Floating menu / settings for all breakpoints */}
 
       <FloatingMenu {...floatingMenuProps} />
