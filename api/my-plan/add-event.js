@@ -1,3 +1,5 @@
+const { respond, setCors } = require("../_lib/http");
+const { resolveUserIdByFirebaseUid } = require("../_lib/users");
 const { verifyRequestUser } = require("../_lib/requestAuth");
 const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
 
@@ -19,42 +21,6 @@ const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
   Zachowanie:
   - Endpoint jest idempotentny: jeśli wpis już istnieje jako active -> zwraca ok.
 */
-
-function respond(res, status, body) {
-  res.status(status).json(body);
-}
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "authorization,content-type");
-}
-
-async function resolveUserIdByFirebaseUid(supabase, firebaseUid) {
-  // Mapowanie użytkownika Firebase -> user_id w Supabase.
-  // Upsert tworzy rekord w `users` przy pierwszym użyciu.
-  const { data, error } = await supabase
-    .from("users")
-    .upsert(
-      {
-        firebase_uid: firebaseUid,
-      },
-      {
-        onConflict: "firebase_uid",
-      },
-    )
-    .select("id")
-    .single();
-
-  if (error || !data?.id) {
-    const err = new Error("Nie udalo sie przygotowac konta uzytkownika.");
-    err.statusCode = 500;
-    err.code = "USER_RESOLVE_FAILED";
-    throw err;
-  }
-
-  return data.id;
-}
 
 module.exports = async function handler(req, res) {
   setCors(res);
