@@ -1,3 +1,5 @@
+const { respond, setCors } = require("../_lib/http");
+const { getUserIdByFirebaseUid } = require("../_lib/users");
 const { verifyRequestUser } = require("../_lib/requestAuth");
 const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
 
@@ -15,31 +17,6 @@ const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
   - added_event_id: string (id rekordu w `user_added_events`)
   - scheduleName: string (musi odpowiadać `events.faculty`)
 */
-
-function respond(res, status, body) {
-  res.status(status).json(body);
-}
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "authorization,content-type");
-}
-
-async function getUserIdByFirebaseUid(supabase, firebaseUid) {
-  // Jeżeli user nie istnieje w `users`, traktujemy to jak brak dopisków.
-  const { data, error } = await supabase
-    .from("users")
-    .select("id")
-    .eq("firebase_uid", firebaseUid)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data?.id || null;
-}
 
 module.exports = async function handler(req, res) {
   setCors(res);

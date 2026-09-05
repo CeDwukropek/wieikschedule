@@ -5,6 +5,6 @@
 import '@testing-library/jest-dom';
 
 // CRA's SVG test transformer emits the pre-React 19 element symbol.
-jest.mock("./app/navigation/RoundedCorner.svg", () => ({
+jest.mock('./Menu/Subtract.svg', () => ({
   ReactComponent: (props) => require('react').createElement('svg', props),
 }));

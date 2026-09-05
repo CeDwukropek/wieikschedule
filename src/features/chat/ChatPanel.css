@@ -1,0 +1,23 @@
+.dock-chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: var(--dock-history-height);
+  min-height: 0;
+  overflow: hidden;
+}
+.dock-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #181818;
+  border-bottom: 1px solid #ffffff08;
+}
+.dock-chat-messages { overscroll-behavior: contain; overflow-wrap: anywhere; }
+.dock-chat-messages table { display: block; max-width: 100%; overflow-x: auto; }
+.dock-chat-messages pre { max-width: 100%; overflow-x: auto; }
+.dock-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dock-accent); }
+.dock-status-dot.is-busy { background: #fbbf24; }
+.dock-status-dot.is-error { background: #fb7185; }
+

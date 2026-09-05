@@ -1,3 +1,5 @@
+const { respond, setCors } = require("../_lib/http");
+const { getUserIdByFirebaseUid } = require("../_lib/users");
 const { verifyRequestUser } = require("../_lib/requestAuth");
 const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
 
@@ -18,16 +20,6 @@ const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
     na "slot" w tygodniu (day/start/duration itd.).
 */
 
-function respond(res, status, body) {
-  res.status(status).json(body);
-}
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "authorization,content-type");
-}
-
 function getDateRangeFromQuery(query) {
   // Przyjmujemy tylko część YYYY-MM-DD (bez czasu), aby unikać problemów stref.
   const dateFrom = String(query?.date_from || "")
@@ -41,22 +33,6 @@ function getDateRangeFromQuery(query) {
     dateFrom,
     dateTo,
   };
-}
-
-async function getUserIdByFirebaseUid(supabase, firebaseUid) {
-  // Użytkownik może nie istnieć w tabeli `users` (np. pierwszy request).
-  // Wtedy zwracamy pustą listę dopisanych eventów.
-  const { data, error } = await supabase
-    .from("users")
-    .select("id")
-    .eq("firebase_uid", firebaseUid)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data?.id || null;
 }
 
 module.exports = async function handler(req, res) {
