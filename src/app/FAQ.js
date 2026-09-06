@@ -11,16 +11,8 @@ const ITEMS = [
     href: "https://samorzad.pk.edu.pl/mapa",
   },
   {
-    q: "W jakich godzinach działa dziekanat?",
-    href: "https://samorzad.pk.edu.pl/mapa",
-  },
-  {
-    q: "Jakie wydarzenia są organizowane w tym semestrze?",
-    href: "https://samorzad.pk.edu.pl/mapa",
-  },
-  {
-    q: "Gdzie znajdę syllabus?",
-    href: "https://samorzad.pk.edu.pl/mapa",
+    q: "Gdzie znajdę syllabus WIEiK?",
+    href: "https://wieik.pk.edu.pl/ksztalcenie/programy-studiow/",
   },
 ];
 
