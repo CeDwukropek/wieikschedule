@@ -38,7 +38,7 @@ async function refreshOptions() {
       const faculties = new Map();
       (data || []).forEach(row => {
         const id = String(row.short_name || "").trim();
-        if (id && id !== "all") faculties.set(id, { id, name: String(row.name || "").trim() || id });
+        if (id && id.toLowerCase() !== "all") faculties.set(id, { id, name: String(row.name || "").trim() || id });
       });
       const options = [...faculties.values()].sort((a, b) => a.name.localeCompare(b.name, "pl"));
       storeTimetableOptions(options);
@@ -57,7 +57,7 @@ async function refreshOptions() {
 
 export async function loadTimetableById(id, { forceRefresh = false } = {}) {
   const scheduleId = String(id || "").trim();
-  if (!scheduleId || scheduleId === "all") return null;
+  if (!scheduleId || scheduleId.toLowerCase() === "all") return null;
   const cached = getCachedTimetableById(scheduleId);
   if (cached && !forceRefresh) {
     if (isCachedTimetableStale(scheduleId)) void refreshTimetable(scheduleId);
