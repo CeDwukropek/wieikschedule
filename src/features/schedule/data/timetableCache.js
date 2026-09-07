@@ -1,6 +1,6 @@
 export const TIMETABLE_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
-const OPTIONS_KEY = "wieik:timetable-options:v1";
-const TIMETABLE_PREFIX = "wieik:timetable:v1:";
+const OPTIONS_KEY = "wieik:timetable-options:v2";
+const TIMETABLE_PREFIX = "wieik:timetable:v2:";
 
 const timetables = new Map();
 let optionsEntry = null;

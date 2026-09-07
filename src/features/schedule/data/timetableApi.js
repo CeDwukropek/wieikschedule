@@ -37,7 +37,7 @@ async function refreshOptions() {
         if (error) throw error;
         (data || []).forEach(row => {
           const faculty = String(row.faculty || "").trim();
-          if (faculty) faculties.add(faculty);
+          if (faculty && faculty !== "all") faculties.add(faculty);
         });
         if (!data || data.length < pageSize) break;
       }
@@ -59,7 +59,7 @@ async function refreshOptions() {
 
 export async function loadTimetableById(id, { forceRefresh = false } = {}) {
   const scheduleId = String(id || "").trim();
-  if (!scheduleId) return null;
+  if (!scheduleId || scheduleId === "all") return null;
   const cached = getCachedTimetableById(scheduleId);
   if (cached && !forceRefresh) {
     if (isCachedTimetableStale(scheduleId)) void refreshTimetable(scheduleId);
@@ -76,7 +76,8 @@ async function refreshTimetable(scheduleId) {
     try {
       const { data, error } = await supabase.from("events")
         .select("id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status")
-        .eq("faculty", scheduleId).or("status.is.null,status.eq.aktywne")
+        .in("faculty", [scheduleId, "all"])
+        .or("status.is.null,status.eq.aktywne,status.eq.wolne")
         .order("date", { ascending: true }).order("start_time", { ascending: true });
       if (error) throw error;
       const timetable = normalizeTimetable(scheduleId, data);
