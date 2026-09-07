@@ -6,7 +6,6 @@ import {
   isCachedTimetableStale,
   loadAllTimetableOptions,
   loadTimetableById,
-  loadSharedTimetable,
   TIMETABLE_REFRESH_INTERVAL_MS,
 } from "../data/timetableApi";
 import { isSupabaseConfigured } from "../../../lib/supabaseClient";
@@ -135,7 +134,7 @@ export function useTimetableData(savedSettings) {
     }
 
     if (hasLoadedTimetableOptions && timetableOptions.length === 0) {
-      return "Nie znaleziono planów w bazie Supabase (tabela faculties).";
+      return "Nie znaleziono planów w bazie Supabase (tabela events).";
     }
 
     return "";
@@ -155,13 +154,7 @@ export function useTimetableData(savedSettings) {
     const hasLoadedTarget = Boolean(loadedTimetables[targetId]);
     const shouldRefreshLoadedTarget =
       hasLoadedTarget && isCachedTimetableStale(targetId);
-    if (hasLoadedTarget && !shouldRefreshLoadedTarget) {
-      const cached = getCachedTimetableById(targetId);
-      if (cached && cached !== loadedTimetables[targetId]) {
-        setLoadedTimetables(prev => ({ ...prev, [targetId]: cached }));
-      }
-      return () => {};
-    }
+    if (hasLoadedTarget && !shouldRefreshLoadedTarget) return () => {};
 
     const lastFailedAt = failedScheduleLoadsRef.current.get(targetId);
     if (
@@ -232,7 +225,6 @@ export function useTimetableData(savedSettings) {
     manualRefreshRef.current = true;
     setIsScheduleRefreshing(true);
     try {
-      await loadSharedTimetable({ forceRefresh: true });
       const ids = [...new Set([
         currentSchedule,
         ...activeExternalSelections.map((item) => item.scheduleId),
@@ -274,13 +266,7 @@ export function useTimetableData(savedSettings) {
       const hasLoadedReference = Boolean(loadedTimetables[scheduleId]);
       const shouldRefreshLoadedReference =
         hasLoadedReference && isCachedTimetableStale(scheduleId);
-      if (hasLoadedReference && !shouldRefreshLoadedReference) {
-        const cached = getCachedTimetableById(scheduleId);
-        if (cached && cached !== loadedTimetables[scheduleId]) {
-          setLoadedTimetables(prev => ({ ...prev, [scheduleId]: cached }));
-        }
-        return;
-      }
+      if (hasLoadedReference && !shouldRefreshLoadedReference) return;
 
       loadTimetableById(scheduleId, {
         forceRefresh: shouldRefreshLoadedReference,

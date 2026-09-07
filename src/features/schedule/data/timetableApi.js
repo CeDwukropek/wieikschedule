@@ -4,7 +4,6 @@ import {
   getCachedTimetableById, getCachedTimetableOptions,
   isCachedTimetableStale, areCachedTimetableOptionsStale,
   storeTimetable, storeTimetableOptions,
-  getCachedSharedTimetable, isSharedTimetableStale, storeSharedTimetable,
 } from "./timetableCache";
 
 export {
@@ -15,11 +14,9 @@ export {
 
 const timetableRequests = new Map();
 let optionsRequest = null;
-let sharedRequest = null;
 
 export async function loadAllTimetableOptions({ forceRefresh = false } = {}) {
   const cached = getCachedTimetableOptions();
-  if (!forceRefresh && !areCachedTimetableOptionsStale()) return cached;
   if (cached.length && !forceRefresh) {
     if (areCachedTimetableOptionsStale()) void refreshOptions();
     return cached;
@@ -32,15 +29,20 @@ async function refreshOptions() {
   if (!supabase) return getCachedTimetableOptions();
   optionsRequest = (async () => {
     try {
-      const { data, error } = await supabase.from("faculties")
-        .select("short_name,name").order("short_name", { ascending: true });
-      if (error) throw error;
-      const faculties = new Map();
-      (data || []).forEach(row => {
-        const id = String(row.short_name || "").trim();
-        if (id && id !== "all") faculties.set(id, { id, name: String(row.name || "").trim() || id });
-      });
-      const options = [...faculties.values()].sort((a, b) => a.name.localeCompare(b.name, "pl"));
+      const faculties = new Set();
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase.from("events").select("faculty")
+          .order("faculty", { ascending: true }).range(from, from + pageSize - 1);
+        if (error) throw error;
+        (data || []).forEach(row => {
+          const faculty = String(row.faculty || "").trim();
+          if (faculty && faculty !== "all") faculties.add(faculty);
+        });
+        if (!data || data.length < pageSize) break;
+      }
+      const options = [...faculties].sort((a, b) => a.localeCompare(b, "pl"))
+        .map(id => ({ id, name: id }));
       storeTimetableOptions(options);
       return options;
     } catch (error) {
@@ -72,10 +74,15 @@ async function refreshTimetable(scheduleId) {
   if (!supabase) return getCachedTimetableById(scheduleId);
   const request = (async () => {
     try {
-      const [rows] = await Promise.all([fetchEventRows(scheduleId), loadSharedTimetable()]);
-      const timetable = normalizeTimetable(scheduleId, rows);
+      const { data, error } = await supabase.from("events")
+        .select("id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status")
+        .in("faculty", [scheduleId, "all"])
+        .or("status.is.null,status.eq.aktywne,status.eq.wolne")
+        .order("date", { ascending: true }).order("start_time", { ascending: true });
+      if (error) throw error;
+      const timetable = normalizeTimetable(scheduleId, data);
       storeTimetable(scheduleId, timetable);
-      return getCachedTimetableById(scheduleId);
+      return timetable;
     } catch (error) {
       console.error(`[timetables] Failed to load timetable '${scheduleId}'`, error);
       return null;
@@ -86,30 +93,5 @@ async function refreshTimetable(scheduleId) {
     return await request;
   } finally {
     timetableRequests.delete(scheduleId);
-  }
-}
-
-async function fetchEventRows(faculty) {
-  const { data, error } = await supabase.from("events")
-    .select("id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status")
-    .eq("faculty", faculty)
-    .or("status.is.null,status.eq.aktywne,status.eq.wolne")
-    .order("date", { ascending: true }).order("start_time", { ascending: true });
-  if (error) throw error;
-  return data;
-}
-
-export async function loadSharedTimetable({ forceRefresh = false } = {}) {
-  if (sharedRequest) return sharedRequest;
-  if (!supabase || (!forceRefresh && !isSharedTimetableStale())) return getCachedSharedTimetable();
-  sharedRequest = (async () => {
-    const rows = await fetchEventRows("all");
-    storeSharedTimetable(normalizeTimetable("all", rows));
-    return getCachedSharedTimetable();
-  })();
-  try {
-    return await sharedRequest;
-  } finally {
-    sharedRequest = null;
   }
 }
