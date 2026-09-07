@@ -52,6 +52,7 @@ export function useTimetableData(savedSettings) {
 
   const [hasLoadedTimetableOptions, setHasLoadedTimetableOptions] =
     useState(false);
+  const [timetableOptionsError, setTimetableOptionsError] = useState("");
 
   const [scheduleRefreshTick, setScheduleRefreshTick] = useState(0);
 
@@ -76,10 +77,12 @@ export function useTimetableData(savedSettings) {
       .then((options) => {
         if (!active) return;
         setTimetableOptions(Array.isArray(options) ? options : []);
+        setTimetableOptionsError("");
       })
       .catch((err) => {
         if (!active) return;
         console.error("[schedule] Failed to refresh timetable options", err);
+        setTimetableOptionsError(err?.message || "Nie udało się odświeżyć listy harmonogramów.");
       });
 
     return () => {
@@ -96,6 +99,7 @@ export function useTimetableData(savedSettings) {
         if (!active) return;
         const normalizedOptions = Array.isArray(options) ? options : [];
         setTimetableOptions(normalizedOptions);
+        setTimetableOptionsError("");
 
         setCurrentSchedule((prev) => {
           const current = String(prev || "").trim();
@@ -113,6 +117,7 @@ export function useTimetableData(savedSettings) {
       .catch((err) => {
         if (!active) return;
         console.error("[schedule] Failed to load timetable options", err);
+        setTimetableOptionsError(err?.message || "Nie udało się pobrać listy harmonogramów.");
       })
       .finally(() => {
         if (!active) return;
@@ -134,12 +139,14 @@ export function useTimetableData(savedSettings) {
       return "Ładowanie listy planów...";
     }
 
+    if (timetableOptionsError) return timetableOptionsError;
+
     if (hasLoadedTimetableOptions && timetableOptions.length === 0) {
-      return "Nie znaleziono planów w bazie Supabase (tabela faculties).";
+      return "Brak harmonogramów dostępnych dla aplikacji.";
     }
 
     return "";
-  }, [hasLoadedTimetableOptions, isTimetableOptionsLoading, timetableOptions]);
+  }, [hasLoadedTimetableOptions, isTimetableOptionsLoading, timetableOptions, timetableOptionsError]);
 
   const failedScheduleLoadsRef = useRef(new Map());
 

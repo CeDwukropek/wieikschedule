@@ -57,3 +57,16 @@ test("failed refresh retains the last plan and permits retry", async () => {
   await act(async () => { await result.current.handleRefreshSchedule(); });
   expect(result.current.isScheduleRefreshing).toBe(false);
 });
+
+test("catalog failures show the read error instead of claiming no schedules exist", async () => {
+  getCachedTimetableOptions.mockReturnValue([]);
+  const message = "Brak uprawnień do odczytu listy harmonogramów.";
+  loadAllTimetableOptions.mockRejectedValue(new Error(message));
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    const { result } = renderHook(() => useScheduleManager(null));
+    await waitFor(() => expect(result.current.timetableOptionsMessage).toBe(message));
+  } finally {
+    log.mockRestore();
+  }
+});
