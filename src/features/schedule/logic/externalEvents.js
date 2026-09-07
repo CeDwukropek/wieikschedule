@@ -10,6 +10,7 @@ export function selectExternalEvents(selections, timetables, hideLectures, weekS
     if (!scheduleId || !groupType || !groupValue || !timetable?.schedule?.length) return [];
 
     return filterEvents(timetable.schedule, { [groupType]: groupValue }, hideLectures, false, weekStart)
+      .filter(event => !event._isGlobal)
       .filter(event => !subjectKey || String(event.subj || "").trim() === subjectKey)
       .map(event => ({
         key: ["external", scheduleId, groupType, groupValue, subjectKey || "*",
