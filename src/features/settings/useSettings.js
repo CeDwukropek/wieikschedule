@@ -127,6 +127,11 @@ export function usePersistSettings(settings, enabled = true) {
   const userId = useGuestId();
   const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
   const lastSavedSignatureRef = useRef("");
+  const lastQueuedCloudSignatureRef = useRef("");
+  const cloudWritesRef = useRef(Promise.resolve());
+  const userUid = user?.uid;
+  const currentUidRef = useRef(userUid);
+  currentUidRef.current = userUid;
 
   const SETTINGS_KEY = useMemo(
     () => `wieikschedule.${user?.uid || userId}.settings`,
@@ -155,19 +160,6 @@ export function usePersistSettings(settings, enabled = true) {
       localStorage.setItem(SETTINGS_KEY, serialized);
       localStorage.setItem(GUEST_SETTINGS_KEY, serialized);
 
-      if (user?.uid && isAuthConfigured && db) {
-        const settingsRef = doc(db, "userSettings", user.uid);
-        setDoc(
-          settingsRef,
-          {
-            settings,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true },
-        ).catch((e) => {
-          console.error("Failed to save cloud settings:", e);
-        });
-      }
     } catch (e) {
       console.error("Failed to save settings:", e);
     }
@@ -180,4 +172,39 @@ export function usePersistSettings(settings, enabled = true) {
     user,
     isAuthConfigured,
   ]);
+
+  useEffect(() => {
+    if (!enabled || !userUid || !isAuthConfigured || !db) return;
+    const snapshot = JSON.parse(settingsSignature)[1];
+    if (!Object.keys(snapshot).length || lastQueuedCloudSignatureRef.current === settingsSignature) return;
+
+    let submitted = false;
+    const save = () => {
+      if (submitted) return;
+      submitted = true;
+      lastQueuedCloudSignatureRef.current = settingsSignature;
+      window.clearTimeout(timer);
+      // Preserve write order when a previous save is still in flight.
+      cloudWritesRef.current = cloudWritesRef.current.then(async () => {
+        if (currentUidRef.current !== userUid) return;
+        await setDoc(doc(db, "userSettings", userUid), {
+          settings: snapshot, updatedAt: serverTimestamp(),
+        }, { merge: true });
+      }).catch(error => {
+        if (lastQueuedCloudSignatureRef.current === settingsSignature) lastQueuedCloudSignatureRef.current = "";
+        console.error("Failed to save cloud settings:", error);
+      });
+    };
+    const timer = window.setTimeout(save, 800);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") save();
+    };
+    window.addEventListener("pagehide", save);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", save);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [settingsSignature, enabled, userUid, isAuthConfigured]);
 }

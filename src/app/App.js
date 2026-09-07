@@ -35,6 +35,7 @@ export default function App() {
     enabled: Boolean(user),
     viewedWeekStart: navigation.viewedWeekStart,
     selectedDayWeekStart: navigation.selectedDayWeekStart,
+    viewMode: view.viewMode,
   });
 
   const eventOptions = useMemo(

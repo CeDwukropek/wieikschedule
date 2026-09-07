@@ -8,6 +8,7 @@ import { auth } from "../../lib/firebaseClient";
 // - ujednolica obsługę błędów (response.ok + data.ok).
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "";
+const addedEventsRequests = new Map();
 
 async function getAuthTokenOrThrow() {
   // Endpointy /api/my-plan/* wymagają zalogowanego usera (Firebase Auth).
@@ -78,6 +79,7 @@ export async function getAddedEventsFromMyPlan({
   scheduleName,
   dateFrom,
   dateTo,
+  forceRefresh = false,
 }) {
   // Pobiera dopisane eventy dla planu i opcjonalnego zakresu dat (YYYY-MM-DD).
   const cleanScheduleName = String(scheduleName || "").trim();
@@ -98,7 +100,15 @@ export async function getAddedEventsFromMyPlan({
 
   const endpoint = `/api/my-plan/added-events?${params.toString()}`;
 
-  return requestMyPlan(endpoint, { method: "GET" });
+  const key = JSON.stringify([auth?.currentUser?.uid, endpoint]);
+  if (!forceRefresh && addedEventsRequests.has(key)) return addedEventsRequests.get(key);
+  const request = requestMyPlan(endpoint, { method: "GET" });
+  addedEventsRequests.set(key, request);
+  try {
+    return await request;
+  } finally {
+    if (addedEventsRequests.get(key) === request) addedEventsRequests.delete(key);
+  }
 }
 
 export async function removeAddedEventFromMyPlan({
