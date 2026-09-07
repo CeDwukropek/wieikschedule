@@ -92,7 +92,7 @@ export default function SettingsPanel({
   } = filterState || {};
   const { exportRef, viewedWeekRange, selection, combinedOptions } =
     exportState || {};
-  const scheduleOptions =
+  const scheduleOptions = (
     timetableOptions.length > 0
       ? timetableOptions
       : currentSchedule
@@ -102,7 +102,8 @@ export default function SettingsPanel({
               name: `${currentSchedule} (zapisany lokalnie)`,
             },
           ]
-        : [];
+        : []
+  ).filter(option => String(option.id || "").trim().toLowerCase() !== "all");
 
   const scheduleValue = scheduleOptions.some(
     (option) => option.id === currentSchedule,

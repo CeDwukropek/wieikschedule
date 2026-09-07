@@ -39,17 +39,10 @@ function getTimetableEntry(id) {
   return timetables.get(id);
 }
 
-function selectableOptions(options) {
-  return options.filter(option => {
-    const id = String(option?.id || "").trim();
-    return id && id.toLowerCase() !== "all";
-  });
-}
-
 export function getCachedTimetableOptions() {
   if (!optionsEntry) {
     const entry = readEntry(OPTIONS_KEY);
-    if (Array.isArray(entry?.data)) optionsEntry = { ...entry, data: selectableOptions(entry.data) };
+    if (Array.isArray(entry?.data)) optionsEntry = entry;
   }
   return optionsEntry?.data || [];
 }
@@ -60,7 +53,7 @@ export function areCachedTimetableOptionsStale() {
 }
 
 export function storeTimetableOptions(options) {
-  optionsEntry = saveEntry(OPTIONS_KEY, selectableOptions(options));
+  optionsEntry = saveEntry(OPTIONS_KEY, options);
 }
 
 export function getCachedTimetableById(id) {
