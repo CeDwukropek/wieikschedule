@@ -13,7 +13,8 @@ export default function ExternalGroupSelections({
   onRemoveExternalSelection,
 }) {
   const scheduleOptions = useMemo(
-    () => timetableOptions.filter((tt) => tt.id !== currentSchedule),
+    () => timetableOptions.filter((tt) =>
+      tt.id !== currentSchedule && String(tt.id || "").trim().toLowerCase() !== "all"),
     [currentSchedule, timetableOptions],
   );
 

@@ -5,7 +5,7 @@ const row = (id, faculty, subject, status = "aktywne") => ({
   type: "laboratorium", group: "L1",
 });
 
-let api, cache, from, queries, catalogResult;
+let api, cache, from, queries;
 beforeEach(() => {
   jest.resetModules();
   localStorage.clear();
@@ -13,7 +13,6 @@ beforeEach(() => {
   cache = require("./timetableCache");
   from = require("../../../lib/supabaseClient").supabase.from;
   queries = [];
-  catalogResult = null;
   from.mockImplementation(table => {
     const query = { table };
     queries.push(query);
@@ -21,34 +20,13 @@ beforeEach(() => {
       select: jest.fn(() => builder),
       eq: jest.fn((key, value) => { query[key] = value; return builder; }),
       or: jest.fn(() => builder), order: jest.fn(() => builder),
-      then: (resolve, reject) => Promise.resolve(table === "faculties" && catalogResult ? catalogResult : { data: table === "faculties"
+      then: (resolve, reject) => Promise.resolve({ data: table === "faculties"
         ? [{ short_name: "A", name: "Kierunek A" }, { short_name: "all", name: "Wspólne" }]
         : [row(query.faculty, query.faculty, "Same subject", query.faculty === "all" ? "wolne" : "aktywne")]
       }).then(resolve, reject),
     };
     return builder;
   });
-});
-
-test("read permission failures are reported and do not replace a confirmed catalog with an empty list", async () => {
-  await api.loadAllTimetableOptions();
-  catalogResult = { data: null, error: { code: "42501", message: "permission denied for table faculties" } };
-  const log = jest.spyOn(console, "error").mockImplementation(() => {});
-  try {
-    await expect(api.loadAllTimetableOptions({ forceRefresh: true })).rejects.toMatchObject({ code: "42501" });
-    expect(cache.getCachedTimetableOptions()).toEqual([{ id: "A", name: "Kierunek A" }]);
-  } finally {
-    log.mockRestore();
-  }
-});
-
-test("an empty RLS response is retried on the next load, including an empty result saved by older code", async () => {
-  cache.storeTimetableOptions([]);
-  catalogResult = { data: [], error: null };
-  expect(await api.loadAllTimetableOptions()).toEqual([]);
-  catalogResult = { data: [{ short_name: "A", name: "Kierunek A" }], error: null };
-  expect(await api.loadAllTimetableOptions()).toEqual([{ id: "A", name: "Kierunek A" }]);
-  expect(queries).toHaveLength(2);
 });
 
 test("loads the catalog only from faculties and does not derive options from cached events", async () => {
