@@ -1,11 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useScheduleManager } from "./useScheduleManager";
-import { getCachedTimetableById, getCachedTimetableOptions, loadAllTimetableOptions, loadTimetableById, loadSharedTimetable } from "../data/timetableApi";
+import { getCachedTimetableById, getCachedTimetableOptions, loadAllTimetableOptions, loadTimetableById } from "../data/timetableApi";
 
 jest.mock("../data/timetableApi", () => ({
   getCachedTimetableById: jest.fn(), getCachedTimetableOptions: jest.fn(),
   loadAllTimetableOptions: jest.fn(), loadTimetableById: jest.fn(),
-  loadSharedTimetable: jest.fn(),
   areCachedTimetableOptionsStale: () => false,
   isCachedTimetableStale: () => false,
   TIMETABLE_REFRESH_INTERVAL_MS: 60000,
@@ -22,10 +21,9 @@ const settings = {
 beforeEach(() => {
   jest.clearAllMocks();
   getCachedTimetableOptions.mockReturnValue([{ id: "main" }]);
-  getCachedTimetableById.mockImplementation(id => id === "main" ? original : external);
+  getCachedTimetableById.mockReturnValue(original);
   loadAllTimetableOptions.mockResolvedValue([{ id: "main" }]);
   loadTimetableById.mockResolvedValue(external);
-  loadSharedTimetable.mockResolvedValue({ schedule: [] });
 });
 
 test("manual refresh bypasses cache for the active and external schedules, keeping groups", async () => {
@@ -33,12 +31,10 @@ test("manual refresh bypasses cache for the active and external schedules, keepi
   await waitFor(() => expect(result.current.loadedTimetables.external).toBe(external));
   loadTimetableById.mockClear();
   const updated = { ...original, schedule: [{ id: "new" }] };
-  getCachedTimetableById.mockImplementation(id => id === "main" ? updated : external);
   loadTimetableById.mockImplementation(async (id) => id === "main" ? updated : external);
   await act(async () => { await result.current.handleRefreshSchedule(); });
   expect(loadTimetableById).toHaveBeenCalledWith("main", { forceRefresh: true });
   expect(loadTimetableById).toHaveBeenCalledWith("external", { forceRefresh: true });
-  expect(loadSharedTimetable).toHaveBeenCalledWith({ forceRefresh: true });
   expect(result.current.schedule).toEqual([{ id: "new" }]);
   expect(result.current.studentGroups).toEqual({ Lab: "L2" });
   expect(result.current.isScheduleRefreshing).toBe(false);

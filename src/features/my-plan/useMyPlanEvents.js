@@ -2,22 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getWeekStart, toIsoDate } from "../../utils/date";
 import { getAddedEventsFromMyPlan, removeAddedEventFromMyPlan } from "./myPlanApi";
 import { mapAddedEvent } from "./eventMappers";
-import { readMyPlanCache, writeMyPlanCache, removeMyPlanCache, isMyPlanCacheStale } from "./myPlanCache";
+import { readMyPlanCache, writeMyPlanCache, removeMyPlanCache } from "./myPlanCache";
 
 const EMPTY_WEEKS = {};
 
-function uniqueAddedEvents(events) {
-  const seen = new Set();
-  return events.filter(event => {
-    const id = event.added_event_id;
-    if (!id) return true;
-    if (seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
-}
-
-export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStart, selectedDayWeekStart, viewMode = "week" }) {
+export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStart, selectedDayWeekStart }) {
   const scope = JSON.stringify([scopeId, scheduleName]);
   const scopeRef = useRef(scope);
   scopeRef.current = scope;
@@ -26,26 +15,23 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
   const revision = useRef(0);
   const mounted = useRef(true);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  const lastRefreshNonce = useRef(0);
   const [removing, setRemoving] = useState(null);
   const weeks = state.scope === scope && enabled ? state.weeks : EMPTY_WEEKS;
-  const weekKeys = toIsoDate(viewMode === "day" ? selectedDayWeekStart : viewedWeekStart);
+  const weekKeys = [...new Set([toIsoDate(viewedWeekStart), toIsoDate(selectedDayWeekStart)].filter(Boolean))].join("|");
 
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; };
   }, []);
 
-  const updateWeeks = useCallback((updater, { persist = false } = {}) => {
+  const updateWeeks = useCallback(updater => {
     if (!mounted.current || scopeRef.current !== scope) return;
     const previous = stateRef.current.scope === scope ? stateRef.current.weeks : {};
     const next = { scope, weeks: updater(previous) };
     stateRef.current = next;
     setState(next);
-    if (persist && scheduleName && enabled) {
-      Object.entries(next.weeks).forEach(([week, events]) => {
-        if (events !== previous[week]) writeMyPlanCache(scopeId, scheduleName, week, events, { refreshed: false });
-      });
+    if (scheduleName && enabled) {
+      Object.entries(next.weeks).forEach(([week, events]) => writeMyPlanCache(scopeId, scheduleName, week, events));
     }
   }, [scope, scopeId, scheduleName, enabled]);
 
@@ -55,8 +41,6 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
 
   useEffect(() => {
     if (!enabled || !scheduleName) return;
-    const forceRefresh = lastRefreshNonce.current !== refreshNonce;
-    lastRefreshNonce.current = refreshNonce;
     let active = true;
     const requestRevision = revision.current;
     const current = () => active && scopeRef.current === scope && revision.current === requestRevision;
@@ -64,14 +48,12 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
     weekKeys.split("|").filter(Boolean).forEach(async week => {
       const cached = readMyPlanCache(scopeId, scheduleName, week);
       if (cached) updateWeeks(previous => previous[week] ? previous : { ...previous, [week]: cached });
-      if (!forceRefresh && cached && !isMyPlanCacheStale(scopeId, scheduleName, week)) return;
       const end = new Date(`${week}T12:00:00`);
       end.setDate(end.getDate() + 6);
       try {
-        const response = await getAddedEventsFromMyPlan({ scheduleName, dateFrom: week, dateTo: toIsoDate(end), forceRefresh });
+        const response = await getAddedEventsFromMyPlan({ scheduleName, dateFrom: week, dateTo: toIsoDate(end) });
         if (!current()) return;
         const events = (response?.events || []).map(event => mapAddedEvent(event)).filter(Boolean);
-        writeMyPlanCache(scopeId, scheduleName, week, events);
         updateWeeks(previous => ({ ...previous, [week]: events }));
       } catch (error) {
         if (!current()) return;
@@ -100,22 +82,19 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
     if (!temporaryAddedEventId || !id || scopeRef.current !== scope) return;
     revision.current += 1;
     updateWeeks(previous => Object.fromEntries(Object.entries(previous).map(([week, events]) => [week,
-      uniqueAddedEvents(events.map(event => {
+      events.map(event => {
         if (event.added_event_id !== temporaryAddedEventId) return event;
         const { __optimistic, ...confirmed } = event;
         return {
           ...confirmed, id: `added-${id}`, added_event_id: id,
           event_id: String(confirmedAddedEvent.event_id || "").trim() || event.event_id,
           reason: String(confirmedAddedEvent.reason || "").trim() || event.reason,
-          // Link status ('active') is distinct from the underlying event status.
-          status: event.status,
+          status: String(confirmedAddedEvent.status || "").trim() || event.status,
         };
-      })),
-    ])), { persist: true });
-    // If an in-flight initial/stale read was superseded by this mutation,
-    // reconcile the rest of the week. Fresh, complete weeks need no extra GET.
-    if (weekKeys && isMyPlanCacheStale(scopeId, scheduleName, weekKeys)) refresh();
-  }, [scope, scopeId, scheduleName, weekKeys, updateWeeks, refresh]);
+      }),
+    ])));
+    refresh();
+  }, [scope, updateWeeks, refresh]);
 
   const rollbackAdd = useCallback(temporaryAddedEventId => {
     if (scopeRef.current !== scope) return;
@@ -140,13 +119,6 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
     setRemoving({ scope, id });
     try {
       await removeAddedEventFromMyPlan({ addedEventId: id, scheduleName });
-      // Persist only after the backend confirms the removal.
-      Object.keys(removedByWeek).forEach(week => {
-        if (scopeRef.current === scope && removedByWeek[week].length) {
-          writeMyPlanCache(scopeId, scheduleName, week, stateRef.current.weeks[week] || [], { refreshed: false });
-        }
-      });
-      if (weekKeys && isMyPlanCacheStale(scopeId, scheduleName, weekKeys)) refresh();
     } catch (error) {
       updateWeeks(previous => {
         const next = { ...previous };
@@ -156,12 +128,12 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
         });
         return next;
       });
-      refresh();
       throw error;
     } finally {
+      refresh();
       if (mounted.current) setRemoving(current => current?.scope === scope && current.id === id ? null : current);
     }
-  }, [scheduleName, scopeId, scope, weekKeys, updateWeeks, refresh]);
+  }, [scheduleName, scope, updateWeeks, refresh]);
 
   return {
     addedEventsByWeek: weeks,

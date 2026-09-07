@@ -1,46 +1,154 @@
 const { respond, setCors } = require("../_lib/http");
+const { resolveUserIdByFirebaseUid } = require("../_lib/users");
 const { verifyRequestUser } = require("../_lib/requestAuth");
 const { getSupabaseAdminClient } = require("../_lib/supabaseAdmin");
 
-// Firebase identity is verified here; only the service-role backend can invoke
-// add_my_plan_event. Validation, user resolution and idempotent insert are atomic.
+/*
+  POST /api/my-plan/add-event
+
+  Cel:
+  - Dopisać istniejący event z tabeli `events` do prywatnego planu użytkownika
+    (tabela `user_added_events`).
+
+  Autoryzacja:
+  - Wymaga Firebase ID token w nagłówku: Authorization: Bearer <token>.
+
+  Body:
+  - event_id: string (id rekordu w `events`)
+  - scheduleName: string (musi odpowiadać `events.faculty`)
+  - reason: opcjonalnie (np. 'makeup')
+
+  Zachowanie:
+  - Endpoint jest idempotentny: jeśli wpis już istnieje jako active -> zwraca ok.
+*/
+
 module.exports = async function handler(req, res) {
   setCors(res);
-  if (req.method === "OPTIONS") return res.status(204).end();
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
-    return respond(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED", message: "Dozwolona metoda: POST." });
+    return respond(res, 405, {
+      ok: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Dozwolona metoda: POST.",
+    });
   }
 
   try {
+    // 1) Auth: sprawdź kto wykonuje operację.
     const { uid } = await verifyRequestUser(req);
+    const supabase = getSupabaseAdminClient();
+
+    // 2) Walidacja wejścia: event_id + nazwa aktualnie oglądanego planu.
     const eventId = String(req.body?.event_id || "").trim();
     const scheduleName = String(req.body?.scheduleName || "").trim();
     const reason = String(req.body?.reason || "makeup").trim() || "makeup";
-    if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(eventId) ||
-        !scheduleName || !["makeup", "optional", "manual"].includes(reason)) {
-      return respond(res, 400, { ok: false, error: "BAD_REQUEST", message: "Niepoprawny event_id, scheduleName lub reason." });
-    }
 
-    const { data, error } = await getSupabaseAdminClient().rpc("add_my_plan_event", {
-      p_firebase_uid: uid,
-      p_event_id: eventId,
-      p_schedule_name: scheduleName,
-      p_reason: reason,
-    });
-    if (error) throw error;
-    if (!data?.ok) {
-      return respond(res, Number(data?.status_code) || 500, {
-        ok: false, error: data?.error || "ADD_EVENT_FAILED",
-        message: data?.message || "Nie udalo sie dodac wydarzenia do planu.",
+    if (!eventId) {
+      return respond(res, 400, {
+        ok: false,
+        error: "BAD_REQUEST",
+        message: "Brak pola event_id.",
       });
     }
-    return respond(res, 200, data);
+
+    if (!scheduleName) {
+      return respond(res, 400, {
+        ok: false,
+        error: "BAD_REQUEST",
+        message: "Brak pola scheduleName.",
+      });
+    }
+
+    // 3) Upewnij się, że istnieje rekord użytkownika w Supabase.
+    const userId = await resolveUserIdByFirebaseUid(supabase, uid);
+
+    // 4) Weryfikacja, że event istnieje, jest aktywny i należy do aktualnie oglądanego planu.
+    const { data: eventRow, error: eventError } = await supabase
+      .from("events")
+      .select("id,status,faculty")
+      .eq("id", eventId)
+      .eq("status", "aktywne")
+      .maybeSingle();
+
+    if (eventError) {
+      throw eventError;
+    }
+
+    if (!eventRow?.id) {
+      return respond(res, 404, {
+        ok: false,
+        error: "EVENT_NOT_FOUND",
+        message: "Nie znaleziono aktywnego wydarzenia.",
+      });
+    }
+
+    // Eventy są powiązane z planem przez `faculty`.
+    // Zapobiega to dopisywaniu eventów z innego planu niż aktualnie oglądany.
+    if (String(eventRow?.faculty || "").trim() !== scheduleName) {
+      return respond(res, 400, {
+        ok: false,
+        error: "EVENT_SCHEDULE_MISMATCH",
+        message: "Ten event nie nalezy do aktualnie ogladanego planu.",
+      });
+    }
+
+    // 5) Idempotencja: jeśli już jest active, nie duplikujemy wpisów.
+    const { data: existingActive, error: existingError } = await supabase
+      .from("user_added_events")
+      .select("id,event_id,status,reason,created_at")
+      .eq("user_id", userId)
+      .eq("event_id", eventId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existingActive?.id) {
+      return respond(res, 200, {
+        ok: true,
+        already_added: true,
+        added_event: existingActive,
+        message: "Ten termin jest juz dodany do Twojego planu.",
+      });
+    }
+
+    // 6) Zapis do `user_added_events` jako soft-link do `events`.
+    const { data: addedRow, error: insertError } = await supabase
+      .from("user_added_events")
+      .insert({
+        user_id: userId,
+        event_id: eventId,
+        reason,
+        status: "active",
+      })
+      .select("id,event_id,status,reason,created_at")
+      .single();
+
+    if (insertError || !addedRow?.id) {
+      throw insertError || new Error("Insert failed");
+    }
+
+    return respond(res, 200, {
+      ok: true,
+      added_event: addedRow,
+    });
   } catch (error) {
     const statusCode = Number(error?.statusCode) || 500;
+    const code = String(error?.code || "ADD_EVENT_FAILED");
+
     return respond(res, statusCode, {
       ok: false,
-      error: statusCode === 401 ? "UNAUTHORIZED" : "ADD_EVENT_FAILED",
-      message: statusCode === 401 ? "Brak autoryzacji. Zaloguj sie ponownie." : "Nie udalo sie dodac wydarzenia do planu.",
+      error: code,
+      message:
+        statusCode === 401
+          ? "Brak autoryzacji. Zaloguj sie ponownie."
+          : "Nie udalo sie dodac wydarzenia do planu.",
     });
   }
 };
