@@ -44,7 +44,7 @@ export function useGroupSets({ savedSettings, currentSchedule, groupConfigs }) {
         activeGroupSetBySchedule: { ...previous.activeGroupSetBySchedule, [currentSchedule]: "set-1" },
       };
     });
-  }, [currentSchedule, groupConfigs, defaultGroups]);
+  }, [currentSchedule, groupConfigs, defaultGroups, savedSettings]);
 
   const updateSets = useCallback(updater => {
     setState(previous => {

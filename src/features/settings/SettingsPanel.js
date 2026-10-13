@@ -112,7 +112,7 @@ export default function SettingsPanel({
     : "";
 
   const handleExportICS = () => exportICS(selectExportEvents({
-    schedule, groups: studentGroups, hideLectures, showAll,
+    schedule, scheduleId: currentSchedule, groups: studentGroups, hideLectures, showAll,
     externalSelections, timetables: loadedTimetables,
   }));
 

@@ -65,7 +65,9 @@ export async function loadTimetableById(id, { forceRefresh = false } = {}) {
     if (isCachedTimetableStale(scheduleId)) void refreshTimetable(scheduleId);
     return cached;
   }
-  if (!supabase) return cached || normalizeTimetable(scheduleId, []);
+  // Missing configuration is a failed load, not a successfully loaded empty
+  // timetable. A fabricated result has no cache entry and triggers reload loops.
+  if (!supabase) return cached || null;
   return refreshTimetable(scheduleId);
 }
 

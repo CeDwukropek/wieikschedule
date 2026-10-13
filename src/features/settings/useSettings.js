@@ -1,183 +1,109 @@
-import { useMemo, useEffect, useState, useCallback, useRef } from "react";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { useGuestId } from "../auth/useGuestId";
 import { useFirebaseAuth } from "../auth/useFirebaseAuth";
 import { db } from "../../lib/firebaseClient";
 
+function readSettings(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value && typeof value === "object" ? value : null;
+  } catch (error) {
+    console.error("Failed to load settings:", error);
+    return null;
+  }
+}
+
+// Firestore can return map keys in a different order from the UI payload.
+function serializeSettings(value) {
+  return JSON.stringify(value, (_key, item) => {
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      return Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]]));
+    }
+    return item;
+  });
+}
+
 export function useSettings() {
-  const userId = useGuestId();
-  const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
-  const previousUserUidRef = useRef(null);
-
-  const SETTINGS_KEY = useMemo(
-    () => `wieikschedule.${user?.uid || userId}.settings`,
-    [user?.uid, userId],
-  );
-  const GUEST_SETTINGS_KEY = useMemo(
-    () => `wieikschedule.${userId}.settings`,
-    [userId],
-  );
-
-  const readSettingsFromKey = useCallback((key) => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {
-      console.error("Failed to load settings:", e);
-    }
-    return null;
-  }, []);
-
-  const readLocalSettings = useCallback(() => {
-    const byUserKey = readSettingsFromKey(SETTINGS_KEY);
-    if (byUserKey && typeof byUserKey === "object") return byUserKey;
-
-    // After login, user-scoped key changes to uid. Keep guest snapshot as fallback.
-    const byGuestKey = readSettingsFromKey(GUEST_SETTINGS_KEY);
-    if (byGuestKey && typeof byGuestKey === "object") return byGuestKey;
-
-    return null;
-  }, [SETTINGS_KEY, GUEST_SETTINGS_KEY, readSettingsFromKey]);
-
-  const [savedSettings, setSavedSettings] = useState(() => readLocalSettings());
+  const guestId = useGuestId();
+  const { user, isLoading: authLoading, isConfigured } = useFirebaseAuth();
+  const uid = user?.uid;
+  const settingsKey = `wieikschedule.${uid || guestId}.settings`;
+  const [hydration, setHydration] = useState(() => ({
+    key: settingsKey, settings: readSettings(settingsKey) || {}, ready: false,
+  }));
 
   useEffect(() => {
-    const currentUserUid = user?.uid || null;
-    const previousUserUid = previousUserUidRef.current;
-
-    if (
-      previousUserUid &&
-      !currentUserUid &&
-      savedSettings &&
-      typeof savedSettings === "object"
-    ) {
-      try {
-        localStorage.setItem(GUEST_SETTINGS_KEY, JSON.stringify(savedSettings));
-      } catch (e) {
-        console.error("Failed to cache settings on logout:", e);
-      }
+    if (authLoading) return;
+    const local = readSettings(settingsKey) || {};
+    if (!uid || !isConfigured || !db) {
+      setHydration({ key: settingsKey, settings: local, ready: true });
+      return;
     }
 
-    previousUserUidRef.current = currentUserUid;
-  }, [user?.uid, savedSettings, GUEST_SETTINGS_KEY]);
-
-  useEffect(() => {
-    let active = true;
-
-    const hydrateFromLocal = () => {
-      const localSettings = readLocalSettings();
-      if (!active) return;
-      setSavedSettings(localSettings);
-    };
-
-    // Always hydrate from localStorage first and keep it as the source of truth for UI.
-    hydrateFromLocal();
-
-    if (!user?.uid || !isAuthConfigured || !db) {
-      return () => {
-        active = false;
-      };
-    }
-
-    // Load from Firestore in background without blocking UI
-    // UI already shows localStorage data (from useState initialization)
-    const loadSettingsFromFirestore = async () => {
-      try {
-        const settingsRef = doc(db, "userSettings", user.uid);
-        const snapshot = await getDoc(settingsRef);
-
-        if (snapshot.exists() && snapshot.data()?.settings) {
-          const firestoreSettings = snapshot.data().settings;
-          if (active) {
-            // Update localStorage and state with Firestore data
-            localStorage.setItem(
-              SETTINGS_KEY,
-              JSON.stringify(firestoreSettings),
-            );
-            setSavedSettings(firestoreSettings);
-          }
+    setHydration({ key: settingsKey, settings: local, ready: false });
+    let hydrated = false;
+    // A cached snapshot cannot establish whether another device has newer settings.
+    return onSnapshot(doc(db, "userSettings", uid), { includeMetadataChanges: true }, snapshot => {
+      if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+      const remote = snapshot.exists() ? snapshot.data()?.settings : null;
+      const settings = remote || local;
+      // Our own writes are already reflected in the UI; do not replay them.
+      if (hydrated && serializeSettings(remote) === serializeSettings(readSettings(settingsKey))) return;
+      hydrated = true;
+      if (settings) {
+        try {
+          localStorage.setItem(settingsKey, serializeSettings(settings));
+        } catch (error) {
+          console.error("Failed to cache cloud settings:", error);
         }
-      } catch (e) {
-        console.error("Failed to load settings from Firestore:", e);
       }
-    };
-
-    // Always fetch from Firestore in background (non-blocking)
-    loadSettingsFromFirestore();
-
-    return () => {
-      active = false;
-    };
-  }, [
-    user,
-    isAuthConfigured,
-    SETTINGS_KEY,
-    GUEST_SETTINGS_KEY,
-    readSettingsFromKey,
-    readLocalSettings,
-  ]);
+      setHydration({ key: settingsKey, settings, ready: true });
+    }, error => {
+      // A failed initial read must not allow defaults to overwrite cloud sets.
+      console.error("Failed to load settings from Firestore:", error);
+    });
+  }, [authLoading, uid, isConfigured, settingsKey]);
 
   return {
-    savedSettings,
-    isLoading: false,
+    savedSettings: hydration.key === settingsKey ? hydration.settings : readSettings(settingsKey) || {},
+    isLoading: Boolean(authLoading) || hydration.key !== settingsKey || !hydration.ready,
   };
 }
 
 export function usePersistSettings(settings, enabled = true) {
-  const userId = useGuestId();
-  const { user, isConfigured: isAuthConfigured } = useFirebaseAuth();
+  const guestId = useGuestId();
+  const { user, isLoading: authLoading, isConfigured } = useFirebaseAuth();
+  const uid = user?.uid;
+  const settingsKey = `wieikschedule.${uid || guestId}.settings`;
   const lastSavedSignatureRef = useRef("");
-
-  const SETTINGS_KEY = useMemo(
-    () => `wieikschedule.${user?.uid || userId}.settings`,
-    [user?.uid, userId],
-  );
-  const GUEST_SETTINGS_KEY = useMemo(
-    () => `wieikschedule.${userId}.settings`,
-    [userId],
-  );
-
-  const settingsSignature = useMemo(
-    () => JSON.stringify([SETTINGS_KEY, settings || {}]),
-    [SETTINGS_KEY, settings],
-  );
+  const signature = serializeSettings([settingsKey, settings]);
 
   useEffect(() => {
-    if (!enabled) return;
-    if (!settings || typeof settings !== "object") return;
-    if (!Object.keys(settings || {}).length) return;
-    if (settingsSignature === lastSavedSignatureRef.current) return;
+    if (!enabled || authLoading || !settings || !Object.keys(settings).length) return;
+    if (signature === lastSavedSignatureRef.current) return;
 
-    lastSavedSignatureRef.current = settingsSignature;
-
-    try {
-      const serialized = JSON.stringify(settings);
-      localStorage.setItem(SETTINGS_KEY, serialized);
-      localStorage.setItem(GUEST_SETTINGS_KEY, serialized);
-
-      if (user?.uid && isAuthConfigured && db) {
-        const settingsRef = doc(db, "userSettings", user.uid);
-        setDoc(
-          settingsRef,
-          {
-            settings,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true },
-        ).catch((e) => {
-          console.error("Failed to save cloud settings:", e);
+    // Allow hydration effects to render first and cancel stale writes on changes.
+    const timer = setTimeout(() => {
+      const serialized = serializeSettings(settings);
+      try {
+        localStorage.setItem(settingsKey, serialized);
+        if (!uid || !isConfigured || !db) {
+          lastSavedSignatureRef.current = signature;
+          return;
+        }
+        // Replace the settings map so deleting sets also removes them remotely.
+        setDoc(doc(db, "userSettings", uid), {
+          settings, updatedAt: serverTimestamp(),
+        }).then(() => {
+          lastSavedSignatureRef.current = signature;
+        }).catch(error => {
+          console.error("Failed to save cloud settings:", error);
         });
+      } catch (error) {
+        console.error("Failed to save settings:", error);
       }
-    } catch (e) {
-      console.error("Failed to save settings:", e);
-    }
-  }, [
-    settings,
-    settingsSignature,
-    SETTINGS_KEY,
-    GUEST_SETTINGS_KEY,
-    enabled,
-    user,
-    isAuthConfigured,
-  ]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [settings, signature, settingsKey, enabled, authLoading, uid, isConfigured]);
 }

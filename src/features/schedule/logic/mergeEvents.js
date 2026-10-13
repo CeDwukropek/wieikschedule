@@ -1,19 +1,23 @@
 import { filterEvents } from "./filterEvents";
 import { selectExternalEvents } from "./externalEvents";
+import { eventIdentity } from "./eventIdentity";
 
 export function mergeEvents({
-  schedule, groups, hideLectures, showAll, weekStart,
+  schedule, scheduleId = "", groups, hideLectures, showAll, weekStart,
   externalSelections = [], timetables = {}, addedEvents = [],
 }) {
   const base = filterEvents(schedule, groups, hideLectures, showAll, weekStart);
   const baseIds = new Set(base.map(event => String(event.event_id || "").trim()).filter(Boolean));
   const merged = new Map();
   base.forEach(event => {
-    const key = ["base", event.id, event.day, event.start, event.end, event.room].join("::");
+    const key = eventIdentity(event, scheduleId);
     merged.set(key, { ...event, origin: "base" });
   });
   selectExternalEvents(externalSelections, timetables, hideLectures, weekStart)
-    .forEach(({ key, event }) => merged.set(key, event));
+    .forEach(({ key, event }) => {
+      if (!merged.has(key)) merged.set(key, event);
+      if (event.event_id) baseIds.add(String(event.event_id).trim());
+    });
   addedEvents.forEach(event => {
     if (baseIds.has(String(event.event_id || "").trim())) return;
     const key = ["added", event.added_event_id || "", event.event_id || "",

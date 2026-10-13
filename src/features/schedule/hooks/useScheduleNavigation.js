@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDate, getWeekStart, parseDaySelection, WEEKDAYS } from "../../../utils/date";
 
 function savedWeekOffset(settings) {
@@ -12,9 +12,14 @@ export function useScheduleNavigation({ minDate, maxDate, savedSettings }) {
   const defaultDay = Math.min((today.getDay() + 6) % 7, 4);
   const [weekOffset, setWeekOffset] = useState(() => savedWeekOffset(savedSettings));
   const [selection, setSelection] = useState(`0:${defaultDay}`);
+  const hasNavigated = useRef(false);
+  const changeWeek = useCallback(value => {
+    hasNavigated.current = true;
+    setWeekOffset(value);
+  }, []);
 
   useEffect(() => {
-    if (savedSettings) setWeekOffset(savedWeekOffset(savedSettings));
+    if (savedSettings && !hasNavigated.current) setWeekOffset(savedWeekOffset(savedSettings));
   }, [savedSettings]);
 
   const getWeekStartByOffset = useCallback(offset => {
@@ -77,11 +82,11 @@ export function useScheduleNavigation({ minDate, maxDate, savedSettings }) {
       isCurrentWeek: weekOffset === 0,
       canGoPrevWeek: weekOffset > minOffset,
       canGoNextWeek: weekOffset < maxOffset,
-      onPrevWeek: () => setWeekOffset(offset => Math.max(offset - 1, minOffset)),
-      onNextWeek: () => setWeekOffset(offset => Math.min(offset + 1, maxOffset)),
-      onResetWeek: () => setWeekOffset(0),
+      onPrevWeek: () => changeWeek(offset => Math.max(offset - 1, minOffset)),
+      onNextWeek: () => changeWeek(offset => Math.min(offset + 1, maxOffset)),
+      onResetWeek: () => changeWeek(0),
     },
-    weekSelection: { options: weekOptions, selection: weekOffset, onChange: setWeekOffset },
+    weekSelection: { options: weekOptions, selection: weekOffset, onChange: changeWeek },
     dayNavigation: {
       currentDayLabel: selectedOption ? `${selectedOption.label} ${selectedOption.date}` : "",
       isCurrentDay: selected.weekOffset === 0 && selected.dayIndex === defaultDay,
