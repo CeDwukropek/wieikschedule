@@ -141,6 +141,10 @@ export function useTimetableData(savedSettings) {
   }, [hasLoadedTimetableOptions, isTimetableOptionsLoading, timetableOptions]);
 
   const failedScheduleLoadsRef = useRef(new Map());
+  // Freshness of the displayed data must not depend solely on persistent cache.
+  // Updating loadedTimetables reruns loading effects, so track successful loads
+  // independently to avoid immediately fetching the same plan again.
+  const successfulScheduleLoadsRef = useRef(new Map());
 
   useEffect(() => {
     if (savedSettings?.currentSchedule != null) setCurrentSchedule(savedSettings.currentSchedule);
@@ -152,8 +156,11 @@ export function useTimetableData(savedSettings) {
     if (!targetId) return () => {};
 
     const hasLoadedTarget = Boolean(loadedTimetables[targetId]);
+    const loadedAt = successfulScheduleLoadsRef.current.get(targetId);
+    const recentlyLoaded = Number.isFinite(loadedAt) &&
+      Date.now() - loadedAt < TIMETABLE_REFRESH_INTERVAL_MS;
     const shouldRefreshLoadedTarget =
-      hasLoadedTarget && isCachedTimetableStale(targetId);
+      !recentlyLoaded && isCachedTimetableStale(targetId);
     if (hasLoadedTarget && !shouldRefreshLoadedTarget) return () => {};
 
     const lastFailedAt = failedScheduleLoadsRef.current.get(targetId);
@@ -178,10 +185,16 @@ export function useTimetableData(savedSettings) {
         }
 
         failedScheduleLoadsRef.current.delete(targetId);
+        successfulScheduleLoadsRef.current.set(targetId, Date.now());
         setLoadedTimetables((prev) => {
           if (prev[targetId] === timetable) return prev;
           return { ...prev, [targetId]: timetable };
         });
+      })
+      .catch((error) => {
+        if (!active) return;
+        failedScheduleLoadsRef.current.set(targetId, Date.now());
+        console.error("[schedule] Failed to load timetable", error);
       })
       .finally(() => {
         if (scheduleLoadRequestIdRef.current === requestId) {
@@ -237,6 +250,7 @@ export function useTimetableData(savedSettings) {
         if (result.status === "fulfilled" && result.value) {
           updates[ids[index]] = result.value;
           failedScheduleLoadsRef.current.delete(ids[index]);
+          successfulScheduleLoadsRef.current.set(ids[index], Date.now());
         }
       });
       setLoadedTimetables((prev) => ({ ...prev, ...updates }));
@@ -264,18 +278,34 @@ export function useTimetableData(savedSettings) {
 
     referencedScheduleIds.forEach((scheduleId) => {
       const hasLoadedReference = Boolean(loadedTimetables[scheduleId]);
+      const loadedAt = successfulScheduleLoadsRef.current.get(scheduleId);
+      const recentlyLoaded = Number.isFinite(loadedAt) &&
+        Date.now() - loadedAt < TIMETABLE_REFRESH_INTERVAL_MS;
       const shouldRefreshLoadedReference =
-        hasLoadedReference && isCachedTimetableStale(scheduleId);
+        !recentlyLoaded && isCachedTimetableStale(scheduleId);
       if (hasLoadedReference && !shouldRefreshLoadedReference) return;
+      const lastFailedAt = failedScheduleLoadsRef.current.get(scheduleId);
+      if (Number.isFinite(lastFailedAt) &&
+          Date.now() - lastFailedAt < SCHEDULE_LOAD_RETRY_COOLDOWN_MS) return;
 
       loadTimetableById(scheduleId, {
         forceRefresh: shouldRefreshLoadedReference,
       }).then((timetable) => {
-        if (!active || !timetable) return;
+        if (!active) return;
+        if (!timetable) {
+          failedScheduleLoadsRef.current.set(scheduleId, Date.now());
+          return;
+        }
+        failedScheduleLoadsRef.current.delete(scheduleId);
+        successfulScheduleLoadsRef.current.set(scheduleId, Date.now());
         setLoadedTimetables((prev) => {
           if (prev[scheduleId] === timetable) return prev;
           return { ...prev, [scheduleId]: timetable };
         });
+      }).catch((error) => {
+        if (!active) return;
+        failedScheduleLoadsRef.current.set(scheduleId, Date.now());
+        console.error("[schedule] Failed to load external timetable", error);
       });
     });
 

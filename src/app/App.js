@@ -21,7 +21,7 @@ export default function App() {
   const [open, setOpen] = useState(false);
   const { user } = useFirebaseAuth();
   const guestId = useGuestId();
-  const { savedSettings } = useSettings();
+  const { savedSettings, isLoading: settingsLoading } = useSettings();
   const view = useViewSettings(savedSettings);
   const schedule = useScheduleManager(savedSettings);
   const navigation = useScheduleNavigation({
@@ -40,6 +40,7 @@ export default function App() {
   const eventOptions = useMemo(
     () => ({
       schedule: schedule.schedule,
+      scheduleId: schedule.currentSchedule,
       groups: schedule.studentGroups,
       hideLectures: view.hideLectures,
       showAll: view.showAll,
@@ -48,6 +49,7 @@ export default function App() {
     }),
     [
       schedule.schedule,
+      schedule.currentSchedule,
       schedule.studentGroups,
       schedule.activeExternalSelections,
       schedule.loadedTimetables,
@@ -88,7 +90,7 @@ export default function App() {
       scheduleGroupSets: schedule.scheduleGroupSets,
       activeGroupSetBySchedule: schedule.activeGroupSetBySchedule,
     },
-    view.ready,
+    view.ready && !settingsLoading,
   );
 
   const calendarProps = {

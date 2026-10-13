@@ -7,9 +7,9 @@ export function useViewSettings(savedSettings) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (typeof savedSettings?.viewMode === "string") setViewMode(savedSettings.viewMode);
-    if (typeof savedSettings?.hideLectures === "boolean") setHideLectures(savedSettings.hideLectures);
-    if (typeof savedSettings?.showAll === "boolean") setShowAll(savedSettings.showAll);
+    setViewMode(savedSettings?.viewMode ?? "week");
+    setHideLectures(savedSettings?.hideLectures ?? false);
+    setShowAll(savedSettings?.showAll ?? false);
     setReady(true);
   }, [savedSettings]);
 
