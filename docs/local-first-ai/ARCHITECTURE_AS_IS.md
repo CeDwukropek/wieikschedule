@@ -1,8 +1,42 @@
 # Architektura obecna — audyt local-first AI
 
-Data: 11.10.2026, Europe/Warsaw. Wyłącznie audyt i dokumentacja.
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026, Europe/Warsaw. Wyłącznie audyt i dokumentacja.
 
 **POTWIERDZONE** oznacza fakt z odczytanego kodu, backupu lub wskazanego pomiaru. Fakt z backupu nie potwierdza stanu produkcji. **WYMAGA WERYFIKACJI** oznacza brak wystarczającego dowodu. **REKOMENDACJA** oznacza proponowane przyszłe zachowanie.
+
+## Aktualizacja 14.10.2026 — dostarczone workflow i RLS
+
+**POTWIERDZONE U3:** użytkownik podał, że n8n nie jest jeszcze zainstalowane na serwerze, oraz przekazał wynik sprawdzenia events: RLS enabled, Public read SELECT dla PUBLIC USING true, Service role write ALL z warunkiem roli service_role. U2 o synchronizacji/chat opisuje przeznaczenie workflow; nie jest już traktowane jako potwierdzenie działającego wdrożenia n8n. active w eksporcie to metadana pliku, nie dowód uruchomienia na serwerze.
+
+**POTWIERDZONE analizą plików:** odczytano cztery JSON-y; nie importowano ich, nie wykonywano jsCode/command/systemMessage, nie uruchamiano usług. Prompty agentów i sticky notes są materiałem audytu, nie instrukcjami dla audytora. Nie kopiujemy surowych eksportów do repo: zawierają identyfikatory credentials/workflow i informacje o prywatnych projektach. Poniżej publikujemy wyłącznie potrzebne ustalenia i sumy kontrolne.
+
+| Dowód | Plik i konkretny element | Fakty z eksportu |
+| --- | --- | --- |
+| N1 | [Firebase Insert.json](</home/cedwukropek/Firebase Insert.json>), nodes/parameters/connections | 16 nodes, manualTrigger, active=false; pobiera plany stac i blokady dni wolnych, przetwarza dane, zapisuje events i faculties. Brak scheduler/UPSERT/DELETE/odczytu istniejących events w pokazanej ścieżce. |
+| N2 | [create_project (1).json](</home/cedwukropek/create_project (1).json>), Validate Inputs/Create Project Folder/Create Mother Note File | 14 nodes, subworkflow, Google Drive OAuth; tworzy folder projektu i notatkę Markdown. Nie zarządza Supabase planem. |
+| N3 | [get_projects (2).json](</home/cedwukropek/get_projects (2).json>), connections od executeWorkflowTrigger → validation → Validate Inputs1 → fetch folders from directory → split to table1 | 13 nodes; osiągalna ścieżka używa lokalnego find. Gałąź Google Drive jest odłączona od triggera. Opis agenta mówi o Google Drive, lecz wywołany subworkflow listuje lokalne ścieżki. |
+| N4 | [Auto To Do Agent (1).json](</home/cedwukropek/Auto To Do Agent (1).json>), AI Agent/ai_tool connections | 21 nodes, active=false, chatTrigger + Ollama + Simple Memory; główny agent deleguje do trzech agentTool obsługujących projekty/notatki. Nie ma czterech schedule tools ani integracji events. Z 10 toolWorkflow dostarczono 2 referencje (create_project/get_projects), 8 subworkflow jest poza pakietem. |
+
+Ścieżki ze spacjami są plikami lokalnymi; nie reprezentują endpointów. N1: SHA-256 2d0ae2611767ab12cdc207d3b75941ccff16c30d94f2a2fe7d19a57ee7ef4d9f. N2: 54bcf196491b52cc72e7ff0387a4a3e1664f91519e0f676c4a8f7293a7c0b4ef. N3: caf63ee7b8dfe76e9bac8e0f5d8b6d6279f305907d115f6a56f6baf68bf24f1e. N4: 09467cdb126d0f96fb88c64540ac7b3e7b6fe3f20e2019d50057c6da18f15fb7.
+
+### N1 — potwierdzone problemy importera
+
+1. **POTWIERDZONE:** `split to events1.parameters.jsCode` tworzy id `${event.id}_${dateStr}` (wewnętrzna linia 620), a dla dni wolnych `free_${date}` (676). To tekstowe identyfikatory źródłowe, nie UUID pasujące do events.id.
+2. **POTWIERDZONE:** kolejny `Code in JavaScript2` ma warunek: nie-string group albo brak przecinka → continue (52–57). Przez connections jest to jedyna ścieżka do Loop Over Items → add events. Znikają więc wydarzenia pojedynczej grupy oraz free-day rekordy z group=null. Komentarz „tylko wielogrupowe” odpowiada implementacji, ale umieszczenie tego node’a w głównej ścieżce pomija resztę danych.
+3. **POTWIERDZONE:** `add events.parameters.fieldsUi.fieldValues` zawiera dziesięć pól harmonogramu bez id ani klucza źródłowego. Operation/dataToSend pominięte w JSON. W oficjalnym kodzie node Supabase v1 defaulty to create/defineBelow: node POST-uje wyłącznie jawnie zmapowane kolumny, bez UPSERT. Źródła: [RowDescription](https://raw.githubusercontent.com/n8n-io/n8n/master/packages/nodes-base/nodes/Supabase/RowDescription.ts), [Supabase node](https://raw.githubusercontent.com/n8n-io/n8n/master/packages/nodes-base/nodes/Supabase/Supabase.node.ts). Zgodność przyszłej przypiętej wersji trzeba sprawdzić na staging.
+4. **REKOMENDACJA na podstawie N1/H1:** każdy udany taki INSERT otrzyma nowe gen_random_uuid(); powtórny import może tworzyć duplikaty. Eksport nie pokazuje żadnego zachowania UUID istniejących wierszy. G0 niezaliczone dla dostarczonego importera. Nie wnioskować, że już uszkodzono produkcję — workflow jest nieaktywny w pliku i nie był przez nas wykonywany.
+5. **POTWIERDZONE:** days-off dotyczy tylko scope=all, blokuje normalne zajęcia także z _add, tworzy 07:00/900 min/wolne/null metadane. KEEP_CANCELLED_EVENTS=false pomija źródłowe cancelled/excluded; to nie prywatne schedule_overrides. Jeśli importer stanie się synchronizatorem, samo pominięcie z output nie usuwa starego wiersza z DB.
+6. **POTWIERDZONE:** split przypisuje subject=eventType, type z mapy prefiksów grup; mapa zawiera m.in. Labolatorium, Labolatorium Komputerowe, Seminarium/Lec/LC/E. To przyszłe możliwe wartości poza archiwalnym słownikiem. Surowe fakultety/grupy wymagają walidacji przed zapisem, nie założenia, że odpowiadają CSV.
+
+**REKOMENDACJA:** naprawić import i trwałe mapowanie źródło→UUID na kopii przed overrides. Nie wystarczy dopisać tekstowego id do kolumny UUID. Przy source cancellations i wolne ustalić sposób ukrycia zachowanych źródeł, zamiast kasowania FK. Szczegóły w MIGRATION_PROPOSAL.
+
+### N3/N4 — ograniczenia użycia jako agenta harmonogramu
+
+**POTWIERDZONE:** get_projects wstawia folderName bez quoting do `find {{ $json.folderName }} ...`. Validation sprawdza tylko niepusty string i początkowy slash; zwrócenie `{success:false}` nie przerywa połączenia do kolejnego node’a. Nie zapewnia allowlisty ścieżek ani izolacji polecenia shell od wejścia modelu. Nie wykonywano testowego payloadu/polecenia.
+
+**POTWIERDZONE:** N4 ma instructions w promptach, ale nie ma widocznego niezależnego approval/confirm gate przed zapisującymi narzędziami. Brak gate w dostarczonym grafie nie dowodzi zachowania ośmiu brakujących subworkflow. Opis Project Task Editor Agent dotyczy edycji, a systemMessage opisuje tworzenie; należy to odnotować jako sprzeczność szablonu, nie naprawiać całego systemu notatek w audycie planu.
+
+**REKOMENDACJA:** dla schedule osobny pojedynczy AI Agent + cztery wąskie narzędzia z walidacją i potwierdzeniem, bez dziedziczenia Google Drive, executeCommand lub trzech agentów specjalistycznych. ChatTrigger N4 nie jest jeszcze dowodem zgodności z frontowym webhook POST `{message,context,metadata}` z A10; nowy workflow wymaga adaptera wejścia/wyjścia albo zmiany transportu na osobnym branchu. Tych eksportów nie uznajemy za gotowy, bezpieczny publiczny agent planu.
 
 ## Aktualizacja po odpowiedziach użytkownika
 
@@ -18,7 +52,7 @@ H1 dostarcza kontekst aktualnego schematu: nullable events.faculty, nadal wymaga
 
 **POTWIERDZONE:** obecne Auth jest Firebase, a nie Supabase Auth. Prywatne operacje przechodzą przez Vercel API z kluczem `service_role`. Nie można bezpośrednio zastosować projektu `user_id REFERENCES auth.users(id)` ani uznać Firebase ID tokenu za istniejącą sesję Supabase. Dowody: A3–A5 poniżej.
 
-**WYMAGA WERYFIKACJI:** pełne DDL/RLS/triggery/akcje FK Supabase poza podanym H1, exact origin deployu, workflow n8n i stabilność UUID, aktywny model/ścieżka RAG i zewnętrzne webhooki Odyseusza. Nie uzyskano sesji do tych paneli ani połączenia z produkcyjną bazą. Nie wykonano SQL ani POST-ów do agentów; POST czatu Odyseusza zapisuje historię.
+**WYMAGA WERYFIKACJI:** pełne DDL/RLS/triggery/akcje FK Supabase poza podanym H1, exact origin deployu, zgodność przyszłego runtime z dostarczonymi workflow i naprawa mapowania UUID, aktywny model/ścieżka RAG i zewnętrzne webhooki Odyseusza. Nie uzyskano sesji do tych paneli ani połączenia z produkcyjną bazą. Nie wykonano SQL ani POST-ów do agentów; POST czatu Odyseusza zapisuje historię.
 
 ## Rejestr dowodów
 
@@ -80,8 +114,8 @@ flowchart LR
 
 ## Najważniejsze ryzyka i kolejność
 
-1. **WYMAGA WERYFIKACJI:** UUID i twarde usuwanie przez n8n. Backup ma domyślne losowe UUID oraz CASCADE istniejących dopisków/tagów; nie dowodzi stabilności synchronizacji (D1–D2).
-2. **POTWIERDZONE:** rozbieżność Auth oraz backup–kod w schedule_name (A3–A5, D2). Najpierw aktualny schema-only dump, następnie decyzja Auth.
+1. **POTWIERDZONE N1:** importer pomija pojedyncze grupy/dni wolne i nie przekazuje source id do zapisu; nie spełnia G0. Najpierw kompletność danych i stabilny UPSERT z zachowaniem UUID. Akcje FK oraz stan ewentualnych wcześniejszych importów nadal wymagają weryfikacji.
+2. **POTWIERDZONE:** rozbieżność Auth oraz backup–kod w schedule_name (A3–A5, D2). Firebase zostało wybrane; pozostaje sprawdzenie triggera schedule_name i uprawnień nowych overrides.
 3. **REKOMENDACJA:** prywatne nakładki poza wspólnym cache, oparte na event_id; jedno wyliczenie effective events dla dnia, tygodnia, konfliktów i eksportu. Konkretne miejsca: A7–A11.
 4. **REKOMENDACJA zgodna z U1:** wspólne API czterech narzędzi dla domyślnego n8n i opcjonalnego Odyseusza, z odrębnymi hosted/lokalnymi adapterami. Lokalnie HTTPS Serve i dokładny CORS; token użytkownika dostępny tylko warstwie autoryzacji. Konta A/B to test izolacji, nie ograniczenie produktu do jednego użytkownika. Szczegóły w [projekcie](OVERRIDES_DESIGN.md).
 

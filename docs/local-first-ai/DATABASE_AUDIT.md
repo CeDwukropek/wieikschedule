@@ -1,6 +1,16 @@
 # Audyt bazy i tożsamości
 
-Data: 11.10.2026. Statusy i dowody A/D odnoszą się do [rejestru](ARCHITECTURE_AS_IS.md). Nie połączono się z produkcyjnym Supabase. SQL poniżej to wyłącznie zapytania do przyszłego odczytu, nie wykonane operacje.
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026. Statusy i dowody A/D odnoszą się do [rejestru](ARCHITECTURE_AS_IS.md). Nie połączono się z produkcyjnym Supabase. SQL poniżej to wyłącznie zapytania do przyszłego odczytu, nie wykonane operacje.
+
+## Aktualizacja U3 — RLS events potwierdzone przez użytkownika
+
+**POTWIERDZONE U3 (relacja użytkownika z panelu):** public.events ma włączone RLS oraz dwie polityki: Public read — SELECT dla PUBLIC USING true; Service role write — ALL z warunkiem roli service_role. PUBLIC oznacza zastosowanie polityki do ról, a nie nazwę schematu. Publiczna polityka pozwala odczytać bazowy plan przy odpowiednich grantach. Nie daje zgody na prywatne overrides.
+
+**WYMAGA WERYFIKACJI:** aktualne GRANT/default ACL, pełne USING/WITH CHECK i akcje FK/triggerów; użytkownik nie podał polityk users/user_added_events/tag_definitions/user_event_tags ani faculties. Nie deklarować bezpieczeństwa tych tabel na podstawie polityk events. service_role ma uprzywilejowany dostęp omijający RLS; nie przekazywać go agentowi ([Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)).
+
+**REKOMENDACJA:** kontrolowany importer źródłowy może wymagać uprzywilejowanej ścieżki backendowej; odseparować jego credential od n8n AI Agent i od narzędzi personal overrides. N1 ma referencję credential supabaseApi, ale sam plik nie dowodzi jego wartości/uprawnień ani udanego wykonania. Agent korzysta tylko z user-scoped tools/JWT, a nie node’a swobodnego zapisu events.
+
+**POTWIERDZONE N1/H1:** writer nie mapuje id ani source_key, a events.id ma default gen_random_uuid. Kod parsera generuje tekstowe source id, które są potem pomijane przy zapisie. Szczegóły i blokada G0 w ARCHITECTURE_AS_IS/MIGRATION_PROPOSAL. Przed DB overrides trzeba naprawić importer i sprawdzić istniejące duplikaty/powiązania; nie wykonywać automatycznej deduplikacji na produkcji.
 
 ## Aktualizacja H1 — schemat przekazany przez użytkownika
 
@@ -63,6 +73,8 @@ Indeks `(faculty,date)` jest w linii 219. Nie ma source_id/source_key/upstream r
 ## Słowniki i dane archiwalne
 
 **POTWIERDZONE:** agregacja `COPY public.events` z [data.sql](../../DB/Backups/06_09_2026/data.sql) i analogicznej sekcji data-fixed.sql: 4696 rekordów, 4696 różnych id, daty 2025-05-07–2026-06-16, duration 45–900. Wszystkie badane kolumny events w tych sekcjach mają zero markerów SQL NULL (`\N`). CSV zawiera te same liczności słowników, lecz nie zawiera id. Dwa pliki tego samego backupu nie są dowodem zachowania UUID między synchronizacjami.
+
+**POTWIERDZONE N1:** nowy parser emituje także status wolne i faculty all dla dni wolnych, z group/type/instructor/room=null; przy KEEP_CANCELLED_EVENTS=true mógłby emitować nieaktywne. Typy z mapType obejmują m.in. Labolatorium, Labolatorium Komputerowe, Seminarium, Lec, Lec. L, LC i E; łączenie typów używa slash. Obecna ścieżka Code in JavaScript2 pomija jednak day-off i single-group przed DB, więc parser output nie dowodzi wartości zapisanych w produkcji.
 
 **WYMAGA WERYFIKACJI:** aktualne dane, w szczególności przekazany przykład z 2026-10-02, faculty=all i NULL-ami. `all` ma obsługę w loaderze, ale nie występuje w archiwum. Dokładne kompletne wartości archiwalne znajdują się w dodatku na końcu dokumentu; wartości puste, NULL i wielkość liter muszą być rozróżniane w aktualnej agregacji.
 

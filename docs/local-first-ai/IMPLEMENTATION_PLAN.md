@@ -1,16 +1,22 @@
 # Etapowy plan wdrożenia po decyzjach użytkownika
 
-Data: 11.10.2026. **POTWIERDZONE U1/U2:** Firebase zostaje; alpha-online-account to główny deploy; n8n synchronizuje events i jest agentem domyślnym; Odyseusz jest opcjonalnym lokalnym zamiennikiem o tych samych narzędziach. Bez historii overrides; cancel ukrywa pozycję; dopiski w ICS; czas 07:00–22:00. **REKOMENDACJA:** poniższa kolejność, bez wdrożenia kodu/DDL/usług w obecnym audycie. Stan decyzji i kopii w [HUMAN_ACTIONS](HUMAN_ACTIONS.md).
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026. **POTWIERDZONE U1/U2:** Firebase zostaje; alpha-online-account to główny deploy; n8n synchronizuje events i jest agentem domyślnym; Odyseusz jest opcjonalnym lokalnym zamiennikiem o tych samych narzędziach. Bez historii overrides; cancel ukrywa pozycję; dopiski w ICS; czas 07:00–22:00. **REKOMENDACJA:** poniższa kolejność, bez wdrożenia kodu/DDL/usług w obecnym audycie. Stan decyzji i kopii w [HUMAN_ACTIONS](HUMAN_ACTIONS.md).
+
+## Stan po dostarczeniu materiałów 14.10.2026
+
+**POTWIERDZONE U3/N1–N4:** cztery eksporty przeanalizowano; n8n nie jest jeszcze zainstalowane na serwerze. Potwierdzone przez użytkownika RLS events: publiczny SELECT i uprzywilejowana polityka ALL. Importer Firebase Insert pomija single-group/dni wolne, nie mapuje source id do DB, korzysta z Create bez UPSERT/reconciliation. G0 niezaliczone. Pozostałe workflow są od projektów/notatek; nie ma gotowego schedule agent.
+
+**REKOMENDACJA kolejności:** etap 1/2 zaczyna się teraz od projektu naprawy importera i stabilnych tożsamości na kopii, następnie overrides i ręczny UI/ICS, potem zatwierdzone testowe wdrożenie n8n i nowego jednoagentowego workflow schedule. Nie uruchamiamy kontenerów ani dostarczonego importera w ramach audytu.
 
 ## 1. Audyt
 
-**Zadania LLM-a:** wykonany audyt aktywnego React/Firebase/Supabase, archiwalnego SQL i lokalnego Odyseusza. Włączyć H1 do porównania schematów; następnie sprawdzić dwa workflow n8n (synchronizacja i chat), stabilność UUID, aktualne FK/RLS/triggery oraz kontrakt native agenta/RAG. Rozstrzygnąć brak schedule_name w INSERT. U1/U2 są źródłem deklaracji użytkownika, nie testem produkcji.
+**Zadania LLM-a:** wykonany audyt aktywnego React/Firebase/Supabase, archiwalnego SQL i lokalnego Odyseusza. Włączyć H1 do porównania schematów; analiza dostarczonego importera i agentowego szablonu jest wykonana; zaprojektować naprawę stwierdzonych błędów, następnie testy UUID na kopii, aktualne FK/RLS/triggery oraz kontrakt native agenta/RAG. Rozstrzygnąć brak schedule_name w INSERT. U1/U2 są źródłem deklaracji użytkownika, nie testem produkcji.
 
-**Zadania człowieka:** teraz tylko oczyszczone eksporty dwóch workflow i publiczny URL strony do CORS; przed migracją wyniki odczytu polityk/triggerów/FK i kopia DB. Klucze .env nie są potrzebne. Nie wymagać ponownej konfiguracji działającego Google login.
+**Zadania człowieka:** eksporty i potwierdzenie RLS events już dostarczone, bez potrzeby kolejnych sekretów. Publiczny URL strony będzie potrzebny do CORS; dopiero przed migracją pełne FK/triggery/RLS prywatnych tabel i kopia DB. Klucze .env nie są potrzebne. Nie wymagać ponownej konfiguracji działającego Google login.
 
-**Zależności:** repo oraz H1 dostępne; workflow i DB security metadata nadal brak.
+**Zależności:** repo oraz H1 dostępne; workflow otrzymano; brak tylko potwierdzenia istniejących wykonań oraz pełnych DB security metadata/triggerów/FK.
 
-**Ryzyka:** UUID odtwarzane przez synchronizację; opis schematu nie pokazuje triggerów/ON DELETE; komentarz o usunięciu schedule_name przeczy H1. Aktualny repo Odyseusza ma lokalne zmiany, a obraz latest jest ruchomy.
+**Ryzyka:** potwierdzone pomijanie części danych i brak UPSERT/mapowania UUID w N1; opis schematu nie pokazuje triggerów/ON DELETE; komentarz o usunięciu schedule_name przeczy H1. Aktualny repo Odyseusza ma lokalne zmiany, a obraz latest jest ruchomy.
 
 **Testy:** dwa identyczne importy, przeniesienie daty/godziny, usunięcie/reappearance i niepełne pobranie na klonie; porównać UUID oraz dopiski/tagi. Sprawdzić rzeczywiste pg_get_constraintdef/pg_policies. Testy odczytu nie mogą deklarować timeoutu jako skutecznej odmowy.
 
@@ -20,7 +26,7 @@ Data: 11.10.2026. **POTWIERDZONE U1/U2:** Firebase zostaje; alpha-online-account
 
 ## 2. Projekt i migracja bazy
 
-**Zadania LLM-a:** po G0 przygotować konkretną migrację schedule_overrides z FK do public.users, allowlistą/null/typami JSON, revision i immutable fields, jednym personal na user/event, global zamkniętym oraz wąskim RPC zapisu po revision/fingerprint. Jeśli UUID są niestabilne, najpierw wariant U z [MIGRATION_PROPOSAL](MIGRATION_PROPOSAL.md). Przygotować bezpieczny provisioning users przez zaufaną warstwę kont; nie przez agenta. Nie dopisywać nowych pól events bez wykazanej potrzeby.
+**Zadania LLM-a:** po G0 przygotować konkretną migrację schedule_overrides z FK do public.users, allowlistą/null/typami JSON, revision i immutable fields, jednym personal na user/event, global zamkniętym oraz wąskim RPC zapisu po revision/fingerprint. N1 nie spełnia stabilności UUID: najpierw projekt naprawy kompletności i wariant U z [MIGRATION_PROPOSAL](MIGRATION_PROPOSAL.md). Przygotować bezpieczny provisioning users przez zaufaną warstwę kont; nie przez agenta. Nie dopisywać nowych pól events bez wykazanej potrzeby.
 
 **Zadania człowieka:** udostępnić staging/klon z kontami A/B, wykonać aktualny backup/restore test. Przyjąć gotowy diff migracji, a nie kontekst CREATE TABLE od U1. Dla rekomendowanego Firebase Third-party Auth zatwierdzić i skonfigurować zaufanie projektu/claims, pozostawiając Google login i obecne my-plan API.
 
@@ -52,9 +58,9 @@ Data: 11.10.2026. **POTWIERDZONE U1/U2:** Firebase zostaje; alpha-online-account
 
 ## 4. Wspólne narzędzia, hosted API i lokalny transport
 
-**Zadania LLM-a:** jeden niewielki pakiet narzędzi i kontrakt HTTP/JSON, z cienkimi wrapperami n8n/MCP; żadnej osobnej walidacji domeny dla każdego agenta. JWT/własność poza modelem, cztery operacje schedule z [OVERRIDES_DESIGN](OVERRIDES_DESIGN.md), bound execution context, podgląd i jednorazowe approvals. Hosted adapter przy n8n; ta sama implementacja lokalnie przy Odyseuszu. Lokalnie loopback + Serve, dokładny CORS, capabilities handshake, limity/timeouty i redakcja logów.
+**Zadania LLM-a:** jeden niewielki pakiet narzędzi i kontrakt HTTP/JSON, z cienkimi wrapperami n8n/MCP; żadnej osobnej walidacji domeny dla każdego agenta. JWT/własność poza modelem, cztery operacje schedule z [OVERRIDES_DESIGN](OVERRIDES_DESIGN.md), bound execution context, podgląd i jednorazowe approvals. Przygotować osobny testowy deploy n8n (nie ma go na serwerze) i hosted adapter; ta sama implementacja narzędzi lokalnie przy Odyseuszu. Wersjonować oczyszczony workflow i projekt konfiguracji, nie wartości credential. Lokalnie loopback + Serve, dokładny CORS, capabilities handshake, limity/timeouty i redakcja logów.
 
-**Zadania człowieka:** wskazać host istniejącego n8n oraz exact URL strony; przed uruchomieniem przyjąć konkretny route/port/ACL. Zalogować Tailscale na urządzeniu używającym własnego endpointu. Jednorazowo skonfigurować lokalny adapter; nie wystawiać go przez Funnel i nie resetować istniejącego Serve.
+**Zadania człowieka:** przed uruchomieniem wybrać host/HTTPS/publiczny origin n8n i exact URL strony; przyjąć konkretny projekt deployu/route/port/ACL oraz kopię trwałego stanu. Nie wymagać odczytu panelu nieistniejącego serwera n8n. Zalogować Tailscale na urządzeniu używającym własnego endpointu. Jednorazowo skonfigurować lokalny adapter; nie wystawiać go przez Funnel i nie resetować istniejącego Serve.
 
 **Zależności:** etap 3 i uzgodnione JWT/RLS; do publikacji API backup/config i osobny branch. Hosted endpoint musi być osiągalny dla użytkowników bez Tailscale; Tailscale dotyczy tylko opcjonalnego lokalnego trybu.
 
@@ -68,9 +74,9 @@ Data: 11.10.2026. **POTWIERDZONE U1/U2:** Firebase zostaje; alpha-online-account
 
 ## 5. Domyślny n8n i opcjonalny Odyseusz
 
-**Zadania LLM-a:** najpierw dopasować istniejący n8n AI Agent do czterech narzędzi/podglądów/confirm, owner-bound pamięci i loginu dla zapisów. Następnie lokalny adapter + MCP tools/skill Odyseusza z identycznym kontraktem i właściwą native sesją agentową/RAG. UI wybiera provider; domyślnie n8n, lokalnie endpoint/test połączenia. Zmiana providera zaczyna nową rozmowę, nie przenosi historii/notatek. Obecne slot_choices/add/remove pozostają kompatybilne; rozbudowa narzędzi dopisków musi używać tego samego protokołu, nie dowolnego INSERT events.
+**Zadania LLM-a:** przygotować nowy workflow jednego n8n AI Agent z czterema narzędziami/podglądami/confirm, owner-bound pamięcią i loginem dla zapisów. N4 jest szablonem projektów/notatek; nie przenosić jego trzech agentTool ani executeCommand do harmonogramu. Następnie lokalny adapter + MCP tools/skill Odyseusza z identycznym kontraktem i właściwą native sesją agentową/RAG. UI wybiera provider; domyślnie n8n, lokalnie endpoint/test połączenia. Zmiana providera zaczyna nową rozmowę, nie przenosi historii/notatek. Obecne slot_choices/add/remove pozostają kompatybilne; rozbudowa narzędzi dopisków musi używać tego samego protokołu, nie dowolnego INSERT events.
 
-**Zadania człowieka:** dostarczyć eksport czatu n8n; operator lokalnego trybu instaluje adapter i przypina własną sesję/model. Token Odyseusza tylko po stronie jego adaptera. Odebrać te same scenariusze na n8n i lokalnie; potwierdzić lokalność modelu/embeddings i brak outbound hooks dla prywatnego chatu.
+**Zadania człowieka:** eksport przykładowego agenta już dostarczony; odebrać nowy workflow planu na danych testowych. Operator lokalnego trybu instaluje adapter i przypina własną sesję/model. Token Odyseusza tylko po stronie jego adaptera. Odebrać te same scenariusze na n8n i lokalnie; potwierdzić lokalność modelu/embeddings i brak outbound hooks dla prywatnego chatu.
 
 **Zależności:** etap 4; n8n workflow/wersja znane; native kontrakt Odyseusza sprawdzony na kopii. Konta A/B to etap testu, nie ograniczenie docelowej dostępności n8n do jednego pilota.
 

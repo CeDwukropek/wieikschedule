@@ -1,27 +1,40 @@
 # Propozycja migracji — najpierw stabilna tożsamość
 
-Data: 11.10.2026. Wszystkie działania przyszłe to **REKOMENDACJA** i wymagają zatwierdzenia wdrożenia. Nie utworzono ani nie zastosowano migracji. Dowody: [architektura A/D](ARCHITECTURE_AS_IS.md), [audyt DB](DATABASE_AUDIT.md).
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026. Wszystkie działania przyszłe to **REKOMENDACJA** i wymagają zatwierdzenia wdrożenia. Nie utworzono ani nie zastosowano migracji. Dowody: [architektura A/D](ARCHITECTURE_AS_IS.md), [audyt DB](DATABASE_AUDIT.md).
 
 ## Aktualizacja U1/U2
 
 **POTWIERDZONE od użytkownika:** n8n synchronizuje events oraz obsługuje chat; dlatego do G0 potrzebny jest eksport workflow synchronizacji. Aktualny kontekst H1 nadal zawiera wymagane schedule_name, nullable events.faculty i faculties. Nie zawiera akcji FK/RLS/triggerów — archiwalne CASCADE niżej pozostaje faktem z backupu, a nie pomiarem produkcji. Firebase zostaje; nie ma zadania migracji dostawcy Auth. n8n jest providerem domyślnym, lokalny Odyseusz zamiennikiem; wdrożenie ma zapewniać wspólny kontrakt narzędzi dla obu.
 
-## Co wiadomo o synchronizacji
+## Co wiadomo po dostarczeniu Firebase Insert.json (N1)
 
-| Pytanie | Status | Dowód / brak dowodu |
+| Pytanie | Status | Dowód / ograniczenie |
 | --- | --- | --- |
-| Czy n8n wykonuje INSERT, UPSERT czy DELETE+INSERT? | WYMAGA WERYFIKACJI | Brak workflow w repo i w badanym runtime; lokalny services/n8n pusty. Frontend n8nClient to klient czatu, nie importer. |
-| Jak identyfikuje istniejący termin? | WYMAGA WERYFIKACJI | W D1 nie ma source_key/source_id. Brak konfiguracji onConflict importera. |
-| Gdzie powstaje UUID? | POTWIERDZONE tylko dla defaultu DB | D1: gen_random_uuid(); D4: dump zawiera id, CSV nie ma id. [jsonToCsv.js](../../scripts/jsonToCsv.js), 14–35, także nie eksportuje id. Nie dowodzi to zachowania produkcyjnego n8n. |
-| Czy przesunięta data/godzina zachowuje UUID? | WYMAGA WERYFIKACJI | Brak snapshotów z dwóch wykonań i śledzenia tego samego terminu. |
-| Co następuje po usunięciu wydarzenia? | POTWIERDZONE dla archiwalnych FK; WYMAGA WERYFIKACJI dla workflow | D2: CASCADE usuwa dopiski i tagi. Nie znamy zachowania usunięcia upstream ani niepełnego pobrania. |
-| Czy FK override można już bezpiecznie dodać? | NIE — bramka nieprzejścia | Brak dowodu stabilności i zgodności aktualnego DDL. RESTRICT zmieni zachowanie importera, CASCADE może zniszczyć prywatne zmiany. |
+| INSERT, UPSERT czy DELETE+INSERT? | POTWIERDZONE dla eksportu: Create/INSERT przy domyślnych parametrach Supabase v1 | add events nie ustawia operation; oficjalny default create wysyła POST, nie UPSERT. Brak ścieżki DELETE lub odczytu istniejących events. Przyszłą przypiętą wersję node’a przetestować na klonie. |
+| Jak identyfikuje istniejący termin? | POTWIERDZONE: writer nie identyfikuje istniejącego wiersza | Parser liczy tekst source id, ale fieldsUi add events go nie wysyła. Nie ma conflict target ani source_key w schemacie H1. |
+| Gdzie powstaje UUID? | POTWIERDZONE w H1 i mapowaniu N1 | Wskazany INSERT bez id korzysta z gen_random_uuid; to nie source id z JS. Nie wolno wpisywać tekstu source_id_date do kolumny UUID. |
+| Czy UUID przetrwa ponowny import/przesunięcie? | G0 NIEZALICZONE | Pokazany mechanizm tworzy nowe wiersze/UUID. Nie ma dowodu aktualizacji starego rekordu; zmiana startDate serii zmienia też obliczany klucz datowy. |
+| Co po usunięciu/odwołaniu upstream? | POTWIERDZONE: parser pomija, writer nie usuwa/oznacza starego wiersza | KEEP_CANCELLED_EVENTS=false i freeDays powodują continue. Brak cleanup/reconcile. Przyszły synchronizator musi odróżniać pełny snapshot od awarii pobrania. |
+| Czy wszystkie dane trafiają do writer? | POTWIERDZONE: nie | Code in JavaScript2 filtruje tylko group zawierające przecinek; single-group/null group/free-day nie docierają do add events. |
+| Czy ten workflow już działa w produkcji? | WYMAGA WERYFIKACJI wcześniejszych wykonań; n8n na tym serwerze nie jest wdrożone | N1 active=false/manualTrigger; U3 podaje brak n8n na serwerze. Nie wnioskować z pliku o wykonanych INSERT-ach/utracie istniejących danych. |
 
-Skrypt jsonToCsv odwołuje się do nieobecnego w aktywnym drzewie `src/timetables` i jest artefaktem wcześniejszej organizacji. Nie uruchamiać go jako rzekomej synchronizacji. Dokumentacja n8n opisuje możliwości node’a, nie konfigurację konkretnego workflow ([Supabase node](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.supabase)).
+Dowody: N1 node’y/połączenia opisane w ARCHITECTURE_AS_IS. To konkretny importer, nie gotowy idempotentny synchronizator. Frontendowy n8nClient ani agent projektów N4 nie zapewniają stabilnych ID.
+
+### Minimalny projekt naprawy na kopii — przed overrides
+
+1. Naprawić kompletność strumienia: zachować wszystkie normalne wystąpienia i wszystkie dni wolne. Preferowany model to jeden rekord na źródłowe wystąpienie, a lista grup jest jego właściwością; ustalić format zgodny z normalizerem i testem filtrów. Jeśli pozostaje rozbijanie grup, stabilność tożsamości każdej części wymaga osobnej strategii — nazwa zmiennej grupy nie wystarczy.
+2. Zachować upstream series/event id oraz identyfikator oryginalnego wystąpienia jako source_key, oddzielnie od events.id UUID. Parser ma dziś series id + wygenerowaną datę; to kandydat dla nieprzesuniętych wystąpień, nie dowód trwałego occurrence id. Upstream prywatne/źródłowe overrides nie są tym samym co nasza schedule_overrides.
+3. Dodać minimalne source_system/source_key z unikalnym kluczem tylko po zdefiniowaniu rzeczywistej tożsamości; UPSERT po tym kluczu aktualizuje pola, nigdy istniejący UUID. Mapper zachowuje jawne NULL i rozróżnia event od dnia wolnego. Source id tekstowe nie jest wysyłane jako events.id.
+4. Backfill istniejących wierszy: jednoznaczne dopasowania zachowują UUID, duplikaty/podobne terminy trafiają do raportu. Nie scalać automatycznie wierszy z dopiskami/tagami ani nie przepinać cudzych powiązań. Gdy source startDate lub para excludedDates/_add oznacza przesunięcie, potrzebny trwały identyfikator wystąpienia lub zatwierdzone mapowanie; nie zgadywać na podstawie nowej daty.
+5. Źródłowe cancellations/deletions/freeDays wymagają reconciliation z DB po pełnym, poprawnym snapshotcie. Zachować referencje istniejących prywatnych powiązań, oznaczyć stan źródła oddzielnie i ukryć nieaktualny termin. Pusta/błędna odpowiedź API nie jest poleceniem usunięcia planu. Samo KEEP_CANCELLED_EVENTS=false nie załatwia tego w DB.
+6. Importer zapisuje również faculties przez Create bez pokazanego conflict target; przetestować duplikację słownika i nie uruchamiać go wielokrotnie bez idempotencji. Nie migrować frontendu na faculties w ramach naprawy override’ów — obecny loader nadal korzysta z events.faculty.
+7. Dopiero testy G0 na kopii: dwa identyczne importy, korekta sali/czasu/grup, przeniesienie, anulowanie i błąd źródła; zero niepotrzebnych nowych UUID, kompletne wydarzenia i zachowane relacje. Potem migracja prywatnych overrides.
+
+Nie wykonano tej naprawy ani SQL. Eksporty pozostają bez zmian. Dalsze warianty S/U poniżej są projektem migracji po rozwiązaniu powyższych problemów; wariant S nie został potwierdzony dla N1.
 
 ## Bramka G0 — dowód przed migracją
 
-Właściciel udostępnia oczyszczony eksport workflow, wersję n8n oraz aktualny schema-only dump. Audyt obejmuje wszystkie aktywne gałęzie: harmonogram, źródło, pagination, Code nodes, HTTP/Postgres/Supabase nodes, SQL/RPC, cleanup, error/retry i credentials tylko jako nazwy/uprawnienia.
+N1 już dostarczono i odczytano; nie trzeba ponownie prosić o ten eksport. Przypiąć przyszłą wersję n8n/node’ów i przed migracją uzupełnić H1 o rzeczywiste FK/triggery oraz uprawnienia. Audyt obejmuje wszystkie aktywne gałęzie: harmonogram, źródło, pagination, Code nodes, HTTP/Postgres/Supabase nodes, SQL/RPC, cleanup, error/retry i credentials tylko jako nazwy/uprawnienia.
 
 Na osobnej bazie testowej porównać snapshot `stable_source_identity → events.id` dla:
 

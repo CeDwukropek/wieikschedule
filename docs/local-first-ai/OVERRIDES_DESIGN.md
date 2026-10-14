@@ -1,6 +1,12 @@
 # Projekt override’ów i wymiennych agentów n8n/Odyseusz
 
-Data: 11.10.2026. **REKOMENDACJA:** cały poniższy projekt opisuje przyszłe zachowanie, nie wdrożoną funkcję. Fakty i ograniczenia: [architektura](ARCHITECTURE_AS_IS.md), [baza](DATABASE_AUDIT.md). **WYMAGA WERYFIKACJI:** aktualne DDL/Auth, stabilne UUID i uzgodnione usuwanie źródeł przed pierwszym override’em.
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026. **REKOMENDACJA:** cały poniższy projekt opisuje przyszłe zachowanie, nie wdrożoną funkcję. Fakty i ograniczenia: [architektura](ARCHITECTURE_AS_IS.md), [baza](DATABASE_AUDIT.md). **WYMAGA WERYFIKACJI:** aktualne DDL/Auth, stabilne UUID i uzgodnione usuwanie źródeł przed pierwszym override’em.
+
+## Stan bramek po dostarczeniu workflow
+
+**POTWIERDZONE N1/U3:** n8n nie jest jeszcze uruchomione na serwerze, a dostarczony importer nie zapewnia stabilnych UUID i pomija część danych. G0 niezaliczone; nie wdrażać schedule_overrides przed naprawą importera. RLS events zostało potwierdzone przez użytkownika, ale nie zastępuje nowych polityk prywatnych overrides. Wyniki z konkretnych node’ów są w ARCHITECTURE_AS_IS/MIGRATION_PROPOSAL.
+
+**REKOMENDACJA:** publiczny agent planu trzeba przygotować jako nowy workflow jednego AI Agent z narzędziami schedule. Auto To Do Agent (N4) jest przykładem pracy na projektach/notatkach i trzech agentach specjalistycznych, nie gotowym agentem harmonogramu; nie importować go jako publicznego agenta planu ani podłączać tools Google Drive/executeCommand. Instalacja n8n i aktywacja workflow pozostają przyszłą, osobno zatwierdzaną zmianą środowiska.
 
 ## Tożsamość i schemat
 
@@ -107,7 +113,7 @@ flowchart LR
   B -->|ręczne overrides: Firebase JWT i RLS| S
 ```
 
-**REKOMENDACJA:** jeden niewielki pakiet schedule-tools/adapter, wdrażany obok publicznego n8n oraz lokalnie obok Odyseusza. Najpierw stabilny HTTP/JSON kontrakt; dla Odyseusza cienki wrapper MCP nad tą samą implementacją. n8n może wywoływać te same operacje przez zamknięte HTTP subworkflows, a gdy eksport potwierdzi zgodność — przez MCP. Nie kopiować walidacji na różne niezależne Code nodes. Serwis nie potrzebuje nowej bazy, kolejki ani kontenera modelu. Miejsce publicznego wdrożenia ustalić po wskazaniu obecnego hosta n8n.
+**REKOMENDACJA:** jeden niewielki pakiet schedule-tools/adapter, wdrażany obok publicznego n8n oraz lokalnie obok Odyseusza. Najpierw stabilny HTTP/JSON kontrakt; dla Odyseusza cienki wrapper MCP nad tą samą implementacją. n8n może wywoływać te same operacje przez zamknięte HTTP subworkflows, a gdy eksport potwierdzi zgodność — przez MCP. Nie kopiować walidacji na różne niezależne Code nodes. Serwis nie potrzebuje nowej bazy, kolejki ani kontenera modelu. Nie ma obecnego wdrożenia n8n na serwerze (U3): przygotować osobne testowe wdrożenie z przypiętą wersją, trwałym stanem i sekretem szyfrowania credentials poza GitHubem. Publiczny chat wymaga HTTPS/Auth/rate limit; panel administracyjny utrzymać prywatnie. Host/publiczny origin ustalić dopiero przed uruchomieniem.
 
 Publiczny frontend z Vercel wywołuje wybrany agentowy endpoint bez proxy czatu w Vercel. Dotychczasowe Vercel API my-plan nadal obsługuje swoją funkcję. Użytkownicy zalogowani korzystają z własnego kontekstu Firebase; goście, jeśli obecny produkt pozwala na chat, mają wyłącznie publiczne odczyty. Zapis prywatnego planu wymaga logowania i konkretnego potwierdzenia. Brak konfiguracji Odyseusza oznacza użycie n8n, nie błąd produktu.
 

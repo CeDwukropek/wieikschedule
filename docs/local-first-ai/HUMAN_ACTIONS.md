@@ -1,6 +1,16 @@
 # Decyzje użytkownika i brakujące materiały — aktualizacja
 
-Data: 11.10.2026. Źródło U1: wiadomość użytkownika z H1–H5 i D-01–D-10. Źródło U2: użytkownik potwierdził, że n8n synchronizuje events i obsługuje chat. **POTWIERDZONE** przy U1/U2 oznacza treść przekazaną przez użytkownika, nie niezależny pomiar panelu. **REKOMENDACJA** opisuje przyszłą zmianę; **WYMAGA WERYFIKACJI** — konkretny brak. Zakres pozostaje dokumentacyjny, z zatwierdzonymi gałęziami i kopią kodu; nie wdrażamy jeszcze migracji ani zmian usług.
+Audyt bazowy: 11.10.2026; aktualizacja: 14.10.2026. Źródło U1: wiadomość użytkownika z H1–H5 i D-01–D-10. Źródło U2: użytkownik potwierdził, że n8n synchronizuje events i obsługuje chat. **POTWIERDZONE** przy U1/U2 oznacza treść przekazaną przez użytkownika, nie niezależny pomiar panelu. **REKOMENDACJA** opisuje przyszłą zmianę; **WYMAGA WERYFIKACJI** — konkretny brak. Zakres pozostaje dokumentacyjny, z zatwierdzonymi gałęziami i kopią kodu; nie wdrażamy jeszcze migracji ani zmian usług.
+
+## U3/N1–N4 — otrzymane materiały i stan prac
+
+**POTWIERDZONE:** dostarczono create_project (1).json, Firebase Insert.json, get_projects (2).json i Auto To Do Agent (1).json; pliki statycznie przeanalizowano i pozostawiono bez zmian. Użytkownik potwierdził, że n8n nie jest jeszcze na serwerze, oraz RLS events: enabled, Public read SELECT/PUBLIC/true, Service role write ALL/service_role. Źródło U3 to ta wiadomość, dowody N1–N4 to konkretne node’y opisane w ARCHITECTURE_AS_IS.
+
+**POTWIERDZONE:** Firebase Insert to dostarczony importer planu; trzy pozostałe workflow są do projektów/notatek. Nie trzeba dosyłać ośmiu brakujących subworkflow agenta notatek na potrzeby harmonogramu. Nie ma gotowego schedule AI Agent; zaproponowano nowy workflow jednego agenta z tymi samymi narzędziami co przyszły adapter Odyseusza.
+
+**Stan G0:** dostarczony importer nie przechodzi bramki. Pomija single-group i free-day, nie wysyła source id do DB, tworzy nowe UUID zamiast aktualizować stare i nie ma reconciliation. To wniosek z eksportu/defaultów node’a, nie deklaracja wykonanych zapisów produkcyjnych. Kolejny krok audytora: konkretny projekt naprawy na kopii z MIGRATION_PROPOSAL. Nie wdrażać teraz overrides, nie importować ani uruchamiać tego workflow na produkcji.
+
+**Na ten etap nie potrzebujemy kolejnych sekretów ani eksportów notatek.** Przed przyszłą migracją/testem end-to-end nadal będą potrzebne rzeczywiste FK/triggery (zwłaszcza schedule_name) i RLS prywatnych tabel, kopia bazy/staging oraz adres strony do CORS. To dane odbioru wdrożenia, a nie warunek analizowania otrzymanych plików.
 
 ## Co jest już ustalone
 
@@ -25,7 +35,7 @@ Data: 11.10.2026. Źródło U1: wiadomość użytkownika z H1–H5 i D-01–D-10
 
 **H3 — branch deployu wystarczy na ten etap.** U1 potwierdza alpha-online-account jako główny deploy. Przed testem przeglądarki potrzebny będzie publiczny adres strony, aby ustawić dokładny CORS. Wartości .env nie są potrzebne; kluczy service_role/Firebase private key/tokenów nie wysyłamy do czatu ani repo.
 
-**H4 — tak, to istotne.** U2 potwierdza dwa zastosowania n8n. Potrzebny oczyszczony eksport workflow synchronizacji events i workflow czatu: z pierwszego sprawdzimy trwałość UUID, z drugiego zaplanujemy identyczne narzędzia i potwierdzenia dla n8n/Odyseusza. Nazwy credential i konfiguracja nodes wystarczą; bez wartości sekretów. Tego nie da się odczytać z Reactowego n8nClient.
+**H4 — materiały odebrane.** Importer N1 przeanalizowany; N4 jest szablonem agenta notatek, więc schedule workflow przygotujemy osobno. U3 wyjaśnia, że wdrożenie n8n na tym serwerze jest przyszłym zadaniem. Nie prosić ponownie o te same pliki ani o eksporty narzędzi notatek poza zakresem harmonogramu.
 
 **H5 — pytanie o działanie lokalnego trybu, nie nową architekturę.** Potrzebujemy sprawdzić, czy adapter uruchamia właściwą sesję agenta/RAG Odyseusza i tylko narzędzia schedule. Nie musisz teraz wybierać jednego modelu dla wszystkich; każdy użytkownik może używać własnego modelu. Audytor odczyta możliwości z kodu, a pierwszy użytkownik lokalnego trybu potwierdzi je testem.
 
@@ -33,7 +43,7 @@ Data: 11.10.2026. Źródło U1: wiadomość użytkownika z H1–H5 i D-01–D-10
 
 | Kiedy | Co jest potrzebne i dlaczego |
 | --- | --- |
-| Teraz, do zamknięcia synchronizacji | Eksport dwóch workflow n8n bez sekretów. Publiczny adres głównego deployu można podać bez .env. |
+| Teraz | Materiały wystarczają do statycznego projektu naprawy importera i nowego schedule agent. Otrzymanych eksportów nie trzeba dosyłać ponownie. |
 | Przed migracją testową | Bezpieczne wyniki pg_policies, pg_get_constraintdef i definicji triggerów z DATABASE_AUDIT; przede wszystkim schedule_name i zachowanie FK po DELETE. Nie wykonywać CREATE TABLE z U1. |
 | Przed zapisami testowymi | Oddzielna baza testowa lub zgodny klon, konta A/B; aktualna kopia DB i test odtworzenia. GitHub przechowuje kod, nie kopiuje automatycznie Supabase/Firebase/n8n runtime. |
 | Przed aktywacją lokalnego trybu | Jednorazowo uruchomiony adapter Odyseusza z pakietem narzędzi, lokalne credentials Odyseusza wyłącznie w adapterze, Serve HTTPS/ACL. Użytkownik wybiera lokalny provider, wpisuje endpoint adaptera i robi test połączenia. Sam dowolny URL obecnego Odyseusza nie zapewnia jeszcze zgodności protokołu. |
@@ -50,3 +60,5 @@ Data: 11.10.2026. Źródło U1: wiadomość użytkownika z H1–H5 i D-01–D-10
 Publikujemy gałąź dokumentacyjną bez merge do głównego deployu. Zmiany kodu, workflow, DDL i usług przygotujemy później jako konkretne diffy na osobnych gałęziach, po sprawdzeniu UUID i uprawnień.
 
 **POTWIERDZONE wynikiem publikacji:** przygotowano commit sześciu dokumentów na docs/local-first-ai-review. Push do origin nie został wykonany: lokalny Git nie ma uwierzytelnienia HTTPS (could not read Username). Repozytorium da się odczytać, ale sam publiczny odczyt nie daje prawa zapisu. Po autoryzacji Git lub zainstalowaniu i połączeniu GitHub należy opublikować tę gałąź; nie przekazywać PAT do czatu. Nie utworzono zdalnego branchu ani PR-a.
+
+**WYMAGA WERYFIKACJI przed uruchomieniem n8n:** przypięta wersja zgodna z użytymi node’ami, osobny trwały stan/backup, secret encryption key poza repo, oddzielne credentials importera i agenta, HTTPS/publiczny chat oraz prywatny panel admin. Pole active w eksportach nie potwierdza żadnej z tych konfiguracji. Instalacja i import pozostają poza obecną zgodą „audyt i dokumentacja”.
