@@ -63,6 +63,11 @@ wskazówki oraz rozstrzygnąć pozostałe 590 rekordów. Następnie przygotować
 kompletny plan na aktualnej kopii, sprawdzić triggery/FK, przesunięcia i retry.
 Nie uruchomiono writera w produkcji ani nie wdrożono zależnych overrides.
 
+Do ustalenia, które nierozstrzygnięte UUID mają rzeczywiste dopiski/tagi,
+przygotowano [inspect-event-references.sql](inspect-event-references.sql).
+Zapytanie tylko odczytuje liczności i nie ujawnia identyfikatorów użytkowników
+ani treści prywatnych wpisów. Nie zostało wykonane na produkcji.
+
 Reprodukcja raportu: `cli.cjs report normalized.json events.csv`, zgodnie
 z [README](README.md). Fingerprint jest porównaniem treści, nie trwałym ID.
 

@@ -145,6 +145,11 @@ z jawną licznością i flagą obcięcia. Pliki wejściowe i pełny raport przec
 lokalnie poza Git; testy w repozytorium używają danych syntetycznych.
 
 Zbiorczy wynik dostarczonego eksportu: [BACKFILL_AUDIT.md](BACKFILL_AUDIT.md).
+Przed rozstrzyganiem konfliktów można wyeksportować wynik
+[inspect-event-references.sql](inspect-event-references.sql). To wyłącznie SELECT
+liczności dopisków i tagów per UUID, bez identyfikatorów użytkowników i treści
+prywatnych wpisów. Pomaga ustalić priorytet review; nie rozstrzyga tożsamości
+i nie zastępuje weryfikacji triggerów/FK.
 
 ### Podgląd n8n
 
