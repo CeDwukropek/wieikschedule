@@ -111,6 +111,43 @@ zweryfikowanego `rpc`, nie ponownie wygenerowanego planu z nowymi UUID.
 
 ## Workflow n8n i migracja
 
+### Raport backfill dla eksportu CSV
+
+```sh
+node integrations/schedule-import/cli.cjs report /tmp/normalized.json /tmp/events.csv > /tmp/backfill-report.json
+```
+
+Polecenie wykonuje wyłącznie porównanie. Powodzenie raportu daje kod wyjścia 0,
+ale wynik **zawsze** ma `write_ready=false` i `rpc=null`. Nie jest plikiem decyzji
+do `plan` i nie akceptuje ani nie wykonuje zmian w bazie.
+
+`exact_proposals` zawiera wyłącznie pary z identyczną treścią wszystkich dziesięciu
+pól harmonogramu, gdy po obu stronach jest dokładnie jeden rekord. Każda para
+wymaga review przed przyjęciem tożsamości. Identyczne kopie albo wiele źródłowych
+serii o tych samych danych trafiają do `exact_ambiguities`, bez dowolnego parowania.
+
+Pozostałe rekordy trafiają do `review`: ten sam dzień wolny ze zmienioną etykietą,
+ten sam slot, te same szczegóły w danym dniu lub podobne szczegóły w innych datach.
+Raport wskazuje zmienione pola, kandydatów zajętych przez ścisłą propozycję oraz
+konkurujące UUID. Nie interpretuje podobieństwa jako dowodu przeniesienia.
+`no_candidate` oznacza brak kandydata w tych konserwatywnych indeksach, a nie
+potwierdzone usunięcie wydarzenia. Nowe rekordy źródła także nie są automatycznie
+uznawane za polecenia INSERT.
+
+Raport rozróżnia puste komórki w cudzysłowie od niecytowanych pustych komórek.
+Dla nullable pól drugi wariant jest interpretowany jako NULL i odnotowany
+w `evidence.inferred_nulls`. Sam CSV może nie wystarczać do potwierdzenia różnicy
+między NULL i pustym tekstem — przed zapisem sprawdzić ją na bazie. Fingerprint
+służy do porównania treści podczas backfill; nie jest trwałym źródłowym ID.
+
+Listy kandydatów i listy konkurujących UUID są ograniczone do 25 pozycji,
+z jawną licznością i flagą obcięcia. Pliki wejściowe i pełny raport przechowuj
+lokalnie poza Git; testy w repozytorium używają danych syntetycznych.
+
+Zbiorczy wynik dostarczonego eksportu: [BACKFILL_AUDIT.md](BACKFILL_AUDIT.md).
+
+### Podgląd n8n
+
 `n8n-preview.json` to nieaktywny, przenośny workflow do pobrania dwóch publicznych
 snapshotów i wykonania tego samego walidatora. Nie zawiera credentiali, zapisu
 do Supabase, chatu ani narzędzi agenta. To podgląd, nie automatyczny scheduler.
