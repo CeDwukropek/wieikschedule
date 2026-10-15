@@ -13,6 +13,7 @@ const DayView = forwardRef(function DayView(
     selection: externalSelection,
     onRemoveAddedEvent,
     removingAddedEventId,
+    onEditEvent,
   },
   ref,
 ) {
@@ -134,6 +135,7 @@ const DayView = forwardRef(function DayView(
                       subjects={subjects}
                       onRemoveAddedEvent={onRemoveAddedEvent}
                       removingAddedEventId={removingAddedEventId}
+                      onEditEvent={onEditEvent}
                     />
                   </EventTooltipWrapper>
                 </div>

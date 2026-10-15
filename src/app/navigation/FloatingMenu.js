@@ -104,6 +104,7 @@ export default function FloatingMenu({
     onOptimisticAdd,
     onOptimisticAddConfirmed,
     onOptimisticAddFailed,
+    onProposal,
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
@@ -141,6 +142,7 @@ export default function FloatingMenu({
     onOptimisticAdd,
     onOptimisticAddConfirmed,
     onOptimisticAddFailed,
+    onProposal,
   });
 
   const isWeek = viewMode === "week";
@@ -501,6 +503,7 @@ export default function FloatingMenu({
           onGroupChange: handleGroupChange,
         }}
         exportState={{
+          ...exportState,
           exportRef,
           viewedWeekRange,
           selection,

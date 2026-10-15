@@ -13,6 +13,8 @@ export function mapAddedEvent(event, { optimistic = false } = {}) {
   const subject = String(event?.subject || (optimistic ? event?.title : "") || "").trim();
 
   return {
+    _raw: event,
+    personal_override: Boolean(event.personal_override),
     id: `added-${addedId || eventId || [date, start, subject].filter(Boolean).join("-")}`,
     event_id: eventId || undefined,
     added_event_id: addedId || undefined,

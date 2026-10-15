@@ -77,13 +77,17 @@ def prepare(args):
         local['n8n_owner_password'] = 'StagingA1-' + local['n8n_owner_password'][:48]
         private_file(secret_file, json.dumps(local, indent=2) + '\n')
     supplied = read_vercel_env(Path(args.env_file))
+    if not local.get('schedule_tool_secret'):
+        local['schedule_tool_secret'] = secrets.token_hex(32)
+        private_file(secret_file, json.dumps(local, indent=2) + '\n')
     client = {key: supplied.get(key, '') for key in CLIENT_KEYS}
-    client.update(REACT_APP_LOCAL_STAGING='true', REACT_APP_ENABLE_AI_CHAT='true',
+    client.update(REACT_APP_LOCAL_STAGING='true', REACT_APP_PERSONAL_SCHEDULE='true', REACT_APP_ENABLE_AI_CHAT='true',
                   REACT_APP_API_BASE_URL='', REACT_APP_SUPABASE_URL='http://localhost:3100/supabase',
                   REACT_APP_SUPABASE_ANON_KEY=local['anon_jwt'], REACT_APP_N8N_CHAT_WEBHOOK='/staging/chat')
     # Never copy production Supabase credentials, webhook URLs or unrelated secrets.
     server = {key: supplied[key] for key in ADMIN_KEYS if supplied.get(key)}
     server['SUPABASE_SERVICE_ROLE_KEY'] = local['service_jwt']
+    server['SCHEDULE_TOOL_SECRET'] = local['schedule_tool_secret']
     client_content = env_text(client)
     private_file(STATE / 'client.env', client_content)
     private_file(STATE / 'server.env', env_text(server))
@@ -124,9 +128,10 @@ def seed(args):
     marker = pg("SELECT name FROM public.staging_marker")
     if marker != 'wieikschedule-local-staging':
         raise ValueError('Refusing to seed an unmarked database')
-    for function, migration in [('apply_wieik_import', '20261014_wieik_import.sql'),
-                                ('bootstrap_wieik_import', '20261015_unlinked_bootstrap.sql')]:
-        initialized = pg("SELECT to_regprocedure('public." + function + "(jsonb,jsonb)') IS NOT NULL") == 't'
+    for signature, migration in [('apply_wieik_import(jsonb,jsonb)', '20261014_wieik_import.sql'),
+                                 ('bootstrap_wieik_import(jsonb,jsonb)', '20261015_unlinked_bootstrap.sql'),
+                                 ('confirm_schedule_change(uuid,uuid,text,text)', '20261015_personal_overrides.sql')]:
+        initialized = pg("SELECT to_regprocedure('public." + signature + "') IS NOT NULL") == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)
     pg("NOTIFY pgrst, 'reload schema'")
@@ -189,12 +194,14 @@ def n8n_setup(args):
     if not state_file.exists():
         raise ValueError('Existing n8n owner differs from this setup; keep instance intact')
     owner_id = json.loads(state_file.read_text())['owner_id']
-    for file in ('/workflows/generated/import-preview.json', '/workflows/staging/staging-chat.json'):
+    for file in ('/workflows/generated/import-preview.json', '/workflows/staging/staging-chat.json',
+                 '/workflows/staging/schedule-tools.json'):
         subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'import:workflow', '--input=' + file,
                                   '--userId=' + owner_id], check=True)
     subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=wksStageChat0001'], check=True)
+    subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=wksStageTools001'], check=True)
     subprocess.run(COMPOSE + ['restart', 'n8n'], check=True)
-    print('Read-only connection workflow published; source preview remains manual/inactive')
+    print('Scoped tool and connection workflows published; source preview remains manual/inactive')
 
 
 def main():

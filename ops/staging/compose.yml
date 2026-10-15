@@ -44,6 +44,7 @@ services:
       - ../../.staging/server.env
     environment:
       PORT: '3100'
+      SCHEDULE_ENVIRONMENT: staging
       SUPABASE_URL: http://127.0.0.1:3100/supabase
     ports:
       - '127.0.0.1:3100:3100'

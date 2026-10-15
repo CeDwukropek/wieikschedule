@@ -82,8 +82,9 @@ n8n zawiera manualny parser źródła oraz aktywny test połączenia
 `aplikacja → n8n → PostgREST`. Ten test odczytuje pojedynczy rekord i wprost
 informuje, że agent AI nie jest skonfigurowany. Nie jest agentem ani writerem
 synchronizacji. Nie używa modeli, prywatnych notatek ani dawnych workflow
-zarządzających projektami. Prywatne overrides i faktyczny agent pozostają
-następnym etapem implementacji.
+zarządzających projektami. Prywatne overrides i wspólne narzędzia opisuje
+[schedule-tools](../../integrations/schedule-tools/README.md). Tryb zewnętrznego
+API jest oddzielnie aktywowany; sam zapis klucza nie uruchamia modelu.
 
 ## Weryfikacja i zatrzymanie
 

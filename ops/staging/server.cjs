@@ -7,6 +7,9 @@ const { pipeline } = require("node:stream");
 const root = path.resolve(__dirname, "../../build");
 const handlers = Object.fromEntries(["add-event", "added-events", "remove-event"].map((name) =>
   [`/api/my-plan/${name}`, require(`../../api/my-plan/${name}.js`)]));
+for (const name of ['overrides','propose','confirm','context','tools','ai-settings','pending','chat']) {
+  handlers[`/api/schedule/${name}`] = require(`../../api/schedule/${name}.js`);
+}
 const types = { ".html": "text/html; charset=utf-8", ".js": "application/javascript",
   ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
   ".ico": "image/x-icon", ".woff2": "font/woff2" };

@@ -15,6 +15,7 @@ const WeekView = forwardRef(function WeekView(
     viewedWeekStart,
     onRemoveAddedEvent,
     removingAddedEventId,
+    onEditEvent,
   },
   ref,
 ) {
@@ -187,6 +188,7 @@ const WeekView = forwardRef(function WeekView(
                           subjects={subjects}
                           onRemoveAddedEvent={onRemoveAddedEvent}
                           removingAddedEventId={removingAddedEventId}
+                          onEditEvent={onEditEvent}
                         />
                       </EventTooltipWrapper>
                     </div>

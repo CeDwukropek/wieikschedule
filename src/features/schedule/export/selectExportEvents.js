@@ -1,6 +1,6 @@
 import { mergeEvents } from "../logic/mergeEvents";
 
-// ICS retains the existing all-weeks export of base and external group schedules.
+// One effective source for all weeks, including confirmed personal additions.
 export function selectExportEvents(options) {
-  return mergeEvents({ ...options, weekStart: null, addedEvents: [] });
+  return mergeEvents({ ...options, weekStart: null });
 }
