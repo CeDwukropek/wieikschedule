@@ -85,6 +85,12 @@ async function getEvents(ctx,args,find=false) {
   if(find) text(args.query,256,true);
   // Include source rows moved INTO the window and exclude rows moved OUT of it.
   const overrides=await listOverrides(ctx), byId=new Map(overrides.map(o=>[o.event_id,o]));
+  const addedIds=new Set();
+  for(let from=0;;from+=1000){
+    const {data,error}=await ctx.db.from('user_added_events').select('event_id').eq('user_id',ctx.userId)
+      .eq('status','active').eq('schedule_name',args.faculty).order('id').range(from,from+999);
+    databaseError(error);data.forEach(row=>addedIds.add(row.event_id));if(data.length<1000)break;
+  }
   let query=ctx.db.from('events').select(FIELDS).in('faculty',[args.faculty,'all'])
     .or('status.is.null,status.eq.aktywne,status.eq.wolne').gte('date',args.date_from).lte('date',args.date_to).order('id');
   const rows=[];
@@ -100,7 +106,7 @@ async function getEvents(ctx,args,find=false) {
     const effective={...row,...(o?.patch||{})};
     if(effective.date<args.date_from||effective.date>args.date_to)return [];
     if(find&&!effective.subject.toLocaleLowerCase('pl').includes(args.query.toLocaleLowerCase('pl')))return [];
-    return [{...effective,override_revision:o?.revision||0}];
+    return [{...effective,override_revision:o?.revision||0,is_added:addedIds.has(row.id)}];
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time)||a.id.localeCompare(b.id));
   return {events:events.slice(offset,offset+limit),next_offset:events.length>offset+limit?offset+limit:null};
 }

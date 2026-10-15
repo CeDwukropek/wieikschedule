@@ -25,12 +25,15 @@ function document(uid) {
   const collection=process.env.SCHEDULE_ENVIRONMENT==='staging'?'scheduleAiStagingCredentials':'scheduleAiCredentials';
   return getFirestore().collection(collection).doc(uid);
 }
-function publicSettings(row={}) {return {provider:row.provider||'n8n',model:row.model||'',local_endpoint:row.local_endpoint||'',has_api_key:Boolean(row.encrypted_key)};}
+function publicSettings(row={}) {return {provider:row.provider||'n8n',model:row.model||'',local_endpoint:row.local_endpoint||'',
+  local_endpoint_id:row.local_endpoint_id||'',local_model:row.local_model||'',local_memory:row.local_memory===true,has_api_key:Boolean(row.encrypted_key)};}
 async function read(uid) {const snapshot=await document(uid).get();return snapshot.exists?snapshot.data():{};}
 async function save(uid,args) {
-  keys(args,['provider','model','local_endpoint','api_key','remove_api_key']);
+  keys(args,['provider','model','local_endpoint','local_endpoint_id','local_model','local_memory','api_key','remove_api_key']);
   if(!['n8n','odysseus'].includes(args.provider))fail(422,'INVALID_PROVIDER','Wybierz API albo lokalnego agenta.');
   text(args.model,128);text(args.local_endpoint,2048);text(args.api_key,4096);
+  text(args.local_endpoint_id,128);text(args.local_model,128);
+  if(args.local_memory!==undefined&&typeof args.local_memory!=='boolean')fail(422,'INVALID_ARGUMENTS','Nieprawidłowa opcja pamięci lokalnej.');
   if(args.api_key&&!args.api_key.trim())fail(422,'INVALID_KEY','Klucz nie może zawierać samych spacji.');
   if(args.remove_api_key!==undefined&&typeof args.remove_api_key!=='boolean')fail(422,'INVALID_ARGUMENTS','Nieprawidłowe ustawienia.');
   if(args.local_endpoint){
@@ -40,7 +43,8 @@ async function save(uid,args) {
   const ref=document(uid);
   return ref.firestore.runTransaction(async transaction=>{
     const previous=(await transaction.get(ref)).data()||{};
-    const row={provider:args.provider,model:args.model||'',local_endpoint:args.local_endpoint||'',updated_at:new Date().toISOString()};
+    const row={provider:args.provider,model:args.model||'',local_endpoint:args.local_endpoint||'',
+      local_endpoint_id:args.local_endpoint_id||'',local_model:args.local_model||'',local_memory:args.local_memory===true,updated_at:new Date().toISOString()};
     if(!args.remove_api_key){
       if(args.api_key)row.encrypted_key=encrypt(uid,args.api_key.trim());
       else if(previous.encrypted_key)row.encrypted_key=previous.encrypted_key;

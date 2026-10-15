@@ -1,0 +1,28 @@
+services:
+  odysseus-local:
+    image: odysseus-custom:local
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      ODYSSEUS_DATA_DIR: /app/data
+      DATABASE_URL: sqlite:////app/data/app.db
+      AUTH_ENABLED: 'true'
+      LOCALHOST_BYPASS: 'false'
+      ODYSSEUS_SESSION_COOKIE: odysseus_schedule_session
+      ALLOWED_ORIGINS: ${STAGING_APP_ORIGIN:?Set the staging origin}
+      SCHEDULE_GATEWAY_URL: http://app:3100
+      SCHEDULE_MODEL_ENDPOINT_IDS: ${SCHEDULE_MODEL_ENDPOINT_IDS:-}
+      SCHEDULE_DEFAULT_MODEL: ${SCHEDULE_DEFAULT_MODEL:-}
+      ODYSSEUS_INPROCESS_POLLERS: '0'
+      ODYSSEUS_INPROCESS_TASKS: '0'
+      SEARXNG_INSTANCE: http://disabled.invalid
+      ANONYMIZED_TELEMETRY: 'false'
+      PUID: '1000'
+      PGID: '1000'
+    volumes:
+      - ${ODYSSEUS_INTEGRATION_ROOT:?Set the separate Odysseus worktree}:/app:ro
+      - ../../.staging/odysseus-data:/app/data
+      - ../../.staging/odysseus-logs:/app/logs
+    ports:
+      - '127.0.0.1:7001:7000'
+    mem_limit: 3g

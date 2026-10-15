@@ -20,7 +20,7 @@ function json(res, status, value) {
 function proxy(req, res, target) {
   const headers = { ...req.headers, host: target.host };
   delete headers.connection;
-  const upstream = http.request(target, { method: req.method, headers, timeout: 150000 }, (response) => {
+  const upstream = http.request(target, { method: req.method, headers, timeout: 210000 }, (response) => {
     res.writeHead(response.statusCode, response.headers);
     pipeline(response, res, () => {});
   });
@@ -58,6 +58,11 @@ const server = http.createServer(async (req, res) => {
       return proxy(req, res, target);
     }
     if (url.pathname === "/staging/chat") return proxy(req, res, new URL("http://n8n:5678/webhook/schedule-staging-chat"));
+    // Fixed staging-only target; never dial a URL supplied by a browser/model.
+    if (process.env.SCHEDULE_ENVIRONMENT === 'staging' &&
+        ['/local-odysseus/api/schedule/capabilities','/local-odysseus/api/schedule/chat'].includes(url.pathname)) {
+      return proxy(req,res,new URL('http://odysseus-local:7000'+url.pathname.slice('/local-odysseus'.length)));
+    }
     if (handlers[url.pathname]) return await api(req, res, handlers[url.pathname], url);
     if (url.pathname.startsWith("/api/")) return json(res, 404, { ok: false, error: "NOT_FOUND" });
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });

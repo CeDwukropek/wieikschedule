@@ -135,6 +135,7 @@ export default function FloatingMenu({
     addingEventId,
     addedEventIds,
     slotErrors,
+    intent,setIntent,
   } = useChatbot({
     scheduleName,
     selectedGroups,
@@ -446,6 +447,8 @@ export default function FloatingMenu({
                 addingEventId={addingEventId}
                 addedEventIds={addedEventIds}
                 slotErrors={slotErrors}
+                intent={intent}
+                onIntentChange={setIntent}
               />
             </div>
           )}

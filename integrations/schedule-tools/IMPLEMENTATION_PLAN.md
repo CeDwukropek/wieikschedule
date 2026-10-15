@@ -46,9 +46,9 @@ Jeżeli wypowiedź nie rozstrzyga, czy chodzi o odrobienie czy przełożenie, ag
 dopytuje. Nie wybiera sam operacji przeniesienia. Walidacja intencji musi być
 uwzględniona również przy wykonywaniu narzędzi, nie tylko w promptcie.
 
-Obecne cztery tools obsługują odczyt i podglądy overrides. Potwierdzone dopisywanie
-istniejącego terminu odrobienia należy połączyć z /api/my-plan/add-event i kartami
-wyboru terminu; nie zastępować tego przez create_override.
+Obecne cztery tools obsługują odczyt i podglądy overrides. Natywny Odysseus
+zwraca karty rzeczywistych terminów odrobienia. Kliknięcie korzysta z istniejącego
+/api/my-plan/add-event. Podpisana intencja blokuje overrides w trybie odrobienia.
 
 ## Kolejność uruchomienia agenta
 
@@ -56,11 +56,13 @@ wyboru terminu; nie zastępować tego przez create_override.
 - [x] Wspólny kontrakt czterech tools, scoped relay n8n, adapter lokalny i MCP.
 - [x] Dynamiczny dropdown modeli dla zapisanego klucza; testy z katalogiem syntetycznym.
 - [ ] Rzeczywisty transport modelu przez n8n z obsługą zgodności modelu/API i błędów.
-- [ ] Aktualnie wybrany plan, grupy i daty jako kontekst rozmowy przypisanej do konta.
-- [ ] Odczyt danych przez tools: odpowiedzi „co mam jutro?”, wyszukiwanie i kolizje.
-- [ ] Dwa odrębne przepływy: odrobienie istniejących zajęć i jawne przełożenie.
-- [ ] Test całości z prawdziwym modelem i kluczem wprowadzonym przez użytkownika.
-- [ ] Natywna sesja Odysseusa z kontekstem tools na osobnej gałęzi, potem pamięć/RAG.
+- [x] Aktualnie wybrany plan, grupy i daty jako kontekst natywnej rozmowy przypisanej do konta.
+- [x] Odczyt danych przez tools, wyszukiwanie i sprawdzanie kolizji terminów odrobienia.
+- [x] Dwa odrębne przepływy lokalne: odrobienie istniejących zajęć i jawne przełożenie.
+- [x] Rzeczywisty model lokalny Gemma: odczyt, odrobienie i niezatwierdzony podgląd sali na stagingu.
+- [x] Natywna sesja Odysseusa z kontekstem tools na osobnej gałęzi i w osobnej kopii.
+- [ ] Test użytkownika w zalogowanej przeglądarce: wybór lokalnego modelu, dodanie i potwierdzenie podglądu.
+- [ ] Podłączenie dokumentów/RAG i automatyczne gromadzenie wiedzy; odczyt istniejącej pamięci jest opcjonalny.
 
 Próby akceptacyjne obejmują pytanie o konkretną grupę i datę; odrobienie bez
 zmiany pierwotnego terminu; przełożenie na wyraźną prośbę; doprecyzowanie

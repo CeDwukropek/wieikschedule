@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 process.env.SCHEDULE_TOOL_SECRET='synthetic-test-master-secret-'.repeat(3);
-const {issueContext,readContext}=require('../_lib/scheduleTools');
+const {issueContext,readContext,dispatch}=require('../_lib/scheduleTools');
 const {encrypt,decrypt,publicSettings}=require('../_lib/aiCredentials');
 const {validateChange}=require('../_lib/schedule');
 const {runAgent}=require('../_lib/scheduleAgent');
@@ -14,13 +14,27 @@ test('delegated context rejects tampering and expiry and binds owner/provider/se
  assert.throws(()=>readContext(token.slice(0,-2)+'xx',1000000),{code:'UNAUTHORIZED'});
  assert.throws(()=>readContext('eyJ.fake.firebase'),{code:'UNAUTHORIZED'});
 });
+test('makeup and query cannot propose moves; operation is signed into delegated context',async()=>{
+ for(const intent of ['makeup','query','restore']){
+  const claims=readContext(issueContext(id,'odysseus','session',Date.now(),intent));
+  assert.equal(claims.intent,intent);
+  await assert.rejects(dispatch(claims,'schedule.create_override',{event_id:id,action:'modify',patch:{room:'T'}}),{code:'INTENT_REQUIRED'});
+ }
+ for(const intent of ['makeup','query','reschedule','cancel']){
+  const claims=readContext(issueContext(id,'odysseus','session',Date.now(),intent));
+  await assert.rejects(dispatch(claims,'schedule.delete_override',{event_id:id}),{code:'INTENT_REQUIRED'});
+ }
+ await assert.rejects(dispatch({intent:'reschedule'},'schedule.create_override',{event_id:id,action:'cancel'}),{code:'INTENT_REQUIRED'});
+ await assert.rejects(dispatch({intent:'cancel'},'schedule.create_override',{event_id:id,action:'modify'}),{code:'INTENT_REQUIRED'});
+ await assert.rejects(dispatch({intent:'reschedule'},'schedule.confirm',{}),{code:'UNKNOWN_TOOL'});
+});
 test('credential ciphertext is randomized, authenticated, and bound to Firebase UID',()=>{
  const encrypted=encrypt('user-a','synthetic-api-key');
  assert.equal(decrypt('user-a',encrypted),'synthetic-api-key');
  assert.notEqual(encrypted.ciphertext,encrypt('user-a','synthetic-api-key').ciphertext);
  assert.throws(()=>decrypt('user-b',encrypted));
  assert.ok(!JSON.stringify(encrypted).includes('synthetic-api-key'));
- assert.deepEqual(Object.keys(publicSettings({encrypted_key:encrypted})).sort(),['has_api_key','local_endpoint','model','provider']);
+ assert.deepEqual(Object.keys(publicSettings({encrypted_key:encrypted})).sort(),['has_api_key','local_endpoint','local_endpoint_id','local_memory','local_model','model','provider']);
 });
 test('change contract preserves explicit null and rejects identity/scope/invalid scalar values',()=>{
  const change={event_id:id,operation:'upsert',action:'modify',patch:{room:null}};

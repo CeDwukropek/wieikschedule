@@ -6,7 +6,14 @@ module.exports=async(req,res)=>{
   try{
     const token=/^Bearer (.+)$/i.exec(String(req.headers.authorization||''))?.[1];
     const claims=readContext(token);
-    if(req.method==='GET')return res.status(200).json({ok:true,protocol:'wieik-schedule-v1',provider:claims.provider,session_id:claims.session_id});
+    if(req.method==='GET'){
+      const {tools}=require('../_lib/scheduleToolSchemas');
+      const available=tools.filter(tool=>tool.name.startsWith('schedule.get_')||tool.name==='schedule.find_event'||
+        (tool.name==='schedule.create_override'&&['reschedule','cancel'].includes(claims.intent))||
+        (tool.name==='schedule.delete_override'&&claims.intent==='restore'));
+      return res.status(200).json({ok:true,protocol:'wieik-schedule-v1',provider:claims.provider,session_id:claims.session_id,
+        principal:claims.sub,intent:claims.intent,tools:available});
+    }
     keys(req.body,['tool','arguments']);
     return res.status(200).json({ok:true,result:await dispatch(claims,req.body.tool,req.body.arguments)});
   }catch(error){return res.status(error.statusCode||503).json({ok:false,error:error.code||'TOOLS_UNAVAILABLE',
