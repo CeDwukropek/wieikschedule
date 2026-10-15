@@ -1,5 +1,8 @@
 # Prywatny plan i narzędzia v1
 
+Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
+przełożeniem i wymagany codzienny importer: [plan wdrożenia](IMPLEMENTATION_PLAN.md).
+
 Migracja `DB/migrations/20261015_personal_overrides.sql` wymaga wcześniejszej
 migracji importera i stabilnych source_system/source_key. Wdrożona wyłącznie na
 lokalnym stagingu po pg_dump. Produkcja pozostaje bez zmian.
@@ -57,7 +60,8 @@ Testy modelu używają odpowiedzi syntetycznych, bez sieci i kosztów.
 
 ## Klucz API w Firebase
 
-Menu → Model AI udostępnia wybór API/lokalny, nazwę modelu, pole hasła na klucz i
+Menu → Model AI udostępnia wybór API/lokalny, dropdown modeli pobierany z OpenAI
+po zapisaniu klucza (z możliwością ręcznego wpisania nazwy), pole hasła na klucz i
 adres adaptera. GET ai-settings zwraca tylko has_api_key; nie ma endpointu
 odszyfrowującego klucz dla przeglądarki/modelu/n8n. Backend zapisuje AES-256-GCM
 z losowym IV i UID jako AAD w `scheduleAiStagingCredentials/{uid}` na stagingu,
