@@ -19,20 +19,35 @@ const EVENT_TINT_BY_BG_CLASS = {
   "bg-gray-600": "rgba(75, 85, 99, 0.1)",
 };
 
+export function eventSubject(ev, subjects = {}) {
+  return subjects[ev.subj] || subjects[ev.title] || {
+    name: ev.title || ev.subj,
+    color: 'bg-gray-600',
+  };
+}
+
+function shortType(type = '') {
+  const value = type.toLowerCase();
+  if (value.includes('wyk')) return 'Wyk.';
+  if (value.includes('lab')) return 'Lab.';
+  if (value.includes('ćw') || value.includes('cw')) return 'Ćw.';
+  if (value.includes('lekt')) return 'Lek.';
+  if (value.includes('projekt')) return 'Proj.';
+  return type;
+}
+
 export default function EventCard({
   ev,
   subjects = {},
   onRemoveAddedEvent,
   removingAddedEventId,
   onEditEvent,
+  compact = false,
+  onOpenDetails,
 }) {
   const [removeError, setRemoveError] = useState("");
 
-  const subj = subjects[ev.subj] ||
-    subjects[ev.title] || {
-      name: ev.title || ev.subj,
-      color: "bg-gray-600",
-    };
+  const subj = eventSubject(ev, subjects);
 
   const teacherLines = splitTeacherDisplay(ev?.teacher);
   const colorBg = subj.color || "bg-gray-600";
@@ -49,6 +64,29 @@ export default function EventCard({
     Boolean(String(ev?.added_event_id || "").trim());
   const isRemoving =
     canRemoveAdded && removingAddedEventId === ev?.added_event_id;
+
+  if (compact) return (
+    <button
+      type="button"
+      className={`week-event-card ${ev.__optimistic === 'adding' ? 'event-card-optimistic' : ''}`}
+      style={{ backgroundColor: eventTint }}
+      onClick={() => onOpenDetails?.(ev)}
+      aria-label={`${subj.name}, ${ev.type || 'zajęcia'}, ${ev.start}–${ev.end}${ev.groups?.length ? ', ' + ev.groups.join(', ') : ''}. Pokaż szczegóły`}
+      aria-haspopup="dialog"
+      data-added={isAdded || undefined}
+      data-modified={ev.personal_override || undefined}
+    >
+      <span className={`week-event-color ${colorBg}`} aria-hidden="true" />
+      <span className="week-event-content">
+        <span className="week-event-time">
+          <span>{ev.start}<span className="week-event-end">–{ev.end}</span></span>
+          <span className="week-event-kind">{shortType(ev.type)}</span>
+          <span className="week-event-room">{ev.room}</span>
+        </span>
+        <span className="week-event-title">{subj.name}</span>
+      </span>
+    </button>
+  );
 
   const handleRemoveClick = async (event) => {
     event.preventDefault();
