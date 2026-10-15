@@ -25,7 +25,8 @@ let db = null;
 if (isFirebaseConfigured) {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
+  // Staging keeps the existing Firebase login, but never reads/writes cloud settings.
+  db = process.env.REACT_APP_LOCAL_STAGING === "true" ? null : getFirestore(app);
   googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({ prompt: "select_account" });
 }

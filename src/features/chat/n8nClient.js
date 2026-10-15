@@ -9,6 +9,7 @@ class ChatbotApiError extends Error {
 }
 
 function getEndpoint() {
+  if (process.env.REACT_APP_LOCAL_STAGING === "true") return "/staging/chat";
   return (process.env.REACT_APP_N8N_CHAT_WEBHOOK || "").trim();
 }
 

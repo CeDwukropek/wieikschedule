@@ -117,8 +117,8 @@ module.exports = async function handler(req, res) {
           reason: row.reason || "makeup",
 
           // Zachowane dla kompatybilności z frontendem.
-          // W bazie nie ma już `user_added_events.schedule_name`;
-          // źródłem prawdy dla planu jest `events.faculty`.
+          // Dopisek zapisuje także wymagane schedule_name, ale nazwa planu
+          // w tej odpowiedzi odpowiada aktualnemu events.faculty.
           schedule_name: event.faculty,
 
           faculty: event.faculty,
