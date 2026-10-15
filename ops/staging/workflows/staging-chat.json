@@ -1,0 +1,30 @@
+{
+  "id": "wksStageChat0001",
+  "name": "Schedule staging — connection check (not an AI agent)",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "id": "webhook", "name": "Staging chat", "type": "n8n-nodes-base.webhook", "typeVersion": 2,
+      "position": [0, 0], "webhookId": "schedule-staging-chat",
+      "parameters": { "httpMethod": "POST", "path": "schedule-staging-chat", "responseMode": "lastNode", "options": {} }
+    },
+    {
+      "id": "read", "name": "Read test database", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [240, 0], "alwaysOutputData": true,
+      "parameters": {
+        "url": "={{ 'http://postgrest:3000/events?select=id&status=eq.aktywne&limit=1&faculty=eq.' + encodeURIComponent(String($json.body?.context?.scheduleName || '').slice(0, 128)) }}",
+        "options": { "timeout": 10000 }
+      }
+    },
+    {
+      "id": "response", "name": "Connection result", "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [480, 0],
+      "parameters": { "mode": "runOnceForAllItems", "jsCode": "const found = $input.all().some(item => Boolean(item.json.id)); return [{json:{output: 'Połączenie aplikacja → n8n → testowa baza działa. ' + (found ? 'Plan zawiera zajęcia.' : 'Dla wybranego planu nie znaleziono aktywnych zajęć.') + ' To test połączenia; agent AI nie jest jeszcze skonfigurowany.', mode:'staging-connection-check'}}];" }
+    }
+  ],
+  "connections": {
+    "Staging chat": { "main": [[{ "node": "Read test database", "type": "main", "index": 0 }]] },
+    "Read test database": { "main": [[{ "node": "Connection result", "type": "main", "index": 0 }]] }
+  }
+}

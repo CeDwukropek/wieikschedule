@@ -1,0 +1,33 @@
+name: Local staging
+on:
+  pull_request:
+    paths:
+      - 'ops/staging/**'
+      - 'src/lib/**'
+      - 'src/features/chat/n8nClient.js'
+      - 'api/my-plan/add-event*'
+      - '.github/workflows/local-staging.yml'
+  push:
+    paths:
+      - 'ops/staging/**'
+      - 'src/lib/**'
+      - 'src/features/chat/n8nClient.js'
+      - 'api/my-plan/add-event*'
+      - '.github/workflows/local-staging.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test -- --watch=false --runInBand
+        env:
+          CI: 'true'
+      - run: node --test api/my-plan/add-event.test.cjs
+      - run: python3 -m unittest discover -s ops/staging -p 'test_*.py'

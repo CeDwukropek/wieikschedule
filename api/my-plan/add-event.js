@@ -124,6 +124,7 @@ module.exports = async function handler(req, res) {
       .insert({
         user_id: userId,
         event_id: eventId,
+        schedule_name: scheduleName,
         reason,
         status: "active",
       })
