@@ -3,6 +3,8 @@
 Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
 przełożeniem i wymagany codzienny importer: [plan wdrożenia](IMPLEMENTATION_PLAN.md).
 
+Aktualna integracja lokalna: [natywny Odysseus — konfiguracja i testy](NATIVE_ODYSSEUS.md).
+
 Migracja `DB/migrations/20261015_personal_overrides.sql` wymaga wcześniejszej
 migracji importera i stabilnych source_system/source_key. Wdrożona wyłącznie na
 lokalnym stagingu po pg_dump. Produkcja pozostaje bez zmian.
@@ -32,7 +34,7 @@ Globalne zmiany pozostają niedostępne. Źródłowy importer musi nadal zachowy
 ## Wspólny kontrakt
 
 Po zweryfikowaniu Firebase POST `/api/schedule/context` otrzymuje
-`{provider:"n8n"|"odysseus",session_id:"..."}`. Wynik to kontekst ważny 5 minut,
+`{provider:"n8n"|"odysseus",session_id:"...",intent:"query"|"makeup"|"reschedule"|"cancel"|"restore"}`. Wynik to kontekst ważny 5 minut,
 podpisany SCHEDULE_TOOL_SECRET, przypisany do właściciela, providera i rozmowy.
 Tylko transport przekazuje go w Authorization do `/api/schedule/tools`.
 Token nie trafia do promptu ani argumentów narzędzi. GET tego endpointu weryfikuje

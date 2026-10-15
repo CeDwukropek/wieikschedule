@@ -1,9 +1,11 @@
 import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import AiSettings from './AiSettings';
 import {personalRequest} from '../my-plan/personalScheduleApi';
+import {nativeCapabilities,setLocalToken} from '../chat/localOdysseus';
 let mockUser;
 jest.mock('../auth/useFirebaseAuth',()=>({useFirebaseAuth:()=>({user:mockUser})}));
 jest.mock('../my-plan/personalScheduleApi',()=>({personalRequest:jest.fn()}));
+jest.mock('../chat/localOdysseus',()=>({nativeCapabilities:jest.fn(),setLocalToken:jest.fn(),localToken:()=>''}));
 const settings={provider:'n8n',model:'',local_endpoint:'',has_api_key:false};
 beforeEach(()=>{jest.clearAllMocks();mockUser={uid:'owner-a'};});
 test('saving the first key loads a dynamic dropdown and preserves model selection',async()=>{
@@ -46,4 +48,19 @@ test('a late catalogue response cannot appear under a different account',async()
   await waitFor(()=>expect(screen.getByRole('combobox',{name:'Model OpenAI'})).toBeDisabled());
   await act(async()=>resolveA({models:[{id:'private-a-model'}]}));
   expect(screen.queryByRole('option',{name:'private-a-model'})).not.toBeInTheDocument();
+});
+test('native connection loads local models and saves selection without persisting the access token',async()=>{
+ const local={...settings,provider:'odysseus',local_endpoint:'https://native.test'};
+ personalRequest.mockImplementation(async(path,body)=>({settings:{...local,...body}}));
+ nativeCapabilities.mockResolvedValue({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',name:'My local server',models:['model-a','model-b']}]});
+ render(<AiSettings/>);
+ await screen.findByLabelText('Adres Odysseusa');
+ fireEvent.change(screen.getByLabelText('Token dostępu Odysseusa (chat)'),{target:{value:'ody_synthetic'}});
+ fireEvent.click(screen.getByRole('button',{name:'Sprawdź połączenie z Odysseusem'}));
+ await screen.findByRole('option',{name:'model-b'});
+ fireEvent.change(screen.getByLabelText('Model Odysseusa'),{target:{value:'model-b'}});
+ fireEvent.click(screen.getByRole('button',{name:'Zapisz ustawienia AI'}));
+ await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint_id:'local',local_model:'model-b'})));
+ expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_synthetic');
+ expect(JSON.stringify(personalRequest.mock.calls)).not.toContain('ody_synthetic');
 });

@@ -86,6 +86,10 @@ zarządzających projektami. Prywatne overrides i wspólne narzędzia opisuje
 [schedule-tools](../../integrations/schedule-tools/README.md). Tryb zewnętrznego
 API jest oddzielnie aktywowany; sam zapis klucza nie uruchamia modelu.
 
+Lokalny wariant korzysta już z natywnego Odysseusa w osobnej instancji oraz
+rzeczywistego lokalnego modelu. Konfiguracja, token i zakres testów:
+[natywna integracja](../../integrations/schedule-tools/NATIVE_ODYSSEUS.md).
+
 ## Weryfikacja i zatrzymanie
 
 ```sh

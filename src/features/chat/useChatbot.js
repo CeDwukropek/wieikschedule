@@ -3,6 +3,7 @@ import { sendN8nChatMessage } from "./n8nClient";
 import { addEventToMyPlan } from "../my-plan/myPlanApi";
 import {sendScheduleAgentMessage} from './scheduleAgentClient';
 import {useFirebaseAuth} from '../auth/useFirebaseAuth';
+import {clearLocalTokens} from './localOdysseus';
 
 function generateSessionId() {
   if (
@@ -45,6 +46,7 @@ export function useChatbot({
   const {user}=useFirebaseAuth();
   const uidRef=useRef(user?.uid);uidRef.current=user?.uid;
   const [messages, setMessages] = useState([]);
+  const [intent,setIntent]=useState('query');
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
@@ -55,6 +57,7 @@ export function useChatbot({
   const sessionIdRef = useRef(generateSessionId());
 
   useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(()=>{clearLocalTokens();setIntent('query');},[user?.uid]);
   useEffect(()=>{
     abortRef.current?.abort();setMessages([]);setInput('');setStatus('idle');setError(null);
     sessionIdRef.current=generateSessionId();
@@ -97,6 +100,7 @@ export function useChatbot({
         sessionId: sessionIdRef.current,
         signal: controller.signal,
         history:messages.filter(msg=>msg.stage==='done').slice(-16).map(msg=>({role:msg.role,content:msg.text})),
+        intent,
       });
       if(controller.signal.aborted||uidRef.current!==owner)return;
       reply.proposals?.forEach(proposal=>onProposal?.(proposal));
@@ -233,6 +237,7 @@ export function useChatbot({
   };
 
   return {
+    intent,setIntent,
     input,
     setInput,
     messages,

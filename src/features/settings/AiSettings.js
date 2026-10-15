@@ -1,15 +1,18 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {useFirebaseAuth} from '../auth/useFirebaseAuth';
 import {personalRequest} from '../my-plan/personalScheduleApi';
+import {nativeCapabilities,setLocalToken,localToken} from '../chat/localOdysseus';
 export default function AiSettings(){
   const {user}=useFirebaseAuth();
+  const activeUid=useRef(user?.uid);activeUid.current=user?.uid;
   const [state,setState]=useState(null),[apiKey,setApiKey]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const [catalog,setCatalog]=useState({uid:'',models:[],loading:false,error:''});
   const [catalogVersion,setCatalogVersion]=useState(0);
+  const [localAccess,setLocalAccess]=useState(''),[native,setNative]=useState(null);
   const ready=Boolean(user&&state?.uid===user.uid);
   const uid=user?.uid,provider=state?.provider,hasKey=Boolean(state?.has_api_key);
   useEffect(()=>{
-    setState(null);setApiKey('');setError('');
+    setState(null);setApiKey('');setError('');setBusy(false);setNative(null);setLocalAccess(localToken(user?.uid));
     if(!user)return undefined;
     let active=true;
     personalRequest('ai-settings').then(data=>{if(active)setState({...data.settings,uid:user.uid});}).catch(err=>{if(active)setError(err.message);});
@@ -31,10 +34,26 @@ export default function AiSettings(){
   const save=async(remove=false)=>{
     setBusy(true);setError('');
     try{
-      const data=await personalRequest('ai-settings',{provider:state.provider,model:state.model,local_endpoint:state.local_endpoint,api_key:apiKey,remove_api_key:remove});
+      const data=await personalRequest('ai-settings',{provider:state.provider,model:state.model,local_endpoint:state.local_endpoint,
+        local_endpoint_id:state.local_endpoint_id||'',local_model:state.local_model||'',local_memory:state.local_memory||false,api_key:apiKey,remove_api_key:remove});
+      if(activeUid.current!==user.uid)return;
+      setLocalToken(user.uid,localAccess);
       setState({...data.settings,uid:user.uid});setApiKey('');setError('Zapisano ustawienia AI.');
       setCatalogVersion(value=>value+1);
-    }catch(err){setError(err.message);}finally{setBusy(false);}
+    }catch(err){if(activeUid.current===user.uid)setError(err.message);}finally{if(activeUid.current===user.uid)setBusy(false);}
+  };
+  const connect=async()=>{
+    setBusy(true);setError('');setNative(null);
+    try{
+      const result=await nativeCapabilities(state.local_endpoint,user.uid,localAccess);
+      if(activeUid.current!==user.uid)return;
+      setNative(result);setLocalToken(user.uid,localAccess);
+      const endpoint=result.endpoints.find(row=>row.id===state.local_endpoint_id)||result.endpoints[0];
+      if(!endpoint)throw new Error('Odysseus nie ma dopuszczonego lokalnego endpointu modeli.');
+      setState(previous=>({...previous,local_endpoint_id:endpoint.id,
+        local_model:endpoint.models.includes(previous.local_model)?previous.local_model:endpoint.models[0]||''}));
+      setError('Połączenie z Odysseusem działa. Wybierz model i zapisz ustawienia.');
+    }catch(err){if(activeUid.current===user.uid)setError(err.message);}finally{if(activeUid.current===user.uid)setBusy(false);}
   };
   return <section className="space-y-3 border-t border-neutral-800 pt-4">
     <h3 className="font-semibold">Model AI</h3>
@@ -58,8 +77,20 @@ export default function AiSettings(){
         <p className="text-xs text-neutral-400">Klucz przechowujemy zaszyfrowany w Firebase. W trybie API wysłana wiadomość, historia rozmowy i wyniki narzędzi planu trafiają do OpenAI. Opłaty rozliczane są na Twoim kluczu.</p>
         {state.has_api_key&&<button className="text-sm text-rose-300" disabled={busy} onClick={()=>save(true)}>Usuń zapisany klucz</button>}
       </>:<>
-        <label className="block text-sm">Adres lokalnego adaptera<input type="url" className="block w-full bg-neutral-800 rounded p-2" placeholder="https://twoj-serwer:port" value={state.local_endpoint} maxLength={2048} onChange={event=>setState({...state,local_endpoint:event.target.value})}/></label>
-        <p className="text-xs text-neutral-400">Przeglądarka łączy się bezpośrednio z adapterem schedule-tools przy Odysseusie. Adapter wymaga lokalnego modelu obsługującego narzędzia i dostępu do tej strony.</p>
+        <label className="block text-sm">Adres Odysseusa<input type="url" className="block w-full bg-neutral-800 rounded p-2" placeholder="https://twoj-serwer:port" value={state.local_endpoint} maxLength={2048} onChange={event=>{setState({...state,local_endpoint:event.target.value});setNative(null);}}/></label>
+        <label className="block text-sm">Token dostępu Odysseusa (chat)<input type="password" autoComplete="off" className="block w-full bg-neutral-800 rounded p-2" value={localAccess} onChange={event=>setLocalAccess(event.target.value)} placeholder="ody_… lub aktywne logowanie w Odysseusie"/></label>
+        <p className="text-xs text-neutral-400">Token pozostaje tylko w pamięci tej strony, do odświeżenia lub wylogowania. Nie zapisujemy go w Firebase. Własny Odysseus musi mieć włączoną integrację planu.</p>
+        <button type="button" className="text-sm underline" disabled={busy||!state.local_endpoint} onClick={connect}>Sprawdź połączenie z Odysseusem</button>
+        {native&&<>
+          <label className="block text-sm">Lokalny endpoint<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_endpoint_id||''} onChange={event=>{const endpoint=native.endpoints.find(row=>row.id===event.target.value);setState({...state,local_endpoint_id:endpoint.id,local_model:endpoint.models[0]||''});}}>
+            {native.endpoints.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+          </select></label>
+          <label className="block text-sm">Model Odysseusa<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_model||''} onChange={event=>setState({...state,local_model:event.target.value})}>
+            {(native.endpoints.find(row=>row.id===state.local_endpoint_id)?.models||[]).map(model=><option key={model} value={model}>{model}</option>)}
+          </select></label>
+        </>}
+        {!native&&state.local_model&&<p className="text-xs">Zapisany model: {state.local_model}</p>}
+        <label className="block text-sm"><input type="checkbox" checked={state.local_memory||false} onChange={event=>setState({...state,local_memory:event.target.checked})}/> Używaj pamięci i dokumentów mojego konta Odysseusa</label>
       </>}
       <button className="rounded bg-sky-700 px-3 py-2 text-sm" disabled={busy} onClick={()=>save()}>{busy?'Zapisywanie…':'Zapisz ustawienia AI'}</button>
     </>:!error&&<p>Ładowanie ustawień AI…</p>}

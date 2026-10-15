@@ -81,6 +81,7 @@ export default function ChatPanel({
   addingEventId,
   addedEventIds,
   slotErrors,
+  intent='query',onIntentChange,
 }) {
   const messagesContainerRef = useRef(null);
   const shouldStickToBottomRef = useRef(true);
@@ -205,6 +206,14 @@ export default function ChatPanel({
           </button>
         </div>
       ) : null}
+
+      {onIntentChange&&process.env.REACT_APP_PERSONAL_SCHEDULE==='true'&&<label className="block px-3 py-2 text-xs text-neutral-300">Co chcesz zrobić?
+        <select className="ml-2 rounded bg-neutral-800 p-1" value={intent} disabled={status==='sending'||status==='waiting'} onChange={event=>onIntentChange(event.target.value)}>
+          <option value="query">Sprawdzić plan</option><option value="makeup">Znaleźć termin odrobienia</option>
+          <option value="reschedule">Przełożyć moje zajęcia</option><option value="cancel">Odwołać tylko dla mnie</option>
+          <option value="restore">Przywrócić plan uczelni</option>
+        </select>
+      </label>}
 
       <div
         ref={messagesContainerRef}

@@ -39,6 +39,9 @@ export default function SlotChoiceCard({
       </div>
 
       {title ? <div className="text-sm text-neutral-100">{title}</div> : null}
+      {slot.conflict_status&&<p className={`text-xs ${slot.conflict_status==='free'?'text-emerald-300':'text-amber-300'}`}>
+        {slot.conflict_status==='free'?'Bez kolizji z Twoim planem':slot.conflict_status==='conflict'?'Ten termin koliduje z Twoim planem':'Nie udało się sprawdzić kolizji'}
+      </p>}
 
       <div className="text-xs text-neutral-300 space-y-1">
         {slot?.room ? <div>Sala: {slot.room}</div> : null}
