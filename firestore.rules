@@ -7,6 +7,9 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidSettingsWrite();
       allow delete: if isOwner(userId);
     }
+    // API-only encrypted model credentials. Firebase Admin enforces ownership.
+    match /scheduleAiCredentials/{userId} { allow read, write: if false; }
+    match /scheduleAiStagingCredentials/{userId} { allow read, write: if false; }
 
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;

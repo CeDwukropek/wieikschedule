@@ -300,6 +300,7 @@ export function normalizeTimetable(scheduleId, rows) {
         start,
         end,
         room,
+        personal_override: Boolean(item.personal_override),
         _dates: new Set(eventDateIso ? [eventDateIso] : []),
       });
     } else {
@@ -337,6 +338,7 @@ export function normalizeTimetable(scheduleId, rows) {
   return {
     id: scheduleId,
     name: scheduleId,
+    rawRows: rawEvents,
     schedule,
     subjects,
     groups,

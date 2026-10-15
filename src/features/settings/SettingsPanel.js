@@ -9,6 +9,7 @@ import { exportICS } from "../schedule/export/exportICS";
 import { FilterToggle } from "./FilterToggle";
 import ExternalGroupSelections from "../schedule/components/ExternalGroupSelections";
 import GoogleSignInButton from "../auth/GoogleSignInButton";
+import AiSettings from './AiSettings';
 
 export default function SettingsPanel({
   panelState,
@@ -90,7 +91,7 @@ export default function SettingsPanel({
     groupConfigs,
     onGroupChange,
   } = filterState || {};
-  const { exportRef, viewedWeekRange, selection, combinedOptions } =
+  const { exportRef, viewedWeekRange, selection, combinedOptions, addedEvents=[], personalReady=true } =
     exportState || {};
   const scheduleOptions = (
     timetableOptions.length > 0
@@ -113,7 +114,7 @@ export default function SettingsPanel({
 
   const handleExportICS = () => exportICS(selectExportEvents({
     schedule, scheduleId: currentSchedule, groups: studentGroups, hideLectures, showAll,
-    externalSelections, timetables: loadedTimetables,
+    externalSelections, timetables: loadedTimetables, addedEvents,
   }));
 
   return (
@@ -157,6 +158,7 @@ export default function SettingsPanel({
         >
           <div className="p-6 space-y-6 ">
             <GoogleSignInButton />
+            {process.env.REACT_APP_PERSONAL_SCHEDULE==='true'&&<AiSettings/>}
 
             {/* Schedule selector */}
             <div className="space-y-2">
@@ -253,6 +255,7 @@ export default function SettingsPanel({
             <div className="space-y-2 pt-4 border-t border-neutral-800">
               <button
                 onClick={handleExportICS}
+                disabled={!personalReady}
                 className="w-full px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded transition-colors text-sm"
               >
                 Eksportuj ICS

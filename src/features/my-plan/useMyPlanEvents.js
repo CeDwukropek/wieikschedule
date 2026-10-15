@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getWeekStart, toIsoDate } from "../../utils/date";
 import { getAddedEventsFromMyPlan, removeAddedEventFromMyPlan } from "./myPlanApi";
 import { mapAddedEvent } from "./eventMappers";
-import { readMyPlanCache, writeMyPlanCache, removeMyPlanCache } from "./myPlanCache";
+import { writeMyPlanCache } from "./myPlanCache";
 
 const EMPTY_WEEKS = {};
 
@@ -17,7 +17,6 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [removing, setRemoving] = useState(null);
   const weeks = state.scope === scope && enabled ? state.weeks : EMPTY_WEEKS;
-  const weekKeys = [...new Set([toIsoDate(viewedWeekStart), toIsoDate(selectedDayWeekStart)].filter(Boolean))].join("|");
 
   useEffect(() => {
     mounted.current = true;
@@ -45,27 +44,28 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
     const requestRevision = revision.current;
     const current = () => active && scopeRef.current === scope && revision.current === requestRevision;
 
-    weekKeys.split("|").filter(Boolean).forEach(async week => {
-      const cached = readMyPlanCache(scopeId, scheduleName, week);
-      if (cached) updateWeeks(previous => previous[week] ? previous : { ...previous, [week]: cached });
-      const end = new Date(`${week}T12:00:00`);
-      end.setDate(end.getDate() + 6);
+    (async () => {
       try {
-        const response = await getAddedEventsFromMyPlan({ scheduleName, dateFrom: week, dateTo: toIsoDate(end) });
+        // Full confirmed range: moved events and ICS must include off-screen weeks.
+        const response = await getAddedEventsFromMyPlan({ scheduleName });
         if (!current()) return;
         const events = (response?.events || []).map(event => mapAddedEvent(event)).filter(Boolean);
-        updateWeeks(previous => ({ ...previous, [week]: events }));
+        const grouped={};
+        events.forEach(event=>{
+          const week=toIsoDate(getWeekStart(new Date(`${event.dates[0]}T12:00:00`)));
+          (grouped[week] ||= []).push(event);
+        });
+        updateWeeks(() => grouped);
       } catch (error) {
         if (!current()) return;
         if (/zalogowany|autoryz|unauthorized/i.test(String(error?.message || ""))) {
-          updateWeeks(previous => ({ ...previous, [week]: [] }));
-          removeMyPlanCache(scopeId, scheduleName, week);
+          updateWeeks(() => ({}));
         }
         // Network failures retain the current confirmed cache.
       }
-    });
+    })();
     return () => { active = false; };
-  }, [enabled, scheduleName, scopeId, scope, weekKeys, refreshNonce, updateWeeks]);
+  }, [enabled, scheduleName, scopeId, scope, refreshNonce, updateWeeks]);
 
   const optimisticAdd = useCallback(slot => {
     if (!enabled || !scheduleName || scopeRef.current !== scope) return null;
@@ -137,6 +137,8 @@ export function useMyPlanEvents({ scheduleName, scopeId, enabled, viewedWeekStar
 
   return {
     addedEventsByWeek: weeks,
+    allAddedEvents: Object.values(weeks).flat(),
+    refreshNonce,
     removingAddedEventId: removing?.scope === scope ? removing.id : null,
     refresh, optimisticAdd, confirmAdd, rollbackAdd, removeEvent,
   };

@@ -98,10 +98,12 @@ module.exports = async function handler(req, res) {
       query = query.lte("events.date", dateTo);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
+    const data=[];
+    for(let from=0;;from+=1000){
+      const page=await query.range(from,from+999);
+      if(page.error)throw page.error;
+      data.push(...(page.data||[]));
+      if(!page.data||page.data.length<1000)break;
     }
 
     // 3) Mapowanie do formatu czytelnego dla UI.

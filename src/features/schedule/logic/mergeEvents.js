@@ -19,8 +19,9 @@ export function mergeEvents({
       if (event.event_id) baseIds.add(String(event.event_id).trim());
     });
   addedEvents.forEach(event => {
+    if (weekStart && !filterEvents([event], {}, false, true, weekStart).length) return;
     if (baseIds.has(String(event.event_id || "").trim())) return;
-    const key = ["added", event.added_event_id || "", event.event_id || "",
+    const key = event.event_id ? `added::${event.event_id}` : ["added", event.added_event_id || "", event.event_id || "",
       event.day, event.start, event.end, event.room].join("::");
     merged.set(key, event);
   });

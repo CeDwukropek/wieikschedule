@@ -23,17 +23,14 @@ function icsEscape(text = "") {
 }
 
 // UID dość stabilny: id_zajec + subject + stały sufiks
-function makeUid(e) {
+function makeUid(e, dateStr) {
+  if (e.event_id) return `${e.event_id}@wieikschedule`;
   const base = `${e.id || "ev"}-${e.subj || "subj"}`;
-  return `${base}@wieikschedule`;
+  return `${base}-${dateStr}@wieikschedule`;
 }
 
 // --- Główny eksport -----------------------------------------------------------
-export function exportICS(events) {
-  if (!events || events.length === 0) {
-    alert("Brak wydarzeń do eksportu.");
-    return;
-  }
+export function buildICS(events) {
 
   // Nagłówek kalendarza
   let ics =
@@ -60,7 +57,7 @@ export function exportICS(events) {
 
     // Create a separate VEVENT for each actual occurrence
     eventDates.forEach((dateStr) => {
-      const eventDate = new Date(dateStr); // Parse "YYYY-MM-DD"
+      const eventDate = new Date(`${dateStr}T12:00:00`);
       if (Number.isNaN(eventDate.getTime())) return;
 
       const eventStart = new Date(eventDate);
@@ -71,8 +68,8 @@ export function exportICS(events) {
       const dtStart = toICSDateLocal(eventStart);
       const dtEnd = toICSDateLocal(eventEnd);
 
-      const uid = `${makeUid(e)}-${dateStr}`;
-      const summary = icsEscape(e.subj || "");
+      const uid = makeUid(e,dateStr);
+      const summary = icsEscape(e.title || e.subj || "");
       const desc = icsEscape(
         [e.type, Array.isArray(e.groups) ? e.groups.join(", ") : ""]
           .filter(Boolean)
@@ -95,6 +92,12 @@ export function exportICS(events) {
   });
 
   ics += "END:VCALENDAR";
+  return ics;
+}
+
+export function exportICS(events) {
+  if (!events?.length) { alert("Brak wydarzeń do eksportu."); return; }
+  const ics=buildICS(events);
 
   // Zapis pliku
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });

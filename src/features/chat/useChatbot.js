@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { sendN8nChatMessage } from "./n8nClient";
 import { addEventToMyPlan } from "../my-plan/myPlanApi";
+import {sendScheduleAgentMessage} from './scheduleAgentClient';
+import {useFirebaseAuth} from '../auth/useFirebaseAuth';
 
 function generateSessionId() {
   if (
@@ -38,7 +40,10 @@ export function useChatbot({
   onOptimisticAdd,
   onOptimisticAddConfirmed,
   onOptimisticAddFailed,
+  onProposal,
 }) {
+  const {user}=useFirebaseAuth();
+  const uidRef=useRef(user?.uid);uidRef.current=user?.uid;
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle");
@@ -50,6 +55,10 @@ export function useChatbot({
   const sessionIdRef = useRef(generateSessionId());
 
   useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(()=>{
+    abortRef.current?.abort();setMessages([]);setInput('');setStatus('idle');setError(null);
+    sessionIdRef.current=generateSessionId();
+  },[user?.uid,scheduleName]);
 
   const canSend = useMemo(
     () =>
@@ -79,13 +88,18 @@ export function useChatbot({
     try {
       setStatus("waiting");
 
-      const reply = await sendN8nChatMessage({
+      const owner=user?.uid;
+      const send=process.env.REACT_APP_PERSONAL_SCHEDULE==='true'?sendScheduleAgentMessage:sendN8nChatMessage;
+      const reply = await send({
         message: cleanInput,
         scheduleName,
         selectedGroups,
         sessionId: sessionIdRef.current,
         signal: controller.signal,
+        history:messages.filter(msg=>msg.stage==='done').slice(-16).map(msg=>({role:msg.role,content:msg.text})),
       });
+      if(controller.signal.aborted||uidRef.current!==owner)return;
+      reply.proposals?.forEach(proposal=>onProposal?.(proposal));
 
       setMessages((prev) =>
         prev.map((msg) =>
@@ -142,6 +156,7 @@ export function useChatbot({
     setAddedEventIds(new Set());
     setSlotErrors({});
     setStatus("idle");
+    sessionIdRef.current=generateSessionId();
   };
 
   const addSlotToMyPlan = async (slot) => {
