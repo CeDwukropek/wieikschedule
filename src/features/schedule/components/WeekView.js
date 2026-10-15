@@ -1,7 +1,7 @@
 import { getWeekStart } from "../../../utils/date";
 import EventCard from "./EventCard";
-import React, { forwardRef } from "react";
-import EventTooltipWrapper from "./EventTooltipWrapper";
+import React, { forwardRef, useEffect, useState } from "react";
+import EventDetailsDialog from "./EventDetailsDialog";
 import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
 import "./ScheduleView.css";
@@ -25,8 +25,12 @@ const WeekView = forwardRef(function WeekView(
 
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
+  const totalMinutes = (endHour - startHour) * 60;
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  useEffect(() => setSelectedEvent(null), [events, viewedWeekStart]);
 
   const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
+  const shortDayNames = ["Pon.", "Wt.", "Śr.", "Czw.", "Pt."];
 
   const monday =
     viewedWeekStart instanceof Date
@@ -55,36 +59,20 @@ const WeekView = forwardRef(function WeekView(
   }, [events, startHour, endHour]);
 
   return (
-    <div className="week-scroll w-full overflow-auto">
-      <style>{`
-        .week-grid {
-          grid-template-columns: 40px repeat(5, minmax(160px, 1fr));
-          grid-template-rows: auto auto repeat(${totalSlots}, 1rem);
-          overflow: hidden;
-        }
-
-        @media (max-width: 768px) {
-          .week-grid {
-            grid-template-columns: 40px repeat(5, calc(100vw - 88px));
-            min-width: calc(40px + (100vw - 88px) * 5);
-          }
-        }
-
-      `}</style>
-
-      {/* Jeden scroll-container */}
-      <div ref={ref} className="week-grid">
+    <div className="week-overview">
+      <p className="week-overview-hint">Cały tydzień <span>· Kliknij zajęcia, aby zobaczyć szczegóły</span></p>
+      <div ref={ref} className="week-grid" style={{gridTemplateRows: `auto auto repeat(${totalSlots}, var(--week-slot-height))`}} aria-label="Plan od poniedziałku do piątku, od 7:00 do 22:00">
         {/* Header row - Day names */}
         {dayNames.map((name, dayIndex) => (
           <div
             key={dayIndex}
-            className="z-10 py-2 text-center text-sm font-semibold bg-neutral-900 border-b border-neutral-700"
+            className="week-day-name"
             style={{
               gridColumn: dayIndex + 2,
               gridRow: 1,
             }}
           >
-            {name}
+            <span className="week-day-long">{name}</span><abbr className="week-day-short" title={name}>{shortDayNames[dayIndex]}</abbr>
           </div>
         ))}
 
@@ -92,7 +80,7 @@ const WeekView = forwardRef(function WeekView(
         {dayNames.map((name, dayIndex) => (
           <div
             key={`date-${dayIndex}`}
-            className="z-10 py-1 text-center text-xs text-gray-400 bg-neutral-900 border-b border-neutral-700"
+            className="week-day-date"
             style={{
               gridColumn: dayIndex + 2,
               gridRow: 2,
@@ -112,7 +100,7 @@ const WeekView = forwardRef(function WeekView(
         {Array.from({ length: endHour - startHour }, (_, i) => (
           <div
             key={i}
-            className="flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900"
+            className="week-hour-label border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
               gridRow: i * slotsPerHour + 3,
@@ -165,8 +153,6 @@ const WeekView = forwardRef(function WeekView(
                 ) => {
                   const startOffset = startMinutes - startHour * 60;
                   const duration = endMinutes - startMinutes;
-                  const topSlots = startOffset / slotMinutes;
-                  const heightSlots = duration / slotMinutes;
                   const width = 100 / columnCount;
                   const left = column * width;
                   const uniqueKey = `${day}-${ev.id}-${ev.start}-${ev.end}-${ev.room}-${idx}`;
@@ -176,21 +162,18 @@ const WeekView = forwardRef(function WeekView(
                       key={uniqueKey}
                       className="week-event-item"
                       style={{
-                        top: `${topSlots}rem`,
-                        height: `${heightSlots}rem`,
+                        top: `${startOffset / totalMinutes * 100}%`,
+                        height: `${duration / totalMinutes * 100}%`,
                         left: `calc(${left}% + 1px)`,
                         width: `calc(${width}% - 2px)`,
                       }}
                     >
-                      <EventTooltipWrapper ev={ev}>
                         <EventCard
                           ev={ev}
                           subjects={subjects}
-                          onRemoveAddedEvent={onRemoveAddedEvent}
-                          removingAddedEventId={removingAddedEventId}
-                          onEditEvent={onEditEvent}
+                          compact
+                          onOpenDetails={setSelectedEvent}
                         />
-                      </EventTooltipWrapper>
                     </div>
                   );
                 },
@@ -199,6 +182,15 @@ const WeekView = forwardRef(function WeekView(
           );
         })}
       </div>
+      {selectedEvent && <EventDetailsDialog
+        ev={selectedEvent}
+        subjects={subjects}
+        date={new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedEvent.day)}
+        onClose={() => setSelectedEvent(null)}
+        onEditEvent={onEditEvent}
+        onRemoveAddedEvent={onRemoveAddedEvent}
+        removingAddedEventId={removingAddedEventId}
+      />}
     </div>
   );
 });

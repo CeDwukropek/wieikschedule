@@ -81,18 +81,22 @@
   opacity: 0.7;
 }
 
-/* Week View Styles */
-.week-scroll {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y;
+/* All five days fit the available width. Details live in a modal. */
+.week-overview { min-width: 0; }
+.week-overview-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #e5e7eb;
 }
-
+.week-overview-hint span { color: #a3a3a3; }
 .week-grid {
+  --week-slot-height: clamp(9px, calc((100dvh - 340px) / 60), 15px);
   display: grid;
+  grid-template-columns: 40px repeat(5, minmax(0, 1fr));
   position: relative;
   width: 100%;
-  min-width: 840px;
+  min-width: 0;
+  overflow: hidden;
   background-color: #171717;
   color: #e5e7eb;
   border-left: 1px solid rgba(148, 163, 184, 0.08);
@@ -102,14 +106,128 @@
   box-shadow: 0 10px 15px -3px rgba(2, 6, 23, 0.6);
 }
 
+.week-grid .time-slot { min-height: 0; padding: 0; }
+.week-grid .week-event-item { min-width: 0; padding: 2px 1px; }
+.week-day-name, .week-day-date {
+  min-width: 0;
+  text-align: center;
+  background: #171717;
+  border-bottom: 1px solid #404040;
+}
+.week-day-name { padding: 10px 2px 3px; font-size: 12px; font-weight: 600; }
+.week-day-date { padding: 0 2px 9px; font-size: 11px; color: #a3a3a3; }
+.week-day-short { display: none; text-decoration: none; }
+.week-hour-label {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 5px;
+  font-size: 10px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+}
+.week-event-card {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  transition: box-shadow 120ms ease;
+  cursor: pointer;
+}
+.week-event-card:hover { box-shadow: inset 0 0 0 1px #a3a3a3; }
+.week-event-card:focus-visible { outline: 2px solid #7dd3fc; outline-offset: -2px; }
+.week-event-card[data-added] { border: 1px dashed #38bdf8; }
+.week-event-card[data-modified]::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7dd3fc;
+}
+.week-event-color { width: 3px; flex: 0 0 3px; }
+.week-event-content {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px;
+}
+.week-event-time { display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-size: 10px; line-height: 1.2; color: #d4d4d4; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.week-event-kind { color: #a3a3a3; overflow: hidden; text-overflow: ellipsis; }
+.week-event-title {
+  min-height: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #f5f5f5;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.week-event-room { color: #a3a3a3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-@media (max-width: 768px) {
+.event-details-dialog {
+  color: #e5e7eb;
+  background: #171717;
+  border: 1px solid #404040;
+  border-radius: 18px;
+  padding: 0;
+  margin: auto;
+  width: min(480px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+.event-details-dialog::backdrop { background: rgba(0,0,0,.72); }
+.event-details-content { padding: 24px; }
+.event-details-header { display: flex; align-items: flex-start; gap: 16px; justify-content: space-between; }
+.event-details-eyebrow { color: #a3a3a3; font-size: 12px; margin-bottom: 6px; }
+.event-details-header h2 { font-size: 21px; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
+.event-details-close { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 40px; border-radius: 8px; color: #d4d4d4; }
+.event-details-close:hover { background: #262626; }
+.event-details-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 24px; }
+.event-details-badges span { border-radius: 6px; padding: 4px 8px; background: #262626; font-size: 12px; }
+.event-details-badges .event-details-personal { background: #082f49; color: #7dd3fc; }
+.event-details-list { display: grid; gap: 18px; font-size: 14px; }
+.event-details-list > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; }
+.event-details-list dt { display: flex; align-items: center; gap: 8px; color: #a3a3a3; }
+.event-details-list dd { overflow-wrap: anywhere; }
+.event-details-list dd span { display: block; }
+.event-details-actions { margin-top: 24px; border-top: 1px solid #404040; padding-top: 18px; display: grid; gap: 10px; }
+.event-details-actions p { font-size: 12px; color: #a3a3a3; }
+.event-details-actions button { padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+.event-details-edit { background: #0369a1; color: white; }
+.event-details-remove { background: #262626; color: #fda4af; }
+.event-details-actions button:disabled, .event-details-close:disabled { opacity: .5; cursor: wait; }
+.event-details-dialog button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.event-details-error { margin-top: 12px; font-size: 13px; color: #fda4af; }
 
-  .week-grid {
-    width: max-content;
-    min-width: 100%;
-    -webkit-overflow-scrolling: touch;
-  }
+@media (max-width: 640px) {
+  .week-grid { grid-template-columns: 29px repeat(5, minmax(0, 1fr)); --week-slot-height: clamp(8px, calc((100dvh - 320px) / 60), 12px); }
+  .week-day-long { display: none; }
+  .week-day-short { display: inline; }
+  .week-day-name { font-size: 11px; }
+  .week-day-date { font-size: 10px; }
+  .week-hour-label { font-size: 8px; padding-right: 3px; }
+  .week-event-color { width: 2px; flex-basis: 2px; }
+  .week-event-content { padding: 3px 2px; gap: 2px; }
+  .week-event-time { font-size: 9px; justify-content: space-between; gap: 2px; }
+  .week-event-end, .week-event-room { display: none; }
+  .week-event-title { font-size: 9px; font-weight: 500; -webkit-line-clamp: 2; }
+  .week-overview-hint { font-size: 10px; }
+  .event-details-content { padding: 20px; }
+  .event-details-list > div { grid-template-columns: 105px minmax(0,1fr); gap: 10px; }
+  .event-details-header h2 { font-size: 19px; }
 }
 
 /* Day View Styles */

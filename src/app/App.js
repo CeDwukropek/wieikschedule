@@ -115,7 +115,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
+    <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       <FloatingMenu
         panelState={{ open, setOpen }}
         viewState={view}
