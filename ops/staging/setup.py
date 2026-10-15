@@ -194,12 +194,14 @@ def n8n_setup(args):
     if not state_file.exists():
         raise ValueError('Existing n8n owner differs from this setup; keep instance intact')
     owner_id = json.loads(state_file.read_text())['owner_id']
-    for file in ('/workflows/generated/import-preview.json', '/workflows/staging/staging-chat.json'):
+    for file in ('/workflows/generated/import-preview.json', '/workflows/staging/staging-chat.json',
+                 '/workflows/staging/schedule-tools.json'):
         subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'import:workflow', '--input=' + file,
                                   '--userId=' + owner_id], check=True)
     subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=wksStageChat0001'], check=True)
+    subprocess.run(COMPOSE + ['exec', '-T', 'n8n', 'n8n', 'publish:workflow', '--id=wksStageTools001'], check=True)
     subprocess.run(COMPOSE + ['restart', 'n8n'], check=True)
-    print('Read-only connection workflow published; source preview remains manual/inactive')
+    print('Scoped tool and connection workflows published; source preview remains manual/inactive')
 
 
 def main():

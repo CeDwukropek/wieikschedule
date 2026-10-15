@@ -33,7 +33,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm test -- --watch=false --runInBand
-      - run: node --test api/my-plan/*.test.cjs api/schedule/*.test.cjs
+      - run: node --test api/my-plan/*.test.cjs api/schedule/*.test.cjs integrations/schedule-tools/*.test.cjs
       - run: python3 -m unittest discover -s ops/staging -p 'test_*.py'
       - name: Test private schema on disposable database
         run: |

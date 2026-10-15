@@ -49,6 +49,9 @@ Bez natychmiastowego mechanizmu revocation nie obiecujemy jego wcześniejszego
 unieważnienia; nie daje on możliwości potwierdzenia ani odczytu kluczy API.
 
 Definicje JSON Schema w `api/_lib/scheduleToolSchemas.js` są wspólne dla adapterów.
+Na stagingu aktywny workflow n8n `Schedule — four scoped tools (preview only)`
+przekazuje POST `/webhook/schedule-tools-v1` do tego samego gateway. Nie zapisuje
+execution data z tokenami. Nie jest jeszcze rozmownym agentem AI.
 `scheduleAgent.js` obsługuje maks. 6 kroków rozmowy i tylko te cztery narzędzia.
 Testy modelu używają odpowiedzi syntetycznych, bez sieci i kosztów.
 

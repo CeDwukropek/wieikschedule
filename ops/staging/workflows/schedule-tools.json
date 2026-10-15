@@ -1,0 +1,32 @@
+{
+  "id": "wksStageTools001",
+  "name": "Schedule — four scoped tools (preview only)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "request", "name": "Tool request", "type": "n8n-nodes-base.webhook", "typeVersion": 2.1,
+      "position": [0, 0], "webhookId": "schedule-tools-v1",
+      "parameters": {"httpMethod": "POST", "path": "schedule-tools-v1", "responseMode": "responseNode", "options": {}}
+    },
+    {
+      "id": "gateway", "name": "Scoped schedule gateway", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [240, 0],
+      "parameters": {
+        "method": "POST", "url": "http://app:3100/api/schedule/tools", "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "={{ $json.headers.authorization }}"}]},
+        "sendBody": true, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {"timeout": 20000, "response": {"response": {"neverError": true}}}
+      }
+    },
+    {
+      "id": "response", "name": "Return tool result", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.4,
+      "position": [480, 0], "parameters": {"respondWith": "json", "responseBody": "={{ $json }}", "options": {}}
+    }
+  ],
+  "connections": {
+    "Tool request": {"main": [[{"node": "Scoped schedule gateway", "type": "main", "index": 0}]]},
+    "Scoped schedule gateway": {"main": [[{"node": "Return tool result", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1", "saveDataErrorExecution": "none", "saveDataSuccessExecution": "none", "saveManualExecutions": false, "saveExecutionProgress": false},
+  "pinData": {}
+}

@@ -31,6 +31,8 @@ const tools=require(path.join(root,'api/_lib/scheduleTools'));
    const claims=tools.readContext(tools.issueContext(owners[0],'odysseus','synthetic-session'));
    const found=await tools.dispatch(claims,'schedule.get_events',{faculty:event.faculty,date_from:event.date,date_to:event.date});
    assert.equal(found.events.find(row=>row.id===event.id).room,null);
+   const relayed=await fetch('http://n8n:5678/webhook/schedule-tools-v1',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tools.issueContext(owners[0],'n8n','synthetic-session')},body:JSON.stringify({tool:'schedule.get_events',arguments:{faculty:event.faculty,date_from:event.date,date_to:event.date}})}).then(response=>response.json());
+   assert.equal(relayed.ok,true);assert.equal(relayed.result.events.find(row=>row.id===event.id).room,null);
    const cancel=await tools.dispatch(claims,'schedule.create_override',{event_id:event.id,action:'cancel',patch:{}});
    assert.equal((await schedule.listOverrides({db,userId:owners[0]}))[0].action,'modify');
    response=await invoke('confirm','POST',{proposal_id:cancel.proposal.id,provider:'odysseus',session_id:'synthetic-session'});assert.equal(response.code,200);
@@ -39,7 +41,7 @@ const tools=require(path.join(root,'api/_lib/scheduleTools'));
    response=await invoke('confirm','POST',{proposal_id:restored.proposal.id,provider:'odysseus',session_id:'synthetic-session'});assert.equal(response.code,200);
    assert.deepEqual(await schedule.listOverrides({db,userId:owners[0]}),[]);
    const {data:after}=await db.from('events').select('*').eq('id',event.id).single();assert.deepEqual(after,event);
-   console.log('Real staging REST/RPC + handlers: owner A/B, null, delegated preview, cancel, restore, source unchanged: PASS');
+   console.log('Real staging REST/RPC + n8n relay: owner A/B, null, delegated preview, cancel, restore, source unchanged: PASS');
  }finally{
    for(const table of ['schedule_change_proposals','schedule_overrides']){const {error}=await db.from(table).delete().in('user_id',owners);assert.ifError(error);}
    const {error}=await db.from('users').delete().in('firebase_uid',uids);assert.ifError(error);
