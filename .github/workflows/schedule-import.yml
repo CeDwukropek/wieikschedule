@@ -4,11 +4,13 @@ on:
     paths:
       - 'integrations/schedule-import/**'
       - 'DB/migrations/20261014_wieik_import.sql'
+      - 'DB/migrations/20261015_unlinked_bootstrap.sql'
       - '.github/workflows/schedule-import.yml'
   push:
     paths:
       - 'integrations/schedule-import/**'
       - 'DB/migrations/20261014_wieik_import.sql'
+      - 'DB/migrations/20261015_unlinked_bootstrap.sql'
       - '.github/workflows/schedule-import.yml'
 permissions:
   contents: read

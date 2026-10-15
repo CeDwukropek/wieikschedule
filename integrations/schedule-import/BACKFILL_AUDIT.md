@@ -1,5 +1,12 @@
 # Porównanie dostarczonego eksportu — 14.10.2026
 
+**Aktualizacja 15.10:** użytkownik potwierdził, że nie ma dopisków ani tagów;
+funkcja jest dopiero wdrażana. Poniższe statystyki pozostają wynikiem porównania,
+ale ręczne rozstrzyganie 590 przypadków i eksport liczników nie są już wymaganym
+krokiem startowym. Można przygotować jednorazowy bootstrap bez prywatnych
+powiązań, opisany w [README](README.md). Stan jest ponownie sprawdzany przy zapisie.
+To nie jest zezwolenie na powtarzanie bootstrapu po uruchomieniu prywatnych funkcji.
+
 Porównano CSV użytkownika z publicznym źródłem `stac` i `block` poprzez parser
 z PR #97. Ponowne pobranie metadanych potwierdziło niezmienione rewizje podczas
 analizy. Pełny eksport i mapowania pozostają w lokalnym raporcie poza Git.

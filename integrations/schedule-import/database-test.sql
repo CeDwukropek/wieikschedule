@@ -160,3 +160,4 @@ BEGIN
 END;
 $$;
 SELECT 'Importer database tests passed' AS result;
+\ir bootstrap-database-test.sql

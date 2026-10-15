@@ -4,6 +4,12 @@ Kod przygotowany na `fix/schedule-import-identity`, z aktualnego
 `alpha-online-account`. Nie zmienia frontendu, Firebase ani działającego
 Odysseusa. Nie zastosowano migracji na produkcji i nie uruchomiono tam n8n.
 
+**Aktualizacja 15.10.2026:** użytkownik potwierdził brak dopisków i tagów — funkcja
+jest dopiero wdrażana. Nie trzeba eksportować liczników powiązań ani ręcznie
+odtwarzać tożsamości wszystkich starych rekordów. Dla takiego startu dostępny
+jest opisany niżej jednorazowy bootstrap. Zwykłe późniejsze importy nadal
+wymagają zachowania tożsamości wydarzeń przed uruchomieniem overrides.
+
 ## Co naprawia
 
 Stary eksport `Firebase Insert.json` przekazuje do zapisu tylko wydarzenia
@@ -111,6 +117,41 @@ zweryfikowanego `rpc`, nie ponownie wygenerowanego planu z nowymi UUID.
 
 ## Workflow n8n i migracja
 
+### Jednorazowy start bez prywatnych powiązań
+
+```sh
+node integrations/schedule-import/cli.cjs bootstrap /tmp/normalized.json /tmp/events.csv --confirm-no-personal-event-data > /tmp/bootstrap-plan.json
+```
+
+To wyłącznie przygotowanie planu do review. `execution_approved=false` oznacza,
+że potwierdzenie stanu danych nie jest zatwierdzeniem wykonania na produkcji.
+Plan zachowuje UUID ścisłych dopasowań, archiwizuje pozostałe stare rekordy
+przez `status=nieaktywne` i nadaje nowe UUID pozostałym rekordom źródła.
+Nie przypisuje starych UUID na podstawie podobieństwa i niczego nie usuwa fizycznie.
+Przy braku prywatnych powiązań nie jest potrzebne ręczne rozstrzyganie każdej
+historycznej różnicy przed nadaniem początkowej tożsamości źródłowej.
+
+Po pierwszej migracji zastosować na kopii
+[20261015_unlinked_bootstrap.sql](../../DB/migrations/20261015_unlinked_bootstrap.sql).
+Zatwierdzony plan wskazuje `rpc_function=bootstrap_wieik_import`, z body `rpc`.
+Ta funkcja podczas tej samej transakcji blokuje równoległe zapisy do tabel
+powiązań i odmawia wykonania przy jakichkolwiek dopiskach, tagach wydarzeń lub
+override’ach. Odrzuca również ponowny bootstrap, jeśli istnieją klucze źródłowe.
+Nie dotyka definicji tagów ani użytkowników. Ma uprawnienia wyłącznie zaufanego
+importera; nie jest narzędziem AI. Odczyty z RLS nie mogą ukryć prywatnych wierszy:
+funkcja ustawia `row_security=off` i w takiej sytuacji PostgreSQL zgłasza błąd.
+
+Dla dostarczonego eksportu i źródła z 15.10 plan zachowuje 4110 dopasowanych UUID,
+oznacza 1498 starych rekordów jako nieaktywne i dodaje 2917 rekordów źródłowych.
+Po symulacji zwykły ponowny import nie wykonuje żadnych zmian. Są to wyniki
+na jednorazowej bazie, nie wykonanie produkcyjne. Podczas przyszłego przełączenia
+stary writer musi być zatrzymany, a prywatne funkcje pozostają wyłączone.
+
+Kolejne importy używają zwykłego `apply_wieik_import`. Zmiana daty/grupy lub
+niejednoznaczne zniknięcie nadal wymaga rozstrzygnięcia, zamiast ponownie
+uruchamiać bootstrap. Przy istniejących powiązaniach obowiązuje zwykła procedura
+backfill/review; brak danych dzisiaj nie oznacza braku danych przy przyszłym zapisie.
+
 ### Raport backfill dla eksportu CSV
 
 ```sh
@@ -145,7 +186,7 @@ z jawną licznością i flagą obcięcia. Pliki wejściowe i pełny raport przec
 lokalnie poza Git; testy w repozytorium używają danych syntetycznych.
 
 Zbiorczy wynik dostarczonego eksportu: [BACKFILL_AUDIT.md](BACKFILL_AUDIT.md).
-Przed rozstrzyganiem konfliktów można wyeksportować wynik
+Gdy istnieją prywatne powiązania, przed rozstrzyganiem konfliktów można wyeksportować wynik
 [inspect-event-references.sql](inspect-event-references.sql). To wyłącznie SELECT
 liczności dopisków i tagów per UUID, bez identyfikatorów użytkowników i treści
 prywatnych wpisów. Pomaga ustalić priorytet review; nie rozstrzyga tożsamości
