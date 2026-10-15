@@ -6,6 +6,7 @@ const { transformSnapshots } = require("./transform.cjs");
 const { createPlan } = require("./plan.cjs");
 const { createHash } = require("node:crypto");
 const { readEventsCSV, backfillReport } = require("./backfill.cjs");
+const { createUnlinkedBootstrap } = require("./bootstrap.cjs");
 
 // Offline only: no credentials, database connection or write switch.
 function read(path) {
@@ -29,7 +30,11 @@ try {
       snapshot_sha256: createHash("sha256").update(snapshot).digest("hex"),
       csv_null_convention: parsed.null_convention, inferred_nulls: parsed.inferred_nulls,
     });
-  } else throw new Error("Usage: node cli.cjs transform stac.json block.json | plan normalized.json events.json [decisions.json] | report normalized.json events.csv");
+  } else if (command === "bootstrap" && paths.length === 3 && paths[2] === "--confirm-no-personal-event-data") {
+    const parsed = readEventsCSV(fs.readFileSync(paths[1], "utf8"));
+    output = createUnlinkedBootstrap(read(paths[0]), parsed.rows, true);
+    output.csv_evidence = { null_convention: parsed.null_convention, inferred_nulls: parsed.inferred_nulls };
+  } else throw new Error("Usage: node cli.cjs transform stac.json block.json | plan normalized.json events.json [decisions.json] | report normalized.json events.csv | bootstrap normalized.json events.csv --confirm-no-personal-event-data");
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`Import preparation failed: ${error.message}\n`);
