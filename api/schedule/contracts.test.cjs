@@ -1,10 +1,21 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 process.env.SCHEDULE_TOOL_SECRET='synthetic-test-master-secret-'.repeat(3);
-const {issueContext,readContext,dispatch}=require('../_lib/scheduleTools');
+const {issueContext,readContext,dispatch,availableTools}=require('../_lib/scheduleTools');
 const {encrypt,decrypt,publicSettings}=require('../_lib/aiCredentials');
 const {validateChange}=require('../_lib/schedule');
 const {runAgent}=require('../_lib/scheduleAgent');
 const id='00000000-0000-0000-0000-000000000001';
+test('semantic tools use signed selection and cannot inject faculty or groups',async()=>{
+ const selection={faculty:'EiAs3',groups:{Lk:'Lk1'}};
+ const claims=readContext(issueContext(id,'odysseus','s',Date.now(),'query',selection));
+ assert.deepEqual(claims.selection,selection);
+ const tools=availableTools(claims).map(tool=>tool.name);
+ assert.ok(tools.includes('schedule.get_next_occurrence'));assert.ok(tools.includes('schedule.find_subjects'));
+ assert.ok(!tools.includes('schedule.find_event'));assert.ok(!tools.includes('schedule.create_override'));assert.ok(!tools.includes('schedule.find_makeup_options'));
+ await assert.rejects(dispatch({...claims,selection:undefined},'schedule.get_next_occurrence',{query:'MUD'}),{code:'SELECTION_REQUIRED'});
+ await assert.rejects(dispatch(claims,'schedule.find_makeup_options',{query:'MUD'}),{code:'INTENT_REQUIRED'});
+ await assert.rejects(dispatch(claims,'schedule.find_event',{faculty:'OTHER'}),{code:'SELECTION_MISMATCH'});
+});
 test('delegated context rejects tampering and expiry and binds owner/provider/session',()=>{
  const token=issueContext(id,'odysseus','session-a',1000000);
  assert.equal(readContext(token,1000000).sub,id);

@@ -86,3 +86,12 @@ niejednoznaczności; potwierdzenie w UI; izolację kont A/B; wylogowanie; konfli
 
 Synchronizacja nie korzysta z modelu AI ani klucza OpenAI. Jej uprawnienia
 zapisu źródłowego planu są oddzielone od narzędzi agenta użytkownika.
+
+## Aktualizacja 16.10.2026 — narzędzia semantyczne
+
+- [x] Wspólny backend czterech narzędzi, podpisane grupy i dodatkowe selekcje.
+- [x] Efektywny plan, dopiski, kolizje i rozróżnione błędy/braki danych.
+- [x] Integracja Odysseusa i testy deterministyczne oraz REST/RPC stagingu.
+- [ ] Rozmowa z Gemmą po ponownym uruchomieniu lokalnego serwera modeli.
+
+Szczegóły: [SEMANTIC_SEARCH.md](SEMANTIC_SEARCH.md).

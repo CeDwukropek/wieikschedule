@@ -1,5 +1,5 @@
 const {keys}=require('../_lib/schedule');
-const {readContext,dispatch}=require('../_lib/scheduleTools');
+const {readContext,dispatch,availableTools}=require('../_lib/scheduleTools');
 module.exports=async(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   if(!['POST','GET'].includes(req.method))return res.status(405).json({ok:false,error:'METHOD_NOT_ALLOWED'});
@@ -7,12 +7,8 @@ module.exports=async(req,res)=>{
     const token=/^Bearer (.+)$/i.exec(String(req.headers.authorization||''))?.[1];
     const claims=readContext(token);
     if(req.method==='GET'){
-      const {tools}=require('../_lib/scheduleToolSchemas');
-      const available=tools.filter(tool=>tool.name.startsWith('schedule.get_')||tool.name==='schedule.find_event'||
-        (tool.name==='schedule.create_override'&&['reschedule','cancel'].includes(claims.intent))||
-        (tool.name==='schedule.delete_override'&&claims.intent==='restore'));
       return res.status(200).json({ok:true,protocol:'wieik-schedule-v1',provider:claims.provider,session_id:claims.session_id,
-        principal:claims.sub,intent:claims.intent,tools:available});
+        principal:claims.sub,intent:claims.intent,selection:claims.selection||null,tools:availableTools(claims)});
     }
     keys(req.body,['tool','arguments']);
     return res.status(200).json({ok:true,result:await dispatch(claims,req.body.tool,req.body.arguments)});

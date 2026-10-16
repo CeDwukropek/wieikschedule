@@ -37,6 +37,7 @@ function createMessage({
 export function useChatbot({
   scheduleName,
   selectedGroups,
+  externalSelections,
   onMyPlanChanged,
   onOptimisticAdd,
   onOptimisticAddConfirmed,
@@ -55,13 +56,14 @@ export function useChatbot({
   const [slotErrors, setSlotErrors] = useState({});
   const abortRef = useRef(null);
   const sessionIdRef = useRef(generateSessionId());
+  const selectionKey=JSON.stringify([selectedGroups||{},externalSelections||[]]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
   useEffect(()=>{clearLocalTokens();setIntent('query');},[user?.uid]);
   useEffect(()=>{
     abortRef.current?.abort();setMessages([]);setInput('');setStatus('idle');setError(null);
     sessionIdRef.current=generateSessionId();
-  },[user?.uid,scheduleName]);
+  },[user?.uid,scheduleName,selectionKey]);
 
   const canSend = useMemo(
     () =>
@@ -97,6 +99,7 @@ export function useChatbot({
         message: cleanInput,
         scheduleName,
         selectedGroups,
+        externalSelections,
         sessionId: sessionIdRef.current,
         signal: controller.signal,
         history:messages.filter(msg=>msg.stage==='done').slice(-16).map(msg=>({role:msg.role,content:msg.text})),

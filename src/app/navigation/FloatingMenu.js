@@ -100,6 +100,7 @@ export default function FloatingMenu({
     enabled: isAiChatEnabled = false,
     scheduleName,
     selectedGroups,
+    externalSelections: agentExternalSelections,
     onMyPlanChanged,
     onOptimisticAdd,
     onOptimisticAddConfirmed,
@@ -139,6 +140,7 @@ export default function FloatingMenu({
   } = useChatbot({
     scheduleName,
     selectedGroups,
+    externalSelections: agentExternalSelections,
     onMyPlanChanged,
     onOptimisticAdd,
     onOptimisticAddConfirmed,
