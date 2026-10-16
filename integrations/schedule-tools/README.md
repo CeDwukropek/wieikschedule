@@ -1,5 +1,7 @@
 # Prywatny plan i narzędzia v1
 
+Nowe narzędzia: [wyszukiwanie semantyczne i efektywny plan](SEMANTIC_SEARCH.md).
+
 Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
 przełożeniem i wymagany codzienny importer: [plan wdrożenia](IMPLEMENTATION_PLAN.md).
 

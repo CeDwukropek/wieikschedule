@@ -25,5 +25,5 @@ yarn-error.log*
 .env*.local
 
 # Local staging data, generated credentials and Vercel-derived configuration
-/.staging/
+/.staging
 __pycache__/

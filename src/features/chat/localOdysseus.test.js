@@ -20,7 +20,7 @@ test('native chat separates Odysseus authentication from delegated schedule cont
  fetch.mockResolvedValueOnce({ok:true,json:async()=>({ok:true,output:'Test response'})});
  const reply=await sendScheduleAgentMessage({message:'Test',scheduleName:'TEST',sessionId:'s',intent:'makeup',selectedGroups:{L:'L1'}});
  expect(reply.output).toBe('Test response');
- expect(personalRequest).toHaveBeenCalledWith('context',{provider:'odysseus',session_id:'s',intent:'makeup'});
+ expect(personalRequest).toHaveBeenCalledWith('context',{provider:'odysseus',session_id:'s',intent:'makeup',selection:{faculty:'TEST',groups:{L:'L1'}}});
  const request=fetch.mock.calls[1][1];
  expect(request.headers.Authorization).toBe('Bearer ody_synthetic');
  expect(request.headers['X-Schedule-Context']).toBe('wks1.synthetic.context');
@@ -41,4 +41,12 @@ test('switching Firebase accounts during the handshake prevents sending the mess
  fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local'}]})});
  await expect(sendScheduleAgentMessage({message:'Private',scheduleName:'TEST',sessionId:'s'})).rejects.toThrow('Konto zmieniło się');
  expect(fetch).toHaveBeenCalledTimes(1);
+});
+test('additional groups are signed in the context instead of being left for the model to choose',async()=>{
+ const external=[{faculty:'Other',groups:{C:'C2'},subject:'Algebra'}];
+ personalRequest.mockImplementation(async path=>path==='ai-settings'?{settings}:{token:'wks1.synthetic'});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local'}]})});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({ok:true,output:'Test'})});
+ await sendScheduleAgentMessage({message:'Plan jutro',scheduleName:'TEST',sessionId:'s',externalSelections:external});
+ expect(personalRequest).toHaveBeenCalledWith('context',expect.objectContaining({selection:{faculty:'TEST',groups:{},external}}));
 });

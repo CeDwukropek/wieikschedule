@@ -160,6 +160,10 @@ export default function App() {
           enabled: process.env.REACT_APP_ENABLE_AI_CHAT !== "false",
           scheduleName: schedule.currentSchedule,
           selectedGroups: schedule.studentGroups,
+          externalSelections: schedule.activeExternalSelections.map(item=>({
+            faculty:item.scheduleId,groups:{[item.groupType]:item.groupValue},
+            subject:item.subjectKey?tables[item.scheduleId]?.subjects?.[item.subjectKey]?.name:null,
+          })),
           onMyPlanChanged: myPlan.refresh,
           onOptimisticAdd: myPlan.optimisticAdd,
           onOptimisticAddConfirmed: myPlan.confirmAdd,
