@@ -1,5 +1,7 @@
 # Prywatny plan i narzędzia v1
 
+Samodzielne tworzenie narzędzi: [tutorial krok po kroku](TOOL_TUTORIAL.md).
+
 Nowe narzędzia: [wyszukiwanie semantyczne i efektywny plan](SEMANTIC_SEARCH.md).
 
 Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
