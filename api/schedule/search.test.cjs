@@ -87,6 +87,40 @@ test('Warsaw midnight and class start time determine what is upcoming',async()=>
  const result=await queryPlan({},selection,'schedule.get_next_occurrence',{query:'MUD',kind:'laboratory'},midnight,async()=>fixture);
  assert.equal(result.event.id,'next');
 });
+test('only exercises excludes lectures, both lab spellings and language classes before pagination',async()=>{
+ const exercises=[row('ex1','2026-10-20','C1','Ćwiczenia','Obwody'),row('ex2','2026-10-21','C1','Ćwiczenia','Pole')];
+ const fixtures=[...rows,...exercises,row('lab','2026-10-20','L1','Laboratorium'),row('language','2026-10-20','Lek1','Lektorat')];
+ const fixture={...data,source:fixtures,events:fixtures};
+ // Missing L/Lk/Lek groups cannot block a query limited to exercises.
+ const scope={faculty:'EiAs3',groups:{C:'C1'}};
+ const args={date_from:'2026-10-19',date_to:'2026-10-23',kind:'exercise',limit:1};
+ const first=await call('get_my_schedule',args,scope,fixture);
+ assert.equal(first.total,2);assert.equal(first.next_offset,1);assert.deepEqual(first.events.map(row=>row.id),['ex1']);
+ assert.equal(first.kind,'exercise');assert.ok(first.message.includes('**07:30–09:00**'));assert.ok(!first.message.includes('Wykład'));
+ const second=await call('get_my_schedule',{...args,offset:1},scope,fixture);
+ assert.deepEqual(second.events.map(row=>row.id),['ex2']);assert.equal(second.next_offset,null);
+});
+test('excluded kinds also filter additions and external groups without hiding an empty result',async()=>{
+ const exercise=row('exercise','2026-10-19','C1','Ćwiczenia');
+ const external={...row('ext-lab','2026-10-19','Lk5'),faculty:'Other'};
+ const fixture={...data,source:[...rows,exercise,external],events:[...rows.map(row=>({...row,is_added:true})),exercise,external]};
+ const scope={...selection,external:[{faculty:'Other',groups:{Lk:'Lk5'},subject:name}]};
+ const args={date_from:'2026-10-19',date_to:'2026-10-23',exclude_kinds:['lecture','laboratory']};
+ const result=await call('get_my_schedule',args,scope,fixture);
+ assert.deepEqual(result.events.map(row=>row.id),['exercise']);assert.deepEqual(result.exclude_kinds,args.exclude_kinds);
+ const empty=await call('get_my_schedule',{...args,kind:'project'},scope,fixture);
+ assert.equal(empty.status,'no_events_in_available_data');assert.equal(empty.total,0);assert.equal(empty.next_offset,null);
+ assert.match(empty.message,/filtr/);
+});
+test('invalid or injected kind filters fail before data access',async()=>{
+ for(const args of [{kind:'Ćwiczenia'},{exclude_kinds:'lecture'},{exclude_kinds:['lecture','lecture']},{exclude_kinds:['unknown']},{kind:null}]){
+  await assert.rejects(call('get_my_schedule',args),error=>error.statusCode===422);
+ }
+ const exercise=row('exercise','2026-10-19','C1','Ćwiczenia');
+ const missing=await call('get_my_schedule',{date_from:'2026-10-19',kind:'exercise'},{faculty:'EiAs3',groups:{}},
+   {...data,source:[exercise],events:[exercise]});
+ assert.equal(missing.status,'missing_groups');assert.deepEqual(missing.required_groups,['C']);
+});
 test('group matching handles lectures, prefix groups, additions and language choices',()=>{
  assert.equal(belongsToUser(row('a','2026-10-19','Lk'),selection.groups),true);
  assert.equal(belongsToUser(row('a','2026-10-19','Lk5'),selection.groups),false);

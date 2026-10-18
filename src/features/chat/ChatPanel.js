@@ -2,12 +2,16 @@ import "./ChatPanel.css";
 import { useEffect, useRef } from "react";
 import { Bot, Trash2 } from "lucide-react";
 import SlotChoicesMessage from "./SlotChoicesMessage";
+import SchedulePlanMessage from "./SchedulePlanMessage";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 function MessageContent({ message, isLoading }) {
   if (isLoading) {
     return "Zastanawiam się…";
+  }
+  if(message.role==='assistant'&&message.payload?.ui?.type==='schedule_plan'&&Array.isArray(message.payload?.data?.plan?.events)){
+    return <SchedulePlanMessage plan={message.payload.data.plan}/>;
   }
 
   if (message.role === "assistant") {

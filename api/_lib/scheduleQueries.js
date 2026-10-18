@@ -1,6 +1,6 @@
 "use strict";
 const schedule=require('./schedule');
-const {normalize,eventKind,resolveSubject,belongsToPlan,externalEvent,missingGroups}=require('./scheduleSearch');
+const {normalize,eventKind,resolveSubject,belongsToPlan,externalEvent,missingGroups,KINDS}=require('./scheduleSearch');
 const FIELDS='id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status';
 const SEMANTIC_TOOLS=['schedule.find_subjects','schedule.get_next_occurrence','schedule.get_my_schedule','schedule.find_makeup_options'];
 const KIND_LABELS={laboratory:'laboratorium',lecture:'wykład',exercise:'ćwiczenia',project:'projekt',language:'lektorat',other:'inne'};
@@ -66,12 +66,30 @@ function describe(row){
   return `${row.subject} — ${row.date} (${day}), ${String(row.start_time).slice(0,5)}–${endTime}, ${row.type||'zajęcia'}, grupa ${row.group||'wszystkie'}, sala ${row.room||'nie podano'}${row.instructor?', prowadzący: '+row.instructor:''}`;
 }
 function minutes(value){const parts=value.split(':').map(Number);return parts[0]*60+parts[1]+(parts[2]||0)/60;}
+function planMessage(rows,kind,excluded){
+  const heading='Twój plan'+(kind?' — '+KIND_LABELS[kind]:'')+(excluded.length?' (bez: '+excluded.map(value=>KIND_LABELS[value]).join(', ')+')':'');
+  const days=new Map();
+  for(const row of rows){
+    if(!days.has(row.date))days.set(row.date,[]);
+    const end=minutes(row.start_time)+row.duration_min;
+    const endTime=String(Math.floor(end/60)%24).padStart(2,'0')+':'+String(Math.floor(end%60)).padStart(2,'0');
+    days.get(row.date).push(`- **${row.start_time.slice(0,5)}–${endTime}** — ${row.subject}\n  ${row.type||'Zajęcia'} · grupa ${row.group||'wszystkie'} · sala ${row.room||'nie podano'}${row.instructor?' · '+row.instructor:''}`);
+  }
+  return heading+'\n\n'+[...days].map(([date,events])=>{
+    const day=new Intl.DateTimeFormat('pl-PL',{weekday:'long',timeZone:'Europe/Warsaw'}).format(new Date(date+'T12:00:00Z'));
+    return `**${day} · ${date}**\n\n`+events.join('\n\n');
+  }).join('\n\n');
+}
 function conflict(a,b){return a.date===b.date&&a.id!==b.id&&minutes(a.start_time)<minutes(b.start_time)+b.duration_min&&minutes(b.start_time)<minutes(a.start_time)+a.duration_min;}
 async function queryPlan(ctx,selection,name,args,now=new Date(),load=loadPlan){
   if(!SEMANTIC_TOOLS.includes(name))schedule.fail(422,'UNKNOWN_TOOL','Nieznane narzędzie.');
-  schedule.keys(args,name==='schedule.find_subjects'?['query','kind']:name==='schedule.get_my_schedule'?['date_from','date_to','limit','offset']:['query','kind','date_from','date_to']);
+  schedule.keys(args,name==='schedule.find_subjects'?['query','kind']:name==='schedule.get_my_schedule'?['date_from','date_to','limit','offset','kind','exclude_kinds']:['query','kind','date_from','date_to']);
   if(name!=='schedule.get_my_schedule')schedule.text(args.query,256,true);
   if(args.kind!==undefined)schedule.text(args.kind,32,true);
+  const excluded=args.exclude_kinds??[];
+  if(name==='schedule.get_my_schedule'&&((args.kind!==undefined&&!KINDS.includes(args.kind))||
+    !Array.isArray(excluded)||excluded.length>6||excluded.some(value=>!KINDS.includes(value))||new Set(excluded).size!==excluded.length))
+    schedule.fail(422,'INVALID_KIND','Wybierz poprawne rodzaje zajęć.');
   const data=await load(ctx,selection);
   const bounds=['schedule.get_my_schedule','schedule.find_makeup_options'].includes(name)?data.bounds:(data.primary_bounds||data.bounds);
   const common={faculty:selection.faculty,groups:selection.groups,timezone:'Europe/Warsaw',available_range:bounds};
@@ -88,7 +106,8 @@ async function queryPlan(ctx,selection,name,args,now=new Date(),load=loadPlan){
   const window=range(argsWithDefault,now,bounds,{next:name==='schedule.get_next_occurrence'});
   if(bounds.date_from&&bounds.date_to&&(window.date_to<bounds.date_from||window.date_from>bounds.date_to))
     return {...common,...window,status:'outside_available_range',message:`Ten okres jest poza dostępnym planem (${bounds.date_from}–${bounds.date_to}). Nie mogę potwierdzić zajęć poza zakresem danych.`};
-  const matching=data.events.filter(row=>inRange(row,window)&&(!subject||
+  const matching=data.events.filter(row=>inRange(row,window)&&
+    (name!=='schedule.get_my_schedule'||((!args.kind||eventKind(row.type)===args.kind)&&!excluded.includes(eventKind(row.type))))&&(!subject||
     (row.faculty===selection.faculty&&normalize(row.subject)===normalize(subject.subject)&&(!subject.kind||eventKind(row.type)===subject.kind))));
   const problem=groupProblem(matching,selection);
   if(problem)return {...common,...window,...problem,subject:subject?.subject};
@@ -97,10 +116,11 @@ async function queryPlan(ctx,selection,name,args,now=new Date(),load=loadPlan){
     const limit=args.limit??30,offset=args.offset??0;
     if(!Number.isInteger(limit)||limit<1||limit>100||!Number.isInteger(offset)||offset<0||offset>50000)schedule.fail(422,'INVALID_PAGE','Nieprawidłowa strona wyników.');
     const rows=own.slice(offset,offset+limit);
-    return {...common,...window,status:own.length?'found':'no_events_in_available_data',events:rows,total:own.length,
-      next_offset:own.length>offset+limit?offset+limit:null,
-      message:own.length?'Twój plan:\n'+rows.map(describe).join('\n')+(own.length>offset+limit?'\nWynik ma kolejną stronę.':''):
-        'W tym zakresie nie znaleziono Twoich zajęć w dostępnych danych planu.'};
+    const nextOffset=own.length>offset+limit?offset+limit:null;
+    return {...common,...window,kind:args.kind||null,exclude_kinds:excluded,status:own.length?'found':'no_events_in_available_data',events:rows,total:own.length,
+      next_offset:nextOffset,
+      message:own.length?planMessage(rows,args.kind,excluded)+(nextOffset!==null?'\n\nWynik ma kolejną stronę.':''):
+        'W tym zakresie nie znaleziono Twoich zajęć'+(args.kind||excluded.length?' pasujących do wybranych filtrów':'')+' w dostępnych danych planu.'};
   }
   if(name==='schedule.get_next_occurrence'){
     const row=own.find(row=>future(row,now));

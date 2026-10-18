@@ -4,6 +4,10 @@ Samodzielne tworzenie narzędzi: [tutorial krok po kroku](TOOL_TUTORIAL.md).
 
 Nowe narzędzia: [wyszukiwanie semantyczne i efektywny plan](SEMANTIC_SEARCH.md).
 
+Plan rozwoju notatek, terminów i wymagań zaliczenia:
+[STUDY_NOTES_PLAN.md](STUDY_NOTES_PLAN.md). To projekt następnego etapu;
+prywatny vault nie jest jeszcze podłączony do agenta planu.
+
 Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
 przełożeniem i wymagany codzienny importer: [plan wdrożenia](IMPLEMENTATION_PLAN.md).
 

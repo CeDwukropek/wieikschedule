@@ -95,3 +95,15 @@ zapisu źródłowego planu są oddzielone od narzędzi agenta użytkownika.
 - [ ] Rozmowa z Gemmą po ponownym uruchomieniu lokalnego serwera modeli.
 
 Szczegóły: [SEMANTIC_SEARCH.md](SEMANTIC_SEARCH.md).
+
+## Aktualizacja 18.10.2026 — filtry, czytelny plan i projekt notatek
+
+- [x] Filtry rodzaju zajęć i wykluczeń, przed paginacją.
+- [x] Karty planu według dni oraz zachowanie zakresu przy doprecyzowaniu.
+- [x] Kontrola jednoznacznych filtrów, również gdy model pomija argument.
+- [x] Projekt notatek Markdown, wymagań zaliczenia i pełnej listy deadline'ów.
+- [ ] Odczyt i indeksowanie Sem3 w ograniczonym agencie planu.
+- [ ] Zadania z metadanymi i zapis plików `_agent`, bez duplikatów i utraty statusów.
+- [ ] Integracja n8n scalająca PDF/Markdown z zachowaniem źródeł.
+
+Projekt następnego etapu: [STUDY_NOTES_PLAN.md](STUDY_NOTES_PLAN.md).
