@@ -106,6 +106,11 @@ Szczegóły: [SEMANTIC_SEARCH.md](SEMANTIC_SEARCH.md).
 - [ ] Zadania w `Zadania.md` w folderze przedmiotu, bez duplikatów i utraty statusów.
 - [ ] Automatyczne terminy „do następnych labów” z grup studenta, daty notatki
   i planu; dopytanie wyłącznie przy brakujących lub sprzecznych danych.
+- [ ] Zapisywanie zadań podanych w rozmowie, np. „Na następne ćwiczenia z MUD jest
+  zadanie domowe”, w folderze przedmiotu, z powiązaniem do właściwego wystąpienia.
+- [ ] Uwzględnianie zapisanych zadań w odpowiedziach i przy karcie danych zajęć.
+- [ ] Osobny projekt prywatnych wydarzeń z własną datą/godziną; istniejące dopiski
+  do planu obejmują tylko wydarzenia już zapisane w bazie.
 - [ ] Integracja n8n scalająca PDF/Markdown z zachowaniem źródeł.
 
 Projekt następnego etapu: [STUDY_NOTES_PLAN.md](STUDY_NOTES_PLAN.md).

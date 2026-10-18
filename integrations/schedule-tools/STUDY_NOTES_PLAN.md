@@ -194,6 +194,56 @@ duplikatów: stabilne ID pochodzi z tożsamości źródła i zadania, nie z term
 który może się zmienić. Regenerator aktualizuje informacje ze źródła, zachowując
 status użytkownika. Sprzeczne terminy i zmiany wymagań trzeba wskazać użytkownikowi.
 
+### Zadania i informacje podawane w rozmowie
+
+Użytkownik może być bezpośrednim źródłem informacji; nie musi wcześniej tworzyć
+notatki ani czekać na workflow n8n. Przykład:
+
+> Na następne ćwiczenia z MUD jest zadanie domowe.
+
+Docelowy przebieg:
+
+1. Rozpoznaj MUD jako Modelowanie układów dynamicznych i rodzaj `exercise`.
+2. Z podpisanego kontekstu przyjmij plan i grupę ćwiczeniową studenta. Ustal
+   kolejne właściwe ćwiczenia narzędziami planu i zapisz ich UUID oraz datę.
+3. Dodaj zadanie w `Modelowanie układów dynamicznych/Zadania.md`, powiązane
+   z tym wystąpieniem. Zachowaj oryginalną wypowiedź i oznacz pochodzenie jako
+   `source_type: user_message`, wraz z czasem zgłoszenia i identyfikatorem
+   wiadomości/zapisu źródłowego. Nie przedstawiaj tej informacji jako pobranej
+   z uczelni lub pliku wymagań.
+4. Jeśli użytkownik nie podał treści zadania, zapisz „Zadanie domowe — szczegóły
+   niepodane”. Nie wymyślaj poleceń ani nie blokuj zapisania samej informacji
+   tylko z powodu braku szczegółów. Późniejsze doprecyzowanie aktualizuje to samo
+   zadanie i zachowuje jego ID oraz status.
+5. Po udanym zapisie potwierdź konkretny przedmiot, termin i miejsce zapisu.
+   Przy pytaniu o plan lub przygotowanie do zajęć uwzględnij to zadanie; karta
+   właściwych ćwiczeń może pokazać informację „Zadanie domowe”. Przy błędzie
+   zapisu nie twierdź, że informacja została zapamiętana.
+
+Dla bieżącego zgłoszenia „na następne ćwiczenia” datą odniesienia jest czas
+wiadomości w Europe/Warsaw, chyba że użytkownik albo aktywny kontekst rozmowy
+wskazał inne zajęcia lub datę. Dla informacji przenoszonej z historycznej notatki
+nadal używamy daty opisanych zajęć. Rozróżniamy datę źródła od daty jego późniejszego
+przetwarzania; nie przesuwamy zaległych zadań na najbliższe przyszłe zajęcia.
+
+Powtórzenie tej samej wiadomości lub ponowne wykonanie narzędzia nie tworzy
+duplikatu (klucz żądania/ID źródłowej wiadomości). Niezależne zgłoszenie podobnego
+zadania jest porównywane z istniejącymi wpisami, ale sama zbieżność nazwy przedmiotu
+i daty nie wystarcza do połączenia dwóch różnych zadań.
+
+W przykładzie powstaje zadanie przypisane do istniejących ćwiczeń, z terminem
+wynikającym z wypowiedzi. Ćwiczenia pozostają jednym wydarzeniem; nie zmieniamy
+ich tytułu, czasu ani publicznego planu. Sama informacja „na ćwiczenia” nie ustala
+dokładnej godziny oddania — oznaczamy zależność od zajęć i znany dzień.
+
+Obsługa własnych zdarzeń z odrębnym czasem, np. „konsultacje we wtorek o 15:00”,
+to osobny przypadek: wymaga prywatnego zapisu wydarzenia oraz wskazania daty,
+godziny i czasu trwania, o ile użytkownik je podał. Brakujących wartości nie
+zgadujemy. Obecne `user_added_events` dopina istniejące UUID z tabeli `events`,
+więc nie traktujemy go jako gotowej obsługi dowolnych nowych wydarzeń. Taki zapis
+pozostaje osobnym punktem projektu; informacji podanej przez studenta nie
+wstawiamy automatycznie do publicznego planu uczelni.
+
 ## Warunki zaliczenia i cytowania
 
 Przy pytaniu o przygotowanie sprawozdania odczytujemy aktualny plik warunków
@@ -216,7 +266,7 @@ Proponowany, ograniczony zestaw:
 | `study.search_notes` | Szukanie treści w dozwolonym Sem3, z filtrem przedmiotu/daty/rodzaju |
 | `study.read_note` | Odczyt wskazanego źródła lub sekcji, z wersją/hash |
 | `study.list_tasks` | Kompletny przegląd zadań po terminie i statusie, z paginacją |
-| `study.save_task` | Tworzenie/aktualizacja zadania w `Zadania.md` lub zarejestrowanej notatce w folderze przedmiotu, ze źródłem i stabilnym ID |
+| `study.save_task` | Tworzenie/aktualizacja zadania w folderze przedmiotu, także z wypowiedzi użytkownika; źródło, stabilne ID i opcjonalne powiązanie z UUID zajęć |
 
 Narzędzia należą do usługi notatek na koncie Odysseusa. Ograniczona pętla agenta
 planu może później dostać ten jawny zestaw, nadal bez pełnego agenta, powłoki
@@ -240,14 +290,19 @@ pamięci. Przewidujemy backup źródeł i plików generowanych.
 1. Ustalić minimalne dane zadania i czytelny zapis w `Zadania.md` w folderze przedmiotu.
 2. Dodać właścicielski odczyt Sem3, wyszukiwanie Markdown i cytowania.
 3. Dodać zadania z datą/statusami, automatyczne rozstrzyganie terminów względnych
-   z kontekstu grup i daty notatki oraz pełne zapytania o deadline'y.
+   z kontekstu grup i daty notatki/wiadomości oraz pełne zapytania o deadline'y.
 4. Dodać ograniczony zapis plików agenta i integrację kontraktu z n8n.
 5. Podłączyć te narzędzia do agenta planu; później rozważyć embeddingi.
+6. Osobno zaprojektować prywatne wydarzenia z własną datą/godziną, niezależne
+   od dopinania istniejących zajęć i od zadań przypisanych do wystąpienia.
 
 Warunki akceptacji: poprawne źródła wymagań, rozdzielenie grup, wszystkie terminy
 w okresie, samodzielne ustalanie „do następnych labów” przy kompletnym kontekście,
 poprawna data z historycznej notatki, jawna niepewność dopiero przy braku danych,
 zadania w folderze właściwego przedmiotu, brak duplikatów po ponownym imporcie,
+zapis informacji użytkownika „na następne ćwiczenia z MUD jest zadanie domowe”,
+poprawne powiązanie z grupą i wystąpieniem, odczyt tego zadania w kolejnej rozmowie,
+aktualizacja szczegółów bez duplikatu oraz potwierdzenie zapisu dopiero po sukcesie,
 zachowanie statusu ukończenia, świeże wyniki po zmianie/usunięciu notatki,
 izolacja kont i ograniczenia ścieżek. Testy mogą początkowo używać sztucznych
 notatek, bez przekazywania zawartości prywatnego vaulta do modeli.
