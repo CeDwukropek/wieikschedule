@@ -58,7 +58,7 @@ kopii przez istniejący HTTPS aplikacji. Nie powstaje publiczny proxy dowolnych 
 Po zastosowaniu natywnej gałęzi ustaw po stronie Odysseusa:
 
 - `SCHEDULE_GATEWAY_URL`: zaufany, stały adres backendu aplikacji;
-- `SCHEDULE_MODEL_ENDPOINT_IDS`: lista dopuszczonych lokalnych endpointów;
+- `SCHEDULE_MODEL_ENDPOINT_IDS`: lista dopuszczonych endpointów (lokalnych, OpenAI, Google Gemini);
 - `SCHEDULE_DEFAULT_MODEL`: opcjonalny model domyślny;
 - `ALLOWED_ORIGINS`: dokładny origin strony, łącznie z portem.
 
@@ -69,8 +69,8 @@ Brak uprawnień chat/agenta, obcy origin, obcy model lub inna intencja kończą
 się błędem. Lista modeli pochodzi z dopuszczonych endpointów natywnego konta.
 Nie ma automatycznego przełączenia na chmurę.
 
-Przygotowanie wyboru OpenAI i Google opisuje [ODYSSEUS_PROVIDERS.md](ODYSSEUS_PROVIDERS.md).
-Backend pozostaje lokalny do czasu osobnej aktywacji tych połączeń.
+Wybór OpenAI i Google opisuje [ODYSSEUS_PROVIDERS.md](ODYSSEUS_PROVIDERS.md).
+Backend używa istniejących połączeń i kluczy Odysseusa, z jawnym wyborem dostawcy.
 
 Natywny runtime używa wyłącznie schematów narzędzi z gateway i umiejętności
 `integrations/schedule-agent/SKILL.md`. Nie podłącza globalnych MCP, powłoki ani

@@ -91,6 +91,7 @@ export default function AiSettings(){
           <label className="block text-sm">Model Odysseusa<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_model||''} onChange={event=>setState({...state,local_model:event.target.value})}>
             {(native.endpoints.find(row=>row.id===state.local_endpoint_id)?.models||[]).map(model=><option key={model} value={model}>{model}</option>)}
           </select></label>
+          <p className="text-xs text-neutral-400">Lista pochodzi z konfiguracji Odysseusa. Wybierz model tekstowy obsługujący narzędzia; dostępność modelu zależy też od uprawnień i limitów konta API.</p>
         </>}
         {!native&&state.local_model&&<p className="text-xs">Zapisany model: {state.local_model}</p>}
         <label className="block text-sm"><input type="checkbox" checked={state.local_memory||false} onChange={event=>setState({...state,local_memory:event.target.checked})}/> Używaj pamięci i dokumentów mojego konta Odysseusa</label>

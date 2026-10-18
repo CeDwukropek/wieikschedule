@@ -16,7 +16,7 @@ test('native URL preserves a deployment prefix and credentials stay scoped to on
 test('native chat separates Odysseus authentication from delegated schedule context',async()=>{
  setLocalToken('owner-a','ody_synthetic');
  personalRequest.mockImplementation(async(path,body)=>path==='ai-settings'?{settings}:{token:'wks1.synthetic.context'});
- fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local'}]})});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',models:['local-model']}]})});
  fetch.mockResolvedValueOnce({ok:true,json:async()=>({ok:true,output:'Test response'})});
  const reply=await sendScheduleAgentMessage({message:'Test',scheduleName:'TEST',sessionId:'s',intent:'makeup',selectedGroups:{L:'L1'}});
  expect(reply.output).toBe('Test response');
@@ -38,15 +38,23 @@ test('switching Firebase accounts during the handshake prevents sending the mess
   if(path==='ai-settings')return {settings};
   auth.currentUser={uid:'owner-b'};return {token:'wks1.synthetic'};
  });
- fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local'}]})});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',models:['local-model']}]})});
  await expect(sendScheduleAgentMessage({message:'Private',scheduleName:'TEST',sessionId:'s'})).rejects.toThrow('Konto zmieniło się');
  expect(fetch).toHaveBeenCalledTimes(1);
 });
 test('additional groups are signed in the context instead of being left for the model to choose',async()=>{
  const external=[{faculty:'Other',groups:{C:'C2'},subject:'Algebra'}];
  personalRequest.mockImplementation(async path=>path==='ai-settings'?{settings}:{token:'wks1.synthetic'});
- fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local'}]})});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',models:['local-model']}]})});
  fetch.mockResolvedValueOnce({ok:true,json:async()=>({ok:true,output:'Test'})});
  await sendScheduleAgentMessage({message:'Plan jutro',scheduleName:'TEST',sessionId:'s',externalSelections:external});
  expect(personalRequest).toHaveBeenCalledWith('context',expect.objectContaining({selection:{faculty:'TEST',groups:{},external}}));
+});
+
+test('a removed endpoint cannot silently route the conversation to another provider',async()=>{
+ personalRequest.mockResolvedValue({settings});
+ fetch.mockResolvedValueOnce({ok:true,json:async()=>({protocol:'wieik-schedule-native-v1',endpoints:[{id:'cloud',models:['cloud-model']}]})});
+ await expect(sendScheduleAgentMessage({message:'Private',scheduleName:'TEST',sessionId:'s'})).rejects.toThrow('Zapisany model lub połączenie jest niedostępne');
+ expect(personalRequest).toHaveBeenCalledTimes(1);
+ expect(fetch).toHaveBeenCalledTimes(1);
 });
