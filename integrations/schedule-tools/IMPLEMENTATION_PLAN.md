@@ -103,7 +103,9 @@ Szczegóły: [SEMANTIC_SEARCH.md](SEMANTIC_SEARCH.md).
 - [x] Kontrola jednoznacznych filtrów, również gdy model pomija argument.
 - [x] Projekt notatek Markdown, wymagań zaliczenia i pełnej listy deadline'ów.
 - [ ] Odczyt i indeksowanie Sem3 w ograniczonym agencie planu.
-- [ ] Zadania z metadanymi i zapis plików `_agent`, bez duplikatów i utraty statusów.
+- [ ] Zadania w `Zadania.md` w folderze przedmiotu, bez duplikatów i utraty statusów.
+- [ ] Automatyczne terminy „do następnych labów” z grup studenta, daty notatki
+  i planu; dopytanie wyłącznie przy brakujących lub sprzecznych danych.
 - [ ] Integracja n8n scalająca PDF/Markdown z zachowaniem źródeł.
 
 Projekt następnego etapu: [STUDY_NOTES_PLAN.md](STUDY_NOTES_PLAN.md).

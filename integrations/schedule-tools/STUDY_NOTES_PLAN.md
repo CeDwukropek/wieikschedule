@@ -16,9 +16,18 @@ zamontowanie folderu nie gwarantuje indeksacji ani aktualizowania wyników.
 
 Sem3 jest dobrym zakresem dostępu narzędzi studenckich. Nie wymaga przenoszenia
 całego vaulta ani otwierania Sem3 jako nowego vaulta w Obsidianie. Proponowane
-wiązanie: źródłowy Sem3 jako `/app/study-notes` tylko do odczytu, a wydzielony
-`_agent` z prawem zapisu dla tworzonych zadań i notatek. Pozostałe notatki,
-folder concepts i konfiguracja Obsidiana nie są potrzebne w tym PoC.
+wiązanie: Sem3 jako `/app/study-notes`. Wszystko dotyczące przedmiotu pozostaje
+w jego folderze: notatki, wymagania, materiały i zadania tworzone przez agenta.
+Domyślnym miejscem listy zadań jest `Przedmiot/Zadania.md`; przy większej liczbie
+notatek można użyć podfolderu `Przedmiot/Zadania/`. Nie wydzielamy zadań poza folder
+przedmiotu. Folder concepts i konfiguracja Obsidiana nie są potrzebne w tym PoC.
+
+Ograniczenie zapisu wynika z kontraktu narzędzia: agent może tworzyć/aktualizować
+zarejestrowane pliki zadań i własne notatki w folderze danego przedmiotu. Odczyt
+materiałów źródłowych i warunków zaliczenia nie daje prawa do ich nadpisywania.
+Zapis wymaga odpowiednich uprawnień woluminu w wybranym zakresie; samo montowanie
+Sem3 tylko do odczytu nie wystarczy do tworzenia plików. Nie rozszerzamy dostępu
+na pozostałe katalogi vaulta.
 
 Katalog przypisujemy do konta Odysseusa. Ścieżki wybiera właściciel w konfiguracji,
 a nie model w argumentach narzędzia. Odrzucamy wyjście poza katalog, również przez
@@ -39,9 +48,15 @@ Przedmiot/
   2026-10-20.md                 # notatka z jednych zajęć
   2026-10-27.md
   podsumowanie.md               # opcjonalne, pochodne
-_agent/
-  zadania/<task-id>.md          # agent zapisuje własne pliki
+  Zadania.md                   # czytelna lista zadań, również tworzona przez agenta
+  Zadania/                     # opcjonalnie osobne notatki bardziej złożonych zadań
 ```
+
+Metadane potrzebne do terminów, źródeł i aktualizacji przechowujemy przy zadaniach
+w folderze przedmiotu. Nie wymagamy konwersji wszystkich ręcznych notatek do
+jednego sztywnego szablonu. Użytkownik korzysta ze zwykłej listy Markdown;
+techniczny zapis musi mieć jedno źródło statusu zadania, aby ręczna zmiana listy
+nie rozjeżdżała się z osobną kopią stanu w indeksie lub metadanych.
 
 n8n łączy notatkę z konkretnego dnia z pasującym PDF-em, tworząc czytelny Markdown
 z odnośnikami do obu źródeł. Zachowujemy pliki źródłowe i datę zajęć. Jedno ogromne
@@ -100,12 +115,14 @@ flowchart LR
     F --> G
     H[Plan i grupy z gateway] --> G
     G --> I[Odpowiedź ze źródłami]
-    G --> J[Własne pliki zadań w _agent]
+    G --> J[Zadania.md w folderze przedmiotu]
 ```
 
 ## Terminy i zadania
 
-Przykładowy plik `_agent/zadania/<task-id>.md`:
+Przykładowy plik `Przedmiot/Zadania/sprawozdanie-03.md` w opcjonalnym wariancie
+osobnych notatek zadań. Domyślnie te same dane zadania zapisujemy przy jego pozycji
+w `Przedmiot/Zadania.md`; osobny plik nie jest wymagany:
 
 ```yaml
 ---
@@ -129,10 +146,47 @@ generated_by: study-agent
 
 To również przykład, nie informacja z notatek użytkownika. `verified` oznacza
 zgodność z konkretnym źródłem lub poleceniem użytkownika, nie samo przekonanie LLM.
-Nie dopisujemy godziny, gdy nie ma jej w źródle. Niejasne „do następnych labów”
-zachowuje oryginalny zapis i stan nierozstrzygnięty, dopóki nie ustalimy grupy,
-daty bazowej oraz odpowiedniego wystąpienia. Przesunięcie prywatnego wydarzenia
-nie może samoistnie zmienić terminu oddania ustalonego przez prowadzącego.
+Nie dopisujemy godziny, gdy nie ma jej w źródle.
+
+### Automatyczne ustalanie „do następnych labów”
+
+To standardowy przypadek do automatycznego rozstrzygnięcia, a nie domyślny powód
+do pytania użytkownika. Skill prowadzi agenta przez następujące kroki:
+
+1. Rozpoznaj przedmiot i rodzaj zajęć z notatki oraz jej kontekstu.
+2. Przyjmij grupy studenta z podpisanego kontekstu planu. Jeśli notatka jest jawnie
+   oznaczona inną grupą, wykryj różnicę zamiast po cichu podmieniać grupę źródłową.
+3. Ustal datę zajęć, których dotyczy notatka: z `lesson_date`, powiązanego UUID
+   wystąpienia lub jednoznacznej daty w treści/nazwie pliku. To data bazowa terminu;
+   nie zastępuj jej datą rozmowy ani czasem utworzenia scalonego pliku przez n8n.
+4. Narzędziami planu znajdź pierwsze laboratorium tego przedmiotu dla właściwej
+   grupy po zajęciach bazowych. Wyklucz to samo wystąpienie i odwołane zajęcia;
+   porównuj rodzaj zajęć również dla źródłowej pisowni „Labolatorium”.
+   Przy terminie wyznaczonym przez prowadzącego rozróżnij źródłowy harmonogram
+   uczelni od osobistego przesunięcia wydarzenia w planie studenta. Narzędzie
+   używane do rozstrzygania terminu musi udostępniać tę różnicę.
+5. Zapisz wyliczoną datę wraz z oryginalnym zapisem „do następnych labów”, datą
+   bazową, źródłem, grupą oraz UUID wystąpienia docelowego. Odpowiedź powinna
+   krótko wskazać podstawę, np. „na kolejne laboratorium Twojej grupy po zajęciach
+   z [data bazowa], czyli [data z planu]”.
+
+Skill odpowiada za dobranie narzędzi i interpretację wypowiedzi, a data pochodzi
+z wyników planu. Gdy notatka jest historyczna, nie wystarczy narzędzie liczące
+„najbliższe” od chwili rozmowy: trzeba odczytać odpowiedni datowany zakres planu.
+Termin, który już minął, pozostaje zaległy — nie przesuwamy go na kolejne zajęcia
+tylko dlatego, że notatkę przetworzono później.
+
+Dopytanie lub stan nierozstrzygnięty pozostaje wyłącznie dla brakujących albo
+sprzecznych danych: brak daty bazowej/grupy, konflikt grupy notatki z kontekstem,
+niejednoznaczne wystąpienie lub brak kolejnych zajęć w dostępnych danych.
+Przy kompletnych danych agent ustala termin samodzielnie. Jeśli znany jest dzień,
+ale nie godzina oddania, zapisuje dzień bez dopisywania wymyślonej godziny.
+
+Powiązanie terminu z konkretnym wystąpieniem pozwoli wykryć późniejsze zmiany
+planu. Zmiana po stronie uczelni może wymagać przeliczenia terminu zależnego od
+zajęć, z zachowaniem źródła i reguły. Przesunięcie prywatnego wydarzenia nie może
+samoistnie zmienić terminu oddania ustalonego przez prowadzącego; jawna data
+podana przez prowadzącego pozostaje wiążąca niezależnie od prywatnego kalendarza.
 
 Potrzebne są stany np. `todo`, `submitted`, `done`, `needs_revision`, `cancelled`.
 Ponowne przetworzenie notatki nie może odtwarzać ukończonych zadań ani tworzyć
@@ -162,7 +216,7 @@ Proponowany, ograniczony zestaw:
 | `study.search_notes` | Szukanie treści w dozwolonym Sem3, z filtrem przedmiotu/daty/rodzaju |
 | `study.read_note` | Odczyt wskazanego źródła lub sekcji, z wersją/hash |
 | `study.list_tasks` | Kompletny przegląd zadań po terminie i statusie, z paginacją |
-| `study.save_task` | Tworzenie/aktualizacja plików wyłącznie w `_agent`, ze źródłem i stabilnym ID |
+| `study.save_task` | Tworzenie/aktualizacja zadania w `Zadania.md` lub zarejestrowanej notatce w folderze przedmiotu, ze źródłem i stabilnym ID |
 
 Narzędzia należą do usługi notatek na koncie Odysseusa. Ograniczona pętla agenta
 planu może później dostać ten jawny zestaw, nadal bez pełnego agenta, powłoki
@@ -183,14 +237,17 @@ pamięci. Przewidujemy backup źródeł i plików generowanych.
 
 ## Kolejność wdrożenia
 
-1. Uzgodnić minimalny format metadanych i katalog `_agent`.
+1. Ustalić minimalne dane zadania i czytelny zapis w `Zadania.md` w folderze przedmiotu.
 2. Dodać właścicielski odczyt Sem3, wyszukiwanie Markdown i cytowania.
-3. Dodać zadania z datą/statusami oraz pełne zapytania o deadline'y.
+3. Dodać zadania z datą/statusami, automatyczne rozstrzyganie terminów względnych
+   z kontekstu grup i daty notatki oraz pełne zapytania o deadline'y.
 4. Dodać ograniczony zapis plików agenta i integrację kontraktu z n8n.
 5. Podłączyć te narzędzia do agenta planu; później rozważyć embeddingi.
 
 Warunki akceptacji: poprawne źródła wymagań, rozdzielenie grup, wszystkie terminy
-w okresie, jawna niepewność przy braku daty, brak duplikatów po ponownym imporcie,
+w okresie, samodzielne ustalanie „do następnych labów” przy kompletnym kontekście,
+poprawna data z historycznej notatki, jawna niepewność dopiero przy braku danych,
+zadania w folderze właściwego przedmiotu, brak duplikatów po ponownym imporcie,
 zachowanie statusu ukończenia, świeże wyniki po zmianie/usunięciu notatki,
 izolacja kont i ograniczenia ścieżek. Testy mogą początkowo używać sztucznych
 notatek, bez przekazywania zawartości prywatnego vaulta do modeli.
