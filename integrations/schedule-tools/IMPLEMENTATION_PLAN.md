@@ -1,12 +1,20 @@
 # Agent planu — uzgodnienia i kolejne kroki
 
-Aktualizacja: 15.10.2026, Europe/Warsaw. Uzgodnienia użytkownika uzupełniają
+**Aktualny audyt i priorytety (18.10.2026):**
+[ROADMAP_2026-10-18.md](ROADMAP_2026-10-18.md).
+Ten dokument zachowuje ustalenia i kolejne aktualizacje wcześniejszych etapów.
+OpenAI i Google działają przez Odysseusa; uruchomienie rozmowy przez n8n oraz
+codzienny importer pozostają do wykonania.
+
+Ustalenia bazowe: 15.10.2026, Europe/Warsaw. Uzgodnienia użytkownika uzupełniają
 [kontrakt i stan implementacji](README.md). Priorytetem jest działający agent AI.
 Przywracanie grup na stagingu pozostaje bez zmian, zgodnie z decyzją użytkownika.
 
 ## Modele i klucze
 
-- Wariant API: OpenAI przez n8n; wariant lokalny: natywny Odysseus po wpięciu sesji.
+- Docelowy wariant domyślny: OpenAI przez n8n (rozmowa jeszcze wyłączona).
+  Działający wariant natywny: Odysseus po wpięciu sesji, z modelami lokalnymi
+  oraz OpenAI/Google skonfigurowanymi po jego stronie.
 - Użytkownik wprowadzi klucz przez Menu → Model AI. Backend zapisuje go
   zaszyfrowany w Firebase. Klucz nie trafia do Gita ani z powrotem do przeglądarki.
 - Dropdown pobiera listę dla zapisanego klucza przez backend: GET /v1/models.

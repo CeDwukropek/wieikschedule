@@ -1,5 +1,8 @@
 # Notatki Sem3, wymagania zaliczenia i terminy — propozycja PoC
 
+Zbiorczy stan projektu, brakujące funkcje i kolejność prac:
+[Audyt i plan — 18.10.2026](ROADMAP_2026-10-18.md).
+
 Status: projekt do kolejnego etapu. Ta zmiana wdraża filtry i karty planu;
 nie montuje notatek w agencie planu, nie indeksuje ich i nie zmienia vaulta.
 

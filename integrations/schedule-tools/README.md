@@ -1,5 +1,11 @@
 # Prywatny plan i narzędzia v1
 
+**Stan na 18.10.2026:** [zbiorczy audyt i kolejność dalszych prac](ROADMAP_2026-10-18.md).
+Transport Odysseusa obsługuje modele lokalne, OpenAI i Google. Domyślny transport
+rozmowy n8n nadal jest wyłączony; notatki i zadania są na etapie projektu.
+Poniższy opis kontraktu v1 należy czytać razem z nowszą dokumentacją narzędzi
+semantycznych i dostawców modeli — nie stanowi samodzielnej listy obecnych funkcji.
+
 Samodzielne tworzenie narzędzi: [tutorial krok po kroku](TOOL_TUTORIAL.md).
 
 Nowe narzędzia: [wyszukiwanie semantyczne i efektywny plan](SEMANTIC_SEARCH.md).
