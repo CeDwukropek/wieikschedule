@@ -6,7 +6,7 @@ dostaje klucza Supabase ani Firebase ID token. n8n nie uczestniczy w tej ścież
 
 ## Użycie na stagingu
 
-W Menu → Model AI wybierz **Lokalny agent / Odysseus**. Wpisz adres integracji
+W Menu → Model AI wybierz **Modele skonfigurowane w Odysseusie**. Wpisz adres integracji
 `https://cedwukropekserver.tail18c1e.ts.net:8444/local-odysseus` oraz token z pliku
 `.staging/odysseus-access-token.txt` na serwerze. Nie kopiuj tego pliku do GitHub.
 Kliknij sprawdzenie połączenia, wybierz endpoint i model, zapisz ustawienia.
@@ -68,6 +68,9 @@ krótkotrwały dostęp do planu. Obie tożsamości i ID rozmowy wyznaczają UUID
 Brak uprawnień chat/agenta, obcy origin, obcy model lub inna intencja kończą
 się błędem. Lista modeli pochodzi z dopuszczonych endpointów natywnego konta.
 Nie ma automatycznego przełączenia na chmurę.
+
+Przygotowanie wyboru OpenAI i Google opisuje [ODYSSEUS_PROVIDERS.md](ODYSSEUS_PROVIDERS.md).
+Backend pozostaje lokalny do czasu osobnej aktywacji tych połączeń.
 
 Natywny runtime używa wyłącznie schematów narzędzi z gateway i umiejętności
 `integrations/schedule-agent/SKILL.md`. Nie podłącza globalnych MCP, powłoki ani

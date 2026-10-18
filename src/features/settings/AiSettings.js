@@ -48,10 +48,10 @@ export default function AiSettings(){
       const result=await nativeCapabilities(state.local_endpoint,user.uid,localAccess);
       if(activeUid.current!==user.uid)return;
       setNative(result);setLocalToken(user.uid,localAccess);
-      const endpoint=result.endpoints.find(row=>row.id===state.local_endpoint_id)||result.endpoints[0];
-      if(!endpoint)throw new Error('Odysseus nie ma dopuszczonego lokalnego endpointu modeli.');
-      setState(previous=>({...previous,local_endpoint_id:endpoint.id,
-        local_model:endpoint.models.includes(previous.local_model)?previous.local_model:endpoint.models[0]||''}));
+      if(!result.endpoints.length)throw new Error('Odysseus nie ma dopuszczonego połączenia z modelem dla planu.');
+      const endpoint=result.endpoints.find(row=>row.id===state.local_endpoint_id)||result.endpoints.find(row=>row.execution!=='cloud');
+      setState(previous=>({...previous,local_endpoint_id:endpoint?.id||'',
+        local_model:endpoint?(endpoint.models.includes(previous.local_model)?previous.local_model:endpoint.models[0]||''):''}));
       setError('Połączenie z Odysseusem działa. Wybierz model i zapisz ustawienia.');
     }catch(err){if(activeUid.current===user.uid)setError(err.message);}finally{if(activeUid.current===user.uid)setBusy(false);}
   };
@@ -59,7 +59,7 @@ export default function AiSettings(){
     <h3 className="font-semibold">Model AI</h3>
     {ready?<>
       <label className="block text-sm">Sposób połączenia<select className="block w-full bg-neutral-800 rounded p-2" value={state.provider} onChange={event=>setState({...state,provider:event.target.value})}>
-        <option value="n8n">API OpenAI przez n8n</option><option value="odysseus">Lokalny agent / Odysseus</option>
+        <option value="n8n">API OpenAI przez n8n</option><option value="odysseus">Modele skonfigurowane w Odysseusie</option>
       </select></label>
       {state.provider==='n8n'?<>
         <label className="block text-sm">Model OpenAI<select className="block w-full bg-neutral-800 rounded p-2" disabled={!state.has_api_key||catalog.loading} value={state.model} onChange={event=>setState({...state,model:event.target.value})}>
@@ -80,11 +80,14 @@ export default function AiSettings(){
         <label className="block text-sm">Adres Odysseusa<input type="url" className="block w-full bg-neutral-800 rounded p-2" placeholder="https://twoj-serwer:port" value={state.local_endpoint} maxLength={2048} onChange={event=>{setState({...state,local_endpoint:event.target.value});setNative(null);}}/></label>
         <label className="block text-sm">Token dostępu Odysseusa (chat)<input type="password" autoComplete="off" className="block w-full bg-neutral-800 rounded p-2" value={localAccess} onChange={event=>setLocalAccess(event.target.value)} placeholder="ody_… lub aktywne logowanie w Odysseusie"/></label>
         <p className="text-xs text-neutral-400">Token pozostaje tylko w pamięci tej strony, do odświeżenia lub wylogowania. Nie zapisujemy go w Firebase. Własny Odysseus musi mieć włączoną integrację planu.</p>
+        <p className="text-xs text-neutral-400">Klucze dostawców pozostają w Odysseusie — nie trzeba wpisywać ich ponownie w planie. Agent korzysta z narzędzi planu zajęć.</p>
         <button type="button" className="text-sm underline" disabled={busy||!state.local_endpoint} onClick={connect}>Sprawdź połączenie z Odysseusem</button>
         {native&&<>
-          <label className="block text-sm">Lokalny endpoint<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_endpoint_id||''} onChange={event=>{const endpoint=native.endpoints.find(row=>row.id===event.target.value);setState({...state,local_endpoint_id:endpoint.id,local_model:endpoint.models[0]||''});}}>
-            {native.endpoints.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+          <label className="block text-sm">Połączenie z modelem<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_endpoint_id||''} onChange={event=>{const endpoint=native.endpoints.find(row=>row.id===event.target.value);setState({...state,local_endpoint_id:endpoint?.id||'',local_model:endpoint?.models[0]||''});}}>
+            <option value="">Wybierz połączenie</option>
+            {native.endpoints.map(row=><option key={row.id} value={row.id}>{row.name}{row.execution==='cloud'?` — API: ${row.destination}`:' — lokalnie'}</option>)}
           </select></label>
+          {native.endpoints.find(row=>row.id===state.local_endpoint_id)?.execution==='cloud'&&<p role="note" className="text-xs text-amber-200">Wybrany dostawca: {native.endpoints.find(row=>row.id===state.local_endpoint_id).destination}. Wiadomości, historia rozmowy i wyniki narzędzi planu będą wysyłane do tego dostawcy. Włączona pamięć udostępni mu także pobrany kontekst pamięci i dokumentów Odysseusa. Obowiązują opłaty Twojego konta API.</p>}
           <label className="block text-sm">Model Odysseusa<select className="block w-full bg-neutral-800 rounded p-2" value={state.local_model||''} onChange={event=>setState({...state,local_model:event.target.value})}>
             {(native.endpoints.find(row=>row.id===state.local_endpoint_id)?.models||[]).map(model=><option key={model} value={model}>{model}</option>)}
           </select></label>
