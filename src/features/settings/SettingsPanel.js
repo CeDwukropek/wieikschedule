@@ -10,6 +10,7 @@ import { FilterToggle } from "./FilterToggle";
 import ExternalGroupSelections from "../schedule/components/ExternalGroupSelections";
 import GoogleSignInButton from "../auth/GoogleSignInButton";
 import AiSettings from './AiSettings';
+import CalendarSyncSettings from './CalendarSyncSettings';
 
 export default function SettingsPanel({
   panelState,
@@ -159,6 +160,8 @@ export default function SettingsPanel({
           <div className="p-6 space-y-6 ">
             <GoogleSignInButton />
             {process.env.REACT_APP_PERSONAL_SCHEDULE==='true'&&<AiSettings/>}
+            {process.env.REACT_APP_CALENDAR_SYNC==='true'&&<CalendarSyncSettings currentSchedule={currentSchedule}
+              activeGroupSetId={activeGroupSetId} groupSetOptions={groupSetOptions}/>}
 
             {/* Schedule selector */}
             <div className="space-y-2">

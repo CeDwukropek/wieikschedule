@@ -23,7 +23,7 @@ async function pages(query){
     if(data.length<1000)return result;
   }
 }
-async function loadPlan(ctx,selection){
+async function loadPlan(ctx,selection,{includeCancelled=false}={}){
   const faculties=[...new Set([selection.faculty,'all',...(selection.external||[]).map(item=>item.faculty)])];
   const source=await pages(ctx.db.from('events').select(FIELDS).in('faculty',faculties)
     .or('status.is.null,status.eq.aktywne,status.eq.wolne').order('id'));
@@ -34,8 +34,10 @@ async function loadPlan(ctx,selection){
   for(const override of overrides)if(override.events&&faculties.includes(override.events.faculty))merged.set(override.event_id,override.events);
   const events=[...merged.values()].flatMap(row=>{
     const override=byId.get(row.id);
-    if(override?.action==='cancel'||!['aktywne','wolne'].includes(row.status??'aktywne'))return [];
-    return [{...row,...(override?.patch||{}),is_added:added.has(row.id),override_revision:override?.revision||0}];
+    if((override?.action==='cancel'&&!includeCancelled)||!['aktywne','wolne'].includes(row.status??'aktywne'))return [];
+    // Calendar mirrors keep cancelled rows so a private cancellation can be shown and restored.
+    return [{...row,...(override?.patch||{}),is_added:added.has(row.id),override_revision:override?.revision||0,
+      ...(includeCancelled?{override_action:override?.action||null}:{})}];
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time)||a.id.localeCompare(b.id));
   const dates=[...source,...events].filter(row=>row.faculty===selection.faculty||externalEvent(row,selection)).map(row=>row.date).sort();
   const primary=[...source,...events].filter(row=>row.faculty===selection.faculty).map(row=>row.date).sort();

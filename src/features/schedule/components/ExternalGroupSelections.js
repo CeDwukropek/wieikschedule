@@ -135,6 +135,9 @@ export default function ExternalGroupSelections({
                         onChange={(e) =>
                           onUpdateExternalSelection?.(item.id, {
                             subjectKey: e.target.value,
+                            // Calendar sync resolves the subject on the server without timetable codes.
+                            subjectName:
+                              timetable?.subjects?.[e.target.value]?.name || "",
                           })
                         }
                         className="w-full min-w-0 truncate px-2 py-1.5 bg-neutral-800 text-gray-300 border border-neutral-700 rounded text-xs"

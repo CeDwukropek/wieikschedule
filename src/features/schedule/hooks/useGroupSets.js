@@ -102,7 +102,7 @@ export function useGroupSets({ savedSettings, currentSchedule, groupConfigs }) {
   const handleAddExternalSelection = useCallback((scheduleId = "") => {
     const next = {
       id: `ext-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      scheduleId: String(scheduleId || "").trim(), groupType: "", groupValue: "", subjectKey: "",
+      scheduleId: String(scheduleId || "").trim(), groupType: "", groupValue: "", subjectKey: "", subjectName: "",
     };
     updateActiveSet(set => ({ ...set, externalSelections: [...(set.externalSelections || []), next] }));
   }, [updateActiveSet]);
@@ -113,7 +113,7 @@ export function useGroupSets({ savedSettings, currentSchedule, groupConfigs }) {
       if (item.id !== selectionId) return item;
       const next = { ...item, ...patch };
       if (Object.prototype.hasOwnProperty.call(patch || {}, "scheduleId")) {
-        next.groupType = ""; next.groupValue = ""; next.subjectKey = "";
+        next.groupType = ""; next.groupValue = ""; next.subjectKey = ""; next.subjectName = "";
       }
       if (Object.prototype.hasOwnProperty.call(patch || {}, "groupType")) next.groupValue = "";
       if (Object.prototype.hasOwnProperty.call(patch || {}, "groupValue") ||

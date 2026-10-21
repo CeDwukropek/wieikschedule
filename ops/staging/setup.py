@@ -82,6 +82,7 @@ def prepare(args):
         private_file(secret_file, json.dumps(local, indent=2) + '\n')
     client = {key: supplied.get(key, '') for key in CLIENT_KEYS}
     client.update(REACT_APP_LOCAL_STAGING='true', REACT_APP_PERSONAL_SCHEDULE='true', REACT_APP_ENABLE_AI_CHAT='true',
+                  REACT_APP_CALENDAR_SYNC='true',
                   REACT_APP_API_BASE_URL='', REACT_APP_SUPABASE_URL='http://localhost:3100/supabase',
                   REACT_APP_SUPABASE_ANON_KEY=local['anon_jwt'], REACT_APP_N8N_CHAT_WEBHOOK='/staging/chat')
     # Never copy production Supabase credentials, webhook URLs or unrelated secrets.
@@ -130,7 +131,8 @@ def seed(args):
         raise ValueError('Refusing to seed an unmarked database')
     for signature, migration in [('apply_wieik_import(jsonb,jsonb)', '20261014_wieik_import.sql'),
                                  ('bootstrap_wieik_import(jsonb,jsonb)', '20261015_unlinked_bootstrap.sql'),
-                                 ('confirm_schedule_change(uuid,uuid,text,text)', '20261015_personal_overrides.sql')]:
+                                 ('confirm_schedule_change(uuid,uuid,text,text)', '20261015_personal_overrides.sql'),
+                                 ('use_calendar_link(text)', '20261021_calendar_links.sql')]:
         initialized = pg("SELECT to_regprocedure('public." + signature + "') IS NOT NULL") == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)
