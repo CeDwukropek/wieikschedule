@@ -13,9 +13,12 @@ beforeAll(() => {
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
 });
 
-test('a compact occurrence opens full details, then edits that occurrence only', () => {
-  const edit = jest.fn();
-  render(<WeekView events={[event]} viewedWeekStart={monday} onEditEvent={edit}/>);
+const planActions=(extra={})=>({overrideFor:()=>undefined,apply:jest.fn().mockResolvedValue({}),removeAdded:jest.fn(),
+  startTimes:['07:30','09:15','12:00'],bounds:{min:'2026-10-01',max:'2027-02-01'},conflictsFor:()=>[],...extra});
+
+test('a compact occurrence opens full details with direct actions', async () => {
+  const actions = planActions();
+  render(<WeekView events={[event]} viewedWeekStart={monday} planActions={actions}/>);
   const trigger = screen.getByRole('button', {name: /Modelowanie.*Pokaż szczegóły/});
   trigger.focus();fireEvent.click(trigger);
   const dialog = screen.getByRole('dialog', {name: event.title});
@@ -24,16 +27,52 @@ test('a compact occurrence opens full details, then edits that occurrence only',
   expect(dialog).toHaveTextContent('A-101');
   expect(dialog).toHaveTextContent('Jan Kowalski');
   expect(dialog).toHaveTextContent('Lk1');
-  fireEvent.click(screen.getByRole('button', {name: 'Przenieś lub zmień zajęcia'}));
-  expect(edit).toHaveBeenCalledWith('occurrence-a');
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Odwołaj u mnie'}));
+  await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id:'occurrence-a',operation:'upsert',action:'cancel',patch:{}}));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   expect(trigger).toHaveFocus();
+});
+
+test('moving keeps an earlier private room change and shows collisions', async () => {
+  const actions = planActions({
+    overrideFor:()=>({action:'modify',patch:{room:'A-101'},reason:null,events:{date:'2026-10-19',start_time:'07:30:00',duration_min:90,room:'B2'}}),
+    conflictsFor:(id,{start})=>start==='12:00'?[{title:'Analiza obwodów',start:'12:15',end:'13:45',room:'108D'}]:[],
+  });
+  render(<WeekView events={[{...event,personal_override:true}]} viewedWeekStart={monday} planActions={actions}/>);
+  fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
+  expect(screen.getByRole('dialog')).toHaveTextContent('Oryginalnie: pon 19.10 · 07:30–09:00 · B2');
+  expect(screen.getByRole('button', {name: 'Przywróć plan uczelni'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Przenieś'}));
+  expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
+  fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-22'}});
+  fireEvent.change(screen.getByLabelText('Początek'), {target: {value: '12:00'}});
+  expect(screen.getByLabelText('Koniec')).toHaveValue('13:30');
+  expect(screen.getByRole('status')).toHaveTextContent('Analiza obwodów (12:15–13:45, 108D)');
+  fireEvent.click(screen.getByRole('button', {name: 'Zapisz'}));
+  await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id:'occurrence-a',operation:'upsert',action:'modify',
+    patch:{room:'A-101',date:'2026-10-22',start_time:'12:00:00'},reason:null}));
+});
+
+test('a weekend date is refused before saving and a failed save keeps the dialog open', async () => {
+  const actions = planActions({apply:jest.fn().mockRejectedValue(new Error('Plan zmienił się lub podgląd wygasł.'))});
+  render(<WeekView events={[event]} viewedWeekStart={monday} planActions={actions}/>);
+  fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
+  fireEvent.click(screen.getByRole('button', {name: 'Przenieś'}));
+  fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-24'}});
+  expect(screen.getByRole('alert')).toHaveTextContent('poniedziałku do piątku');
+  expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', {name: 'Anuluj'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Zmień salę'}));
+  fireEvent.change(screen.getByLabelText('Sala'), {target: {value: 'C3'}});
+  fireEvent.click(screen.getByRole('button', {name: 'Zapisz'}));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Plan zmienił się');
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
 });
 
 test('changing week dismisses stale details and guests have no private edit action', () => {
   const {rerender} = render(<WeekView events={[event]} viewedWeekStart={monday}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
-  expect(screen.queryByRole('button', {name: 'Przenieś lub zmień zajęcia'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Przenieś'})).not.toBeInTheDocument();
   rerender(<WeekView events={[event]} viewedWeekStart={new Date(2026,9,26)}/>);
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(document.body.style.overflow).not.toBe('hidden');
@@ -42,8 +81,9 @@ test('changing week dismisses stale details and guests have no private edit acti
 test('removing a makeup occurrence uses the addition ID and keeps errors visible', async () => {
   const remove = jest.fn().mockRejectedValueOnce(new Error('Spróbuj ponownie'));
   const added = {...event, origin: 'added', added_event_id: 'addition-a'};
-  render(<WeekView events={[added]} viewedWeekStart={monday} onRemoveAddedEvent={remove}/>);
+  render(<WeekView events={[added]} viewedWeekStart={monday} planActions={planActions({removeAdded:remove})}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
+  expect(screen.queryByRole('button', {name: 'Odwołaj u mnie'})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', {name: 'Usuń z mojego planu'}));
   expect(remove).toHaveBeenCalledWith('addition-a');
   expect(await screen.findByRole('alert')).toHaveTextContent('Spróbuj ponownie');
@@ -59,7 +99,7 @@ test('overlapping events remain independently selectable and cancel closes detai
   expect(screen.getAllByRole('button', {name: /Pokaż szczegóły/})).toHaveLength(2);
   fireEvent.click(screen.getByRole('button', {name: /Inne zajęcia/}));
   const dialog = screen.getByRole('dialog', {name: 'Inne zajęcia'});
-  expect(dialog).toHaveTextContent('Moja zmiana');
+  expect(dialog).toHaveTextContent('Zmienione u mnie');
   fireEvent(dialog, new Event('cancel', {cancelable: true}));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });

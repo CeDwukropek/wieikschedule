@@ -63,4 +63,11 @@ i odpowiedzi agenta pokazują ten sam plan; testy A/B, CAS i konfliktów przecho
   Testy: Node 43, React 71. Wycofanie: obraz `wieikschedule-staging-app:before-personal-plan-a`.
 - Uwaga dla kolejnych zmian: build stagingu traktuje ostrzeżenia ESLint jako błędy;
   przed wdrożeniem uruchamiać lint w obrazie aplikacji.
-- **Następny: krok B** — okno zajęć z akcjami i formularzem „Przenieś”, panel „Mój plan”.
+- **Krok B gotowy i wdrożony na stagingu:** okno zajęć z akcjami (Przenieś, Zmień salę,
+  Odwołaj u mnie / Usuń z mojego planu, Przywróć plan uczelni) i linią „Oryginalnie”,
+  formularz „Przenieś” (pon.–pt., zakres planu, godziny z siatki, koniec liczony z długości,
+  kolizje na bieżąco, prowadzący i powód pod „Więcej”), to samo okno w widoku dnia,
+  panel boczny „Mój plan” z propozycjami agenta. Usunięto `PersonalChangeDialog`.
+  Nowe edycje łączą się z wcześniejszym `patch`. Testy React: 80.
+  Wycofanie: obraz `wieikschedule-staging-app:before-personal-plan-b`.
+- **Następny: krok C** — odwołane jako wyblakłe kafelki, obrys oryginalnego miejsca przeniesionych.

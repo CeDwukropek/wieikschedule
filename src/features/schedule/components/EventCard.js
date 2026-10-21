@@ -41,7 +41,6 @@ export default function EventCard({
   subjects = {},
   onRemoveAddedEvent,
   removingAddedEventId,
-  onEditEvent,
   compact = false,
   onOpenDetails,
 }) {
@@ -153,8 +152,8 @@ export default function EventCard({
           <div className="mt-1 text-[10px] text-rose-300">{removeError}</div>
         ) : null}
 
-        {onEditEvent && ev.event_id && <button type="button" className="mt-1 text-left text-[10px] text-sky-300" onClick={event=>{event.stopPropagation();onEditEvent(ev.event_id);}}>
-          {ev.personal_override?'Edytuj moją zmianę':'Zmień tylko dla mnie'}
+        {onOpenDetails && <button type="button" className="mt-1 text-left text-[10px] text-sky-300" aria-haspopup="dialog" onClick={event=>{event.stopPropagation();onOpenDetails(ev);}}>
+          Szczegóły i zmiany
         </button>}
 
         <div className="text-[0.7rem] text-gray-200 mt-1 flex flex-wrap gap-2 items-center">

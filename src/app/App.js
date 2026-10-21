@@ -18,7 +18,10 @@ import {usePersonalPlan} from '../features/my-plan/usePersonalPlan';
 import UndoToast from '../features/my-plan/UndoToast';
 import {addEventToMyPlan} from '../features/my-plan/myPlanApi';
 import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effectiveSchedule';
-import PersonalChangeDialog from '../features/my-plan/PersonalChangeDialog';
+import MyPlanPanel from '../features/my-plan/MyPlanPanel';
+import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
+import {dialogEventFromItem,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
+import {getWeekStart} from '../utils/date';
 
 export default function App() {
   const exportRef = useRef(null);
@@ -29,10 +32,11 @@ export default function App() {
   const view = useViewSettings(savedSettings);
   const schedule = useScheduleManager(savedSettings);
   const personalEnabled=process.env.REACT_APP_PERSONAL_SCHEDULE==='true';
-  const [editing,setEditing]=useState(null);
+  const [planOpen,setPlanOpen]=useState(false);
+  const [shownItem,setShownItem]=useState(null);
   const [toast,setToast]=useState(null);
   const [dismissed,setDismissed]=useState(()=>new Set());
-  useEffect(()=>{setEditing(null);setToast(null);},[user?.uid,schedule.currentSchedule]);
+  useEffect(()=>{setPlanOpen(false);setShownItem(null);setToast(null);},[user?.uid,schedule.currentSchedule]);
   const dismissToast=useCallback(()=>setToast(null),[]);
   const personal=usePersonalPlan(user,personalEnabled);
   const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows),[schedule.loadedTimetables,personal.rows]);
@@ -51,24 +55,18 @@ export default function App() {
   });
 
   const addedEvents=useMemo(()=>effectiveAddedEvents(myPlan.allAddedEvents,personal.rows),[myPlan.allAddedEvents,personal.rows]);
-  const sourceById=useMemo(()=>new Map([
-    ...Object.values(schedule.loadedTimetables).flatMap(table=>table.rawRows||[]),
-    ...myPlan.allAddedEvents.map(event=>({...event._raw,id:event.event_id})),
-    ...personal.rows.map(row=>row.events).filter(Boolean),
-  ].map(row=>[row.id,row])),[schedule.loadedTimetables,myPlan.allAddedEvents,personal.rows]);
-  const source=editing&&user&&editing.uid===user.uid?(editing.proposal?.source||sourceById.get(editing.id)):null;
   const proposals=personal.proposals.filter(proposal=>!dismissed.has(proposal.id));
 
   // Own edits are saved at once; the toast offers to restore the previous state.
   const applyChange=async change=>{
     const undo=await personal.apply(change);
-    setEditing(null);myPlan.refresh();
+    myPlan.refresh();
     const message=change.operation==='delete'?'Przywrócono plan uczelni.':change.action==='cancel'?'Odwołano zajęcia w Twoim planie.':'Zapisano zmianę w Twoim planie.';
     setToast({message,undo:async()=>{await personal.apply(undo);myPlan.refresh();}});
   };
   const confirmProposal=async proposal=>{
     await personal.confirmProposal(proposal);
-    setEditing(null);myPlan.refresh();
+    myPlan.refresh();
     setToast({message:'Zatwierdzono propozycję agenta.'});
   };
   const removeAddedEvent=async addedEventId=>{
@@ -133,13 +131,28 @@ export default function App() {
     view.ready && !settingsLoading,
   );
 
+  // Private changes made from a class's details dialog; absent for guests.
+  const startTimes=useMemo(()=>startTimeOptions(effectiveTable.rawRows).filter(Boolean),[effectiveTable.rawRows]);
+  const planActions=user&&personalEnabled&&personal.ready?{
+    overrideFor:id=>personal.rows.find(row=>row.event_id===id),
+    apply:applyChange,
+    removeAdded:removeAddedEvent,
+    startTimes,
+    bounds:{min:effectiveTable.minDate,max:effectiveTable.maxDate},
+    conflictsFor:(eventId,{date,start,end})=>{
+      const day=(parseDate(date).getDay()+6)%7;
+      return mergeEvents({...eventOptions,weekStart:getWeekStart(parseDate(date)),addedEvents})
+        .filter(other=>other.day===day&&String(other.event_id||'')!==String(eventId)&&overlaps(other,{start,end}))
+        .map(other=>({title:other.title||other.subj,start:other.start,end:other.end,room:other.room}));
+    },
+  }:undefined;
   const calendarProps = {
     subjects: schedule.subjects,
-    onRemoveAddedEvent: removeAddedEvent,
-    removingAddedEventId: myPlan.removingAddedEventId,
-    onEditEvent: user&&personalEnabled&&personal.ready?id=>setEditing({uid:user.uid,id}):undefined,
+    planActions,
     ref: exportRef,
   };
+  const today=new Date().toISOString().slice(0,10);
+  const shownEvent=shownItem&&dialogEventFromItem(shownItem);
 
   return (
     <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
@@ -211,14 +224,11 @@ export default function App() {
         </div>
       </div>
       {user&&personalEnabled&&<section className="mb-4 text-sm">
-        {proposals.map(proposal=><div key={proposal.id} className="my-2 rounded bg-sky-950 p-3">
-          Agent proponuje zmianę: {proposal.subject} ({proposal.original.date}). <button className="underline" onClick={()=>setEditing({uid:user.uid,id:proposal.event_id,proposal})}>Sprawdź podgląd</button>
-          <button className="ml-3 text-neutral-400" onClick={()=>setDismissed(previous=>new Set([...previous,proposal.id]))}>Odrzuć</button>
-        </div>)}
         {!personal.ready&&<p role="status">{personal.error||'Sprawdzanie prywatnych zmian…'} <button onClick={personal.refresh} className="underline">Odśwież</button></p>}
-        {personal.ready&&personal.items.length>0&&<details><summary className="cursor-pointer text-sky-300">Moje zmiany ({personal.items.length})</summary>
-          {personal.items.map(item=><button key={`${item.kind}:${item.event_id}`} className="block p-2 underline" onClick={()=>setEditing({uid:user.uid,id:item.event_id})}>{item.subject} — {item.kind==='cancelled'?'odwołane':item.kind==='added'?'odrabianie':'zmienione'} ({(item.current||item.original).date})</button>)}
-        </details>}
+        {personal.ready&&<button type="button" className="plan-panel-trigger" aria-haspopup="dialog" onClick={()=>setPlanOpen(true)}>
+          Mój plan{personal.items.length>0&&<span className="plan-panel-count">{personal.items.length}</span>}
+          {proposals.length>0&&<span className="plan-panel-count plan-panel-count-attention">{proposals.length} do zatwierdzenia</span>}
+        </button>}
       </section>}
       {personal.ready&&(view.viewMode === "week" ? (
         <WeekView
@@ -231,10 +241,16 @@ export default function App() {
           {...calendarProps}
           key={navigation.daySelection.selection}
           events={dayEvents}
+          weekStart={navigation.selectedDayWeekStart}
           selection={navigation.daySelection.selection}
         />
       ))}
-      {source&&personal.ready&&<PersonalChangeDialog key={`${user.uid}:${editing.id}:${editing.proposal?.id||'manual'}`} source={source} initialProposal={editing.proposal} override={personal.rows.find(row=>row.event_id===source.id)} onClose={()=>setEditing(null)} onApply={applyChange} onConfirmProposal={confirmProposal}/>}
+      {planOpen&&planActions&&<MyPlanPanel items={personal.items} proposals={proposals} today={today} onClose={()=>setPlanOpen(false)}
+        onApply={applyChange} onRemoveAdded={removeAddedEvent} onConfirmProposal={confirmProposal}
+        onDismissProposal={id=>setDismissed(previous=>new Set([...previous,id]))}
+        onShow={item=>{setPlanOpen(false);setShownItem(item);}}/>}
+      {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={schedule.subjects} date={parseDate((shownItem.current||shownItem.original).date)}
+        onClose={()=>setShownItem(null)} planActions={planActions}/>}
       <UndoToast toast={toast} onDismiss={dismissToast}/>
       <FAQ />
     </div>

@@ -1,6 +1,7 @@
 import { parseDaySelection } from "../../../utils/date";
-import React, { useMemo, forwardRef } from "react";
+import React, { useEffect, useMemo, useState, forwardRef } from "react";
 import EventCard from "./EventCard";
+import EventDetailsDialog from "./EventDetailsDialog";
 import EventTooltipWrapper from "./EventTooltipWrapper";
 import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
@@ -11,9 +12,8 @@ const DayView = forwardRef(function DayView(
     events,
     subjects = {},
     selection: externalSelection,
-    onRemoveAddedEvent,
-    removingAddedEventId,
-    onEditEvent,
+    weekStart,
+    planActions,
   },
   ref,
 ) {
@@ -48,6 +48,10 @@ const DayView = forwardRef(function DayView(
   // highlight if the displayed day is today in the current week
   const isTodayDisplayed =
     selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  useEffect(() => setSelectedEvent(null), [events, selection]);
+  const displayedDate = weekStart
+    ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + selectedDayIndex) : null;
 
   return (
     <div>
@@ -133,9 +137,7 @@ const DayView = forwardRef(function DayView(
                     <EventCard
                       ev={ev}
                       subjects={subjects}
-                      onRemoveAddedEvent={onRemoveAddedEvent}
-                      removingAddedEventId={removingAddedEventId}
-                      onEditEvent={onEditEvent}
+                      onOpenDetails={displayedDate ? setSelectedEvent : undefined}
                     />
                   </EventTooltipWrapper>
                 </div>
@@ -150,6 +152,13 @@ const DayView = forwardRef(function DayView(
           </div>
         ) : null}
       </div>
+      {selectedEvent && displayedDate && <EventDetailsDialog
+        ev={selectedEvent}
+        subjects={subjects}
+        date={displayedDate}
+        onClose={() => setSelectedEvent(null)}
+        planActions={planActions}
+      />}
     </div>
   );
 });

@@ -1,18 +1,22 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Clock, MapPin, Users, UserRound, CalendarDays, Pencil, Trash2 } from 'lucide-react';
+import { X, Clock, MapPin, Users, UserRound, CalendarDays } from 'lucide-react';
 import { splitTeacherDisplay } from '../logic/teacherDisplay';
 import { eventSubject } from './EventCard';
+import ClassPlanActions from '../../my-plan/ClassPlanActions';
+import { timeToMinutes } from '../../../utils/time';
 
-export default function EventDetailsDialog({ ev, subjects, date, onClose, onEditEvent, onRemoveAddedEvent, removingAddedEventId }) {
+const isoDate = value => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+
+export default function EventDetailsDialog({ ev, subjects, date, onClose, planActions }) {
   const dialog = useRef(null);
   const titleId = useId();
-  const [error, setError] = useState('');
-  const [pending, setPending] = useState(false);
+  const [busy, setBusy] = useState(false);
   const subject = eventSubject(ev, subjects);
   const teachers = splitTeacherDisplay(ev.teacher);
-  const canRemove = ev.origin === 'added' && ev.added_event_id && onRemoveAddedEvent;
-  const busy = pending || (canRemove && removingAddedEventId === ev.added_event_id);
+  // The occurrence as shown, i.e. the university plan with the person's changes applied.
+  const current = { date: isoDate(date), start_time: `${ev.start}:00`, duration_min: timeToMinutes(ev.end) - timeToMinutes(ev.start),
+    room: ev.room || '', instructor: ev.teacher || '' };
 
   useEffect(() => {
     const node = dialog.current;
@@ -28,16 +32,6 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, onEdit
     };
   }, []);
 
-  const edit = () => {
-    onClose();
-    onEditEvent(ev.event_id);
-  };
-  const remove = async () => {
-    setPending(true);setError('');
-    try { await onRemoveAddedEvent(ev.added_event_id);onClose(); }
-    catch (failure) { setError(failure.message || 'Nie udało się usunąć dopisku. Spróbuj ponownie.'); }
-    finally { setPending(false); }
-  };
 
   return createPortal(
     <dialog ref={dialog} className="event-details-dialog" aria-labelledby={titleId} aria-modal="true"
@@ -54,7 +48,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, onEdit
         <div className="event-details-badges">
           {ev.type && <span>{ev.type}</span>}
           {ev.origin === 'added' && <span className="event-details-personal">Odrobienie</span>}
-          {ev.personal_override && <span className="event-details-personal">Moja zmiana</span>}
+          {ev.personal_override && <span className="event-details-personal">Zmienione u mnie</span>}
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
         </div>
         <dl className="event-details-list">
@@ -64,14 +58,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, onEdit
           <div><dt><UserRound size={17}/>Prowadzący</dt><dd>{teachers.length ? teachers.map(teacher => <span key={teacher}>{teacher}</span>) : 'Nie podano'}</dd></div>
           <div><dt><Users size={17}/>Grupa</dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
         </dl>
-        {(onEditEvent && ev.event_id) || canRemove ? <footer className="event-details-actions">
-          {onEditEvent && ev.event_id && <>
-            <p>Zmiana dotyczy tylko tego wystąpienia w Twoim planie.</p>
-            <button type="button" className="event-details-edit" disabled={busy} onClick={edit}><Pencil size={16}/>{ev.personal_override ? 'Edytuj moją zmianę' : 'Przenieś lub zmień zajęcia'}</button>
-          </>}
-          {canRemove && <button type="button" className="event-details-remove" disabled={busy} onClick={remove}><Trash2 size={16}/>{busy ? 'Usuwanie…' : 'Usuń z mojego planu'}</button>}
-        </footer> : null}
-        {error && <p role="alert" className="event-details-error">{error}</p>}
+        {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}/>}
       </section>
     </dialog>, document.body,
   );

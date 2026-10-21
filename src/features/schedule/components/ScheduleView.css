@@ -212,6 +212,49 @@
 .event-details-dialog button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
 .event-details-error { margin-top: 12px; font-size: 13px; color: #fda4af; }
 
+/* Private changes of one class (inside the details dialog) */
+.plan-original { color: #fcd34d !important; }
+.plan-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.plan-action-grid > button:first-child { grid-column: 1 / -1; }
+.plan-action { background: #262626; color: #e5e7eb; }
+.plan-form { display: grid; gap: 12px; font-size: 13px; }
+.plan-form label { display: grid; gap: 4px; color: #a3a3a3; }
+.plan-form input, .plan-form select, .plan-form textarea { background: #262626; color: #f5f5f5; border: 1px solid #404040; border-radius: 8px; padding: 9px 10px; font-size: 14px; color-scheme: dark; }
+.plan-form-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.plan-form-buttons { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.plan-more summary { cursor: pointer; color: #7dd3fc; }
+.plan-more[open] { display: grid; gap: 10px; }
+.plan-conflicts { border-radius: 8px; padding: 10px 12px; background: #451a03; color: #fde68a; }
+.plan-conflicts ul { margin-top: 4px; padding-left: 18px; list-style: disc; }
+
+/* "Mój plan" side panel */
+.plan-panel-trigger { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 6px 14px; background: #082f49; color: #e0f2fe; font-weight: 600; }
+.plan-panel-trigger:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.plan-panel-count { border-radius: 999px; padding: 1px 8px; background: #0c4a6e; font-size: 12px; font-weight: 500; }
+.plan-panel-count-attention { background: #b45309; color: #fff7ed; }
+.plan-panel {
+  color: #e5e7eb; background: #171717; border: 0; border-left: 1px solid #404040; padding: 0;
+  margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; width: min(440px, 100%); overflow: auto;
+  box-shadow: -24px 0 80px rgba(0,0,0,.6);
+}
+.plan-panel::backdrop { background: rgba(0,0,0,.6); }
+.plan-panel-content { padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 18px; }
+.plan-panel-section h3, .plan-panel-section summary { font-size: 13px; font-weight: 600; color: #a3a3a3; margin-bottom: 8px; cursor: default; }
+.plan-panel-section summary { cursor: pointer; }
+.plan-panel-section ul { display: grid; gap: 8px; }
+.plan-panel-row { display: grid; gap: 8px; border-radius: 12px; padding: 12px; background: #1f1f1f; border: 1px solid #2e2e2e; }
+.plan-panel-proposals .plan-panel-row { border-color: #b45309; }
+.plan-panel-text { display: grid; gap: 2px; font-size: 13px; }
+.plan-panel-text strong { font-size: 14px; overflow-wrap: anywhere; }
+.plan-panel-text span { color: #d4d4d4; }
+.plan-panel-text em { color: #a3a3a3; font-style: normal; font-size: 12px; }
+.plan-panel-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-panel-buttons button { border-radius: 8px; padding: 6px 12px; background: #262626; font-size: 13px; }
+.plan-panel-buttons button:disabled { opacity: .5; cursor: wait; }
+.plan-panel-buttons .plan-panel-primary { background: #0369a1; color: white; }
+.plan-panel button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.plan-panel-empty { color: #a3a3a3; font-size: 14px; }
+
 @media (max-width: 640px) {
   .week-grid { grid-template-columns: 29px repeat(5, minmax(0, 1fr)); --week-slot-height: clamp(8px, calc((100dvh - 320px) / 60), 12px); }
   .week-day-long { display: none; }
@@ -228,6 +271,8 @@
   .event-details-content { padding: 20px; }
   .event-details-list > div { grid-template-columns: 105px minmax(0,1fr); gap: 10px; }
   .event-details-header h2 { font-size: 19px; }
+  .plan-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .plan-form-row label:first-child { grid-column: 1 / -1; }
 }
 
 /* Day View Styles */

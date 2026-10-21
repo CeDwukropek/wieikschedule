@@ -13,9 +13,7 @@ const WeekView = forwardRef(function WeekView(
     events,
     subjects = {},
     viewedWeekStart,
-    onRemoveAddedEvent,
-    removingAddedEventId,
-    onEditEvent,
+    planActions,
   },
   ref,
 ) {
@@ -187,9 +185,7 @@ const WeekView = forwardRef(function WeekView(
         subjects={subjects}
         date={new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedEvent.day)}
         onClose={() => setSelectedEvent(null)}
-        onEditEvent={onEditEvent}
-        onRemoveAddedEvent={onRemoveAddedEvent}
-        removingAddedEventId={removingAddedEventId}
+        planActions={planActions}
       />}
     </div>
   );
