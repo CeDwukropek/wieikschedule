@@ -214,6 +214,22 @@ widoczne w wieikschedule natychmiast, bo zapis przechodzi przez backend.
   (`ODYSSEUS_INPROCESS_POLLERS=0`), działa przy otwarciu kalendarza i ręcznie.
 - Istniejące dodatkowe grupy bez `subjectName` dają czytelny błąd feedu;
   wystarczy ponownie wybrać przedmiot w aplikacji.
+- **E1 potwierdzone przez użytkownika** na stagingu (konto `admin`, EiAs3, „Zestaw 1”).
+- **E2 zaimplementowane i wdrożone na stagingu (21.10.2026):**
+  - wieikschedule: migracja `20261022_calendar_writes.sql` (provider
+    `odysseus-calendar`), `api/calendar-sync/changes` (modify/remove/restore,
+    kontrola wersji wystąpienia, scalanie z wcześniejszym patch, idempotencja po
+    `request_id`, tryb `propose` dla E3) i `api/calendar-sync/confirm`;
+  - Odysseus: przesunięcie, długość i sala zapisują się od razu jako prywatna zmiana;
+    usunięcie = prywatne odwołanie albo usunięcie dopisku; „Przywróć termin”
+    w formularzu i lista odwołanych w ustawieniach; tytuł/opis/powtarzanie
+    zablokowane; odświeżanie co 3 min przy otwartym kalendarzu i co 5 min w tle.
+  - Próba na żywo: zmiana sali z Odysseusa → override w Supabase, źródło bez
+    zmian → przywrócenie → 0 overrides.
+- **Następny: E3** — agent Odysseusa proponuje zmianę, użytkownik zatwierdza w Odysseusie.
+
+Wycofanie E2 na stagingu: obraz `wieikschedule-staging-app:before-calendar-writes`,
+kopie `*before-calendar-writes-*`.
 
 Wycofanie stagingu: obraz `wieikschedule-staging-app:before-calendar-sync`,
 kopie `.staging/backups/*before-calendar-*`, poprzedni
