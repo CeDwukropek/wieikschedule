@@ -66,7 +66,7 @@ export default function MyPlanPanel({ items, proposals, today, onClose, onApply,
           detail={proposal.operation === 'delete' ? 'przywrócenie planu uczelni' : describeChange(proposal.before || proposal.original, proposal.after)}
           note={proposal.reason ? `Agent: ${proposal.reason}` : 'Propozycja agenta, ważna kilka minut'}>
           <button type="button" className="plan-panel-primary" disabled={Boolean(busy)} onClick={() => run(proposal.id, () => onConfirmProposal(proposal))}>{busy === proposal.id ? 'Zapisywanie…' : 'Zatwierdź'}</button>
-          <button type="button" disabled={Boolean(busy)} onClick={() => onDismissProposal(proposal.id)}>Odrzuć</button>
+          <button type="button" disabled={Boolean(busy)} onClick={() => run(proposal.id, () => onDismissProposal(proposal))}>Odrzuć</button>
         </Row>)}</ul>
       </section>}
       {SECTIONS.map(([kind, label]) => {

@@ -73,6 +73,16 @@ async function confirm(ctx,args) {
   const {data,error}=await ctx.db.rpc('confirm_schedule_change',{p_user_id:ctx.userId,p_proposal_id:args.proposal_id,p_provider:args.provider,p_session_id:args.session_id});
   databaseError(error);return data;
 }
+// Expires an open agent preview so it is offered nowhere anymore; consumed ones are left as they are.
+async function reject(ctx,args,sessionPrefix='') {
+  keys(args,['proposal_id']);uuid(args.proposal_id);
+  const {data,error}=await ctx.db.from('schedule_change_proposals').update({expires_at:new Date().toISOString()})
+    .eq('id',args.proposal_id).eq('user_id',ctx.userId).in('provider',['n8n','odysseus','odysseus-calendar'])
+    .like('session_id',sessionPrefix+'%').is('consumed_at',null).select('id');
+  databaseError(error);
+  if(!data.length) fail(404,'NOT_FOUND','Nie znaleziono otwartej propozycji.');
+  return {rejected:true};
+}
 // Restores the override state captured in a proposal: re-create it, or remove the one created since.
 function undoOf(eventId,previous) {
   return previous?{event_id:eventId,operation:'upsert',action:previous.action,patch:previous.patch||{},reason:previous.reason??null}
@@ -132,4 +142,4 @@ async function getEvents(ctx,args,find=false) {
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time)||a.id.localeCompare(b.id));
   return {events:events.slice(offset,offset+limit),next_offset:events.length>offset+limit?offset+limit:null};
 }
-module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,apply,undoOf,getEvents,validateChange};
+module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,apply,reject,undoOf,getEvents,validateChange};

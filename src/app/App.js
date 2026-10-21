@@ -35,7 +35,6 @@ export default function App() {
   const [planOpen,setPlanOpen]=useState(false);
   const [shownItem,setShownItem]=useState(null);
   const [toast,setToast]=useState(null);
-  const [dismissed,setDismissed]=useState(()=>new Set());
   useEffect(()=>{setPlanOpen(false);setShownItem(null);setToast(null);},[user?.uid,schedule.currentSchedule]);
   const dismissToast=useCallback(()=>setToast(null),[]);
   const personal=usePersonalPlan(user,personalEnabled);
@@ -55,7 +54,7 @@ export default function App() {
   });
 
   const addedEvents=useMemo(()=>effectiveAddedEvents(myPlan.allAddedEvents,personal.rows),[myPlan.allAddedEvents,personal.rows]);
-  const proposals=personal.proposals.filter(proposal=>!dismissed.has(proposal.id));
+  const proposals=personal.proposals;
 
   // Own edits are saved at once; the toast offers to restore the previous state.
   const applyChange=async change=>{
@@ -255,7 +254,7 @@ export default function App() {
       ))}
       {planOpen&&planActions&&<MyPlanPanel items={personal.items} proposals={proposals} today={today} onClose={()=>setPlanOpen(false)}
         onApply={applyChange} onRemoveAdded={removeAddedEvent} onConfirmProposal={confirmProposal}
-        onDismissProposal={id=>setDismissed(previous=>new Set([...previous,id]))}
+        onDismissProposal={personal.rejectProposal}
         onShow={item=>{setPlanOpen(false);setShownItem(item);}}/>}
       {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={schedule.subjects} date={parseDate((shownItem.current||shownItem.original).date)}
         onClose={()=>setShownItem(null)} planActions={planActions}/>}

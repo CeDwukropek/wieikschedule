@@ -146,6 +146,14 @@ async function confirmCalendarProposal(ctx,link,body){
   if(!data||!data.session_id.startsWith(`cal:${link.id}:`))fail(404,'NOT_FOUND','Nie znaleziono podglądu zmiany.');
   return {status:'applied',result:await schedule.confirm(ctx,{proposal_id:body.proposal_id,provider:PROVIDER,session_id:data.session_id})};
 }
+// Previews the Odysseus agent prepared through this link, for confirmation in Odysseus.
+async function listCalendarProposals(ctx,link){
+  const {openProposals}=require('./personalPlan');
+  return {proposals:await openProposals(ctx,[PROVIDER],`cal:${link.id}:`)};
+}
+async function rejectCalendarProposal(ctx,link,body){
+  return schedule.reject(ctx,body,`cal:${link.id}:`);
+}
 function bearer(req){
   const header=String(req.headers.authorization||'').trim();
   return header.toLowerCase().startsWith('bearer ')?header.slice(7).trim():'';
@@ -167,4 +175,4 @@ function linkEndpoint(method,handle,client=getSupabaseAdminClient){
       message:error.statusCode?error.message:'Synchronizacja kalendarza jest chwilowo niedostępna.'});}
   };
 }
-module.exports={PROVIDER,validateCalendarChange,calendarChange,confirmCalendarProposal,LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,buildFeed,occurrence,linkEndpoint};
+module.exports={PROVIDER,validateCalendarChange,calendarChange,confirmCalendarProposal,listCalendarProposals,rejectCalendarProposal,LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,buildFeed,occurrence,linkEndpoint};

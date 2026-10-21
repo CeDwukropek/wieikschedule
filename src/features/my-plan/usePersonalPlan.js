@@ -30,8 +30,13 @@ export function usePersonalPlan(user,enabled) {
     await personalRequest('confirm',{proposal_id:proposal.id,provider:proposal.provider,session_id:proposal.session_id});
     refresh();
   },[refresh]);
+  // Declining expires the preview server-side, so a linked Odysseus no longer offers it either.
+  const rejectProposal=useCallback(async proposal=>{
+    await personalRequest('reject',{proposal_id:proposal.id});
+    refresh();
+  },[refresh]);
   const current=uid&&state.uid===uid?state.data:null;
   return {rows:current?.overrides||EMPTY,items:current?.items||EMPTY,proposals:current?.proposals||EMPTY,
     ready:!uid||(state.uid===uid&&Boolean(state.data)),error:uid&&state.uid===uid?state.error:'',
-    refresh,apply,confirmProposal};
+    refresh,apply,confirmProposal,rejectProposal};
 }

@@ -13,7 +13,7 @@ const items=[
 ];
 const proposal={id:'p',event_id:'m',subject:'MUD',operation:'upsert',original:row,before:row,after:{...row,room:'D4'},reason:'sala zmieniona'};
 const props=extra=>({items,proposals:[proposal],today:'2026-10-21',onClose:jest.fn(),onApply:jest.fn().mockResolvedValue(),
-  onRemoveAdded:jest.fn().mockResolvedValue(),onConfirmProposal:jest.fn().mockResolvedValue(),onDismissProposal:jest.fn(),onShow:jest.fn(),...extra});
+  onRemoveAdded:jest.fn().mockResolvedValue(),onConfirmProposal:jest.fn().mockResolvedValue(),onDismissProposal:jest.fn().mockResolvedValue(),onShow:jest.fn(),...extra});
 test('entries are grouped with plain before/after and past ones are folded away',()=>{
   render(<MyPlanPanel {...props()}/>);
   const dialog=screen.getByRole('dialog',{name:'Mój plan'});
@@ -41,7 +41,7 @@ test('actions restore, remove makeup classes, show in calendar and handle agent 
   await waitFor(()=>expect(p.onConfirmProposal).toHaveBeenCalledWith(proposal));
   await waitFor(()=>expect(screen.getByRole('button',{name:'Odrzuć'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'Odrzuć'}));
-  expect(p.onDismissProposal).toHaveBeenCalledWith('p');
+  await waitFor(()=>expect(p.onDismissProposal).toHaveBeenCalledWith(proposal));
 });
 test('a failed action is reported in the panel',async()=>{
   render(<MyPlanPanel {...props({onApply:jest.fn().mockRejectedValue(new Error('Plan zmienił się.'))})}/>);

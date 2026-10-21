@@ -182,3 +182,17 @@ test('deleting a regular class in the calendar becomes a private cancellation',a
   const propose=f.db.calls.find(call=>call[0]==='rpc');
   assert.deepEqual([propose[2].p_operation,propose[2].p_action,propose[2].p_patch],['upsert','cancel',{}]);
 });
+test('a link lists and declines only the previews it created',async()=>{
+  const queries=[];
+  const db=chainDb({schedule_change_proposals:query=>{queries.push(query);
+    return query.ops.some(op=>op[0]==='update')?{data:[{id:'p'}],error:null}:{data:[],error:null};}});
+  await sync.listCalendarProposals({db,userId:'u'},link);
+  assert.deepEqual(queries[0].ops.find(op=>op[0]==='like'),['like','session_id',`cal:${link.id}:%`]);
+  assert.deepEqual(queries[0].ops.find(op=>op[0]==='in'),['in','provider',['odysseus-calendar']]);
+  assert.deepEqual(await sync.rejectCalendarProposal({db,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{rejected:true});
+  const update=queries[1].ops;
+  assert.ok(update.some(op=>op[0]==='like'&&op[2]===`cal:${link.id}:%`));
+  assert.ok(update.some(op=>op[0]==='is'&&op[1]==='consumed_at'));
+  const none=chainDb({schedule_change_proposals:()=>({data:[],error:null})});
+  await assert.rejects(sync.rejectCalendarProposal({db:none,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{code:'NOT_FOUND'});
+});

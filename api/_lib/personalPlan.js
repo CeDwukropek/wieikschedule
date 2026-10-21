@@ -5,6 +5,22 @@ const SHOWN=['date','start_time','duration_min','room','instructor'];
 const AGENT_PROVIDERS=['n8n','odysseus','odysseus-calendar'];
 const pick=row=>row?Object.fromEntries(SHOWN.map(key=>[key,row[key]??null])):null;
 function base(row){return {event_id:row.id,faculty:row.faculty,subject:row.subject,type:row.type??null,group:row.group??null};}
+function proposalView(row){
+  const before=row.expected_override?.action==='cancel'?null:{...row.expected_event,...(row.expected_override?.patch||{})};
+  const after=row.operation==='delete'?row.expected_event:row.action==='cancel'?null:{...row.expected_event,...row.patch};
+  return {...base(row.expected_event),kind:'proposal',id:row.id,source:row.expected_event,operation:row.operation,action:row.action,reason:row.reason??null,
+    provider:row.provider,session_id:row.session_id,expires_at:row.expires_at,original:pick(row.expected_event),
+    before:pick(before),after:pick(after)};
+}
+const PROPOSAL_FIELDS='id,event_id,operation,action,patch,reason,provider,session_id,expires_at,expected_event,expected_override';
+// Open previews of one provider, optionally only those of one session prefix (a calendar link).
+async function openProposals(ctx,providers,sessionPrefix='',now=new Date()){
+  const {data,error}=await ctx.db.from('schedule_change_proposals').select(PROPOSAL_FIELDS)
+    .eq('user_id',ctx.userId).in('provider',providers).like('session_id',sessionPrefix+'%').is('consumed_at',null)
+    .gt('expires_at',now.toISOString()).order('created_at').limit(50);
+  schedule.databaseError(error);
+  return data.map(proposalView);
+}
 // One read model for every personal entry: private changes, cancellations, makeup classes, agent previews.
 async function personalPlan(ctx,now=new Date()){
   const overrides=await schedule.listOverrides(ctx);
@@ -27,20 +43,9 @@ async function personalPlan(ctx,now=new Date()){
     items.push({...base(row.events),kind:'added',added_event_id:row.id,schedule_name:row.schedule_name,reason:row.reason,
       original:pick(row.events),current:change?change.current:pick(row.events),override:change?.override||null});
   }
-  const {data,error}=await ctx.db.from('schedule_change_proposals')
-    .select('id,event_id,operation,action,patch,reason,provider,session_id,expires_at,expected_event,expected_override')
-    .eq('user_id',ctx.userId).in('provider',AGENT_PROVIDERS).is('consumed_at',null).gt('expires_at',now.toISOString())
-    .order('created_at').limit(50);
-  schedule.databaseError(error);
-  const proposals=data.map(row=>{
-    const before=row.expected_override?.action==='cancel'?null:{...row.expected_event,...(row.expected_override?.patch||{})};
-    const after=row.operation==='delete'?row.expected_event:row.action==='cancel'?null:{...row.expected_event,...row.patch};
-    return {...base(row.expected_event),kind:'proposal',id:row.id,source:row.expected_event,operation:row.operation,action:row.action,reason:row.reason??null,
-      provider:row.provider,session_id:row.session_id,expires_at:row.expires_at,original:pick(row.expected_event),
-      before:pick(before),after:pick(after)};
-  });
+  const proposals=await openProposals(ctx,AGENT_PROVIDERS,'',now);
   const order=(a,b)=>(a.current||a.original).date.localeCompare((b.current||b.original).date);
   // Raw overrides feed the effective plan (week, makeup classes, ICS) from this same response.
   return {items:items.sort(order),proposals,overrides};
 }
-module.exports={personalPlan};
+module.exports={personalPlan,openProposals};

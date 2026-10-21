@@ -7,10 +7,10 @@ const { pipeline } = require("node:stream");
 const root = path.resolve(__dirname, "../../build");
 const handlers = Object.fromEntries(["add-event", "added-events", "remove-event", "changes"].map((name) =>
   [`/api/my-plan/${name}`, require(`../../api/my-plan/${name}.js`)]));
-for (const name of ['overrides','propose','confirm','apply','context','tools','ai-settings','models','pending','chat']) {
+for (const name of ['overrides','propose','confirm','apply','reject','context','tools','ai-settings','models','pending','chat']) {
   handlers[`/api/schedule/${name}`] = require(`../../api/schedule/${name}.js`);
 }
-for (const name of ['links','pair','feed','unlink','changes','confirm']) {
+for (const name of ['links','pair','feed','unlink','changes','confirm','proposals','reject']) {
   handlers[`/api/calendar-sync/${name}`] = require(`../../api/calendar-sync/${name}.js`);
 }
 const types = { ".html": "text/html; charset=utf-8", ".js": "application/javascript",
