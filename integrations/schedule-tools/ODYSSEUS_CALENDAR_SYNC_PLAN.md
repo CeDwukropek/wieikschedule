@@ -226,7 +226,19 @@ widoczne w wieikschedule natychmiast, bo zapis przechodzi przez backend.
     zablokowane; odświeżanie co 3 min przy otwartym kalendarzu i co 5 min w tle.
   - Próba na żywo: zmiana sali z Odysseusa → override w Supabase, źródło bez
     zmian → przywrócenie → 0 overrides.
-- **Następny: E3** — agent Odysseusa proponuje zmianę, użytkownik zatwierdza w Odysseusie.
+- **E3 zaimplementowane i wdrożone na stagingu (21.10.2026):** `manage_calendar`
+  na „Planie zajęć” tworzy wyłącznie podgląd (`mode: propose`) i mówi modelowi, że
+  zmiana nie jest zapisana; zatwierdzenie i odrzucenie tylko przez trasy UI kalendarza
+  (`/api/calendar/wieik/proposals/{id}/confirm|reject`, sesja zalogowanego użytkownika,
+  tokeny API odrzucone). Lista „Do zatwierdzenia” w ustawieniach kalendarza i
+  powiadomienie o nowej propozycji. wieikschedule: `api/calendar-sync/proposals|reject`,
+  `api/schedule/reject`; propozycje widać też w panelu „Mój plan”, a odrzucenie tam
+  wygasza je również w Odysseusie.
+  Próba na żywo: propozycja agenta → bez zmian w planie → odrzucenie → ponowna
+  propozycja → zatwierdzenie → przywrócenie; 0 overrides i 0 otwartych podglądów.
+- **Pozostaje:** E4 (zastąpienie starego kalendarza `timetable` w głównym Odysseusie,
+  wymaga zgody, bo dotyczy działającej instancji) i E5 (wydanie produkcyjne razem
+  z etapem 7 ROADMAP).
 
 Wycofanie E2 na stagingu: obraz `wieikschedule-staging-app:before-calendar-writes`,
 kopie `*before-calendar-writes-*`.
