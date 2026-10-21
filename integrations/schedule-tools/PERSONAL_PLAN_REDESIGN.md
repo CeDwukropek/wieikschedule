@@ -53,3 +53,14 @@ i odpowiedzi agenta pokazują ten sam plan; testy A/B, CAS i konfliktów przecho
 - Odwołane: wyblakły, przekreślony kafelek z „Przywróć”.
 - Przeniesione: znacznik i przerywany obrys w oryginalnym miejscu.
 - Odrabianie: własny znacznik. Przeciąganie kafelków — ewentualnie później.
+
+## Stan (21.10.2026)
+
+- **Krok A gotowy i wdrożony na stagingu** (gałąź `feat/personal-plan-redesign`):
+  `POST /api/schedule/apply`, `GET /api/my-plan/changes`, hook `usePersonalPlan`,
+  `UndoToast`; okno zmiany zapisuje od razu, propozycje agenta przetrwają odświeżenie,
+  usunięcie dopisku można cofnąć. Usunięto `usePersonalOverrides`.
+  Testy: Node 43, React 71. Wycofanie: obraz `wieikschedule-staging-app:before-personal-plan-a`.
+- Uwaga dla kolejnych zmian: build stagingu traktuje ostrzeżenia ESLint jako błędy;
+  przed wdrożeniem uruchamiać lint w obrazie aplikacji.
+- **Następny: krok B** — okno zajęć z akcjami i formularzem „Przenieś”, panel „Mój plan”.
