@@ -73,6 +73,27 @@ async function confirm(ctx,args) {
   const {data,error}=await ctx.db.rpc('confirm_schedule_change',{p_user_id:ctx.userId,p_proposal_id:args.proposal_id,p_provider:args.provider,p_session_id:args.session_id});
   databaseError(error);return data;
 }
+// Restores the override state captured in a proposal: re-create it, or remove the one created since.
+function undoOf(eventId,previous) {
+  return previous?{event_id:eventId,operation:'upsert',action:previous.action,patch:previous.patch||{},reason:previous.reason??null}
+    :{event_id:eventId,operation:'delete'};
+}
+// A person's own edit: preview and confirmation in one request, idempotent per request id.
+async function apply(ctx,args) {
+  keys(args,['event_id','operation','action','patch','reason','request_id']);
+  if(typeof args.request_id!=='string'||!/^[A-Za-z0-9_-]{8,64}$/.test(args.request_id)) fail(422,'INVALID_REQUEST','Nieprawidłowy identyfikator żądania.');
+  const sessionId='manual:'+args.request_id;
+  const {data:done,error}=await ctx.db.from('schedule_change_proposals').select('event_id,result,expected_override')
+    .eq('user_id',ctx.userId).eq('provider','manual').eq('session_id',sessionId).not('consumed_at','is',null).limit(1);
+  databaseError(error);
+  if(done.length) return {result:done[0].result,undo:undoOf(done[0].event_id,done[0].expected_override),replayed:true};
+  const {request_id:_,...change}=args;
+  const proposal=await propose(ctx,change,'manual',sessionId);
+  const {data:stored,error:readError}=await ctx.db.from('schedule_change_proposals').select('expected_override').eq('id',proposal.id).single();
+  databaseError(readError);
+  const result=await confirm(ctx,{proposal_id:proposal.id,provider:'manual',session_id:sessionId});
+  return {result,before:proposal.before,after:proposal.after,undo:undoOf(proposal.event_id,stored.expected_override)};
+}
 async function getEvents(ctx,args,find=false) {
   keys(args,find?['faculty','date_from','date_to','query','limit','offset']:['faculty','date_from','date_to','limit','offset']);
   text(args.faculty,256,true);
@@ -111,4 +132,4 @@ async function getEvents(ctx,args,find=false) {
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time)||a.id.localeCompare(b.id));
   return {events:events.slice(offset,offset+limit),next_offset:events.length>offset+limit?offset+limit:null};
 }
-module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,getEvents,validateChange};
+module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,apply,undoOf,getEvents,validateChange};
