@@ -165,7 +165,8 @@ test('agent previews are not confirmed; other groups and wrong operations are re
   await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove_added',values:undefined},f.deps),{code:'NOT_ADDED'});
   f=changeFixture({rowExtra:{is_added:true}});
   await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'cancel',values:undefined},f.deps),{code:'ADDED_EVENT'});
-  const removed=await sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove_added',values:undefined},f.deps);
+  await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove',values:undefined,mode:'propose'},f.deps),{code:'INVALID_MODE'});
+  const removed=await sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove',values:undefined},f.deps);
   assert.equal(removed.result.operation,'remove_added');
   const update=f.db.calls.find(call=>call.table==='user_added_events');
   assert.deepEqual(update.ops.filter(op=>op[0]==='eq'),[['eq','user_id','u'],['eq','event_id',EVENT],['eq','schedule_name','EiAs3'],['eq','status','active']]);
@@ -174,4 +175,10 @@ test('a link can only confirm previews it created itself',async()=>{
   const db=chainDb({schedule_change_proposals:()=>({data:{session_id:'cal:other-link:req-1'},error:null}),rpc:()=>({data:{},error:null})});
   await assert.rejects(sync.confirmCalendarProposal({db,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{code:'NOT_FOUND'});
   assert.equal(db.calls.filter(call=>call[0]==='rpc').length,0);
+});
+test('deleting a regular class in the calendar becomes a private cancellation',async()=>{
+  const f=changeFixture();
+  assert.equal((await sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove',values:undefined},f.deps)).status,'applied');
+  const propose=f.db.calls.find(call=>call[0]==='rpc');
+  assert.deepEqual([propose[2].p_operation,propose[2].p_action,propose[2].p_patch],['upsert','cancel',{}]);
 });

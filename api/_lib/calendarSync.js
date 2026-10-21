@@ -77,7 +77,7 @@ const CHANGE_FIELDS=['date','start_time','duration_min','room'];
 function validateCalendarChange(body){
   schedule.keys(body,['event_id','operation','values','expected_version','request_id','mode']);
   schedule.uuid(body.event_id);
-  if(!['modify','cancel','restore','remove_added'].includes(body.operation))fail(422,'INVALID_OPERATION','Nieprawidłowa operacja.');
+  if(!['modify','cancel','restore','remove','remove_added'].includes(body.operation))fail(422,'INVALID_OPERATION','Nieprawidłowa operacja.');
   if(typeof body.expected_version!=='string'||!/^[0-9a-f]{16}$/.test(body.expected_version))fail(422,'INVALID_VERSION','Brak wersji zajęć z kalendarza.');
   if(typeof body.request_id!=='string'||!/^[A-Za-z0-9_-]{8,64}$/.test(body.request_id))fail(422,'INVALID_REQUEST','Nieprawidłowy identyfikator żądania.');
   const mode=body.mode??'apply';
@@ -108,6 +108,9 @@ async function calendarChange(ctx,link,body,{load=loadPlan,selectionOf=linkSelec
   if(occurrence(row).version!==change.expected_version)
     fail(409,'PLAN_CHANGED','Plan zmienił się w międzyczasie. Kalendarz zostanie odświeżony — spróbuj ponownie.');
   if(row.status==='wolne')fail(422,'DAY_OFF','Dni wolnych nie można zmieniać.');
+  // "remove" is what deleting in a calendar means: drop a makeup class, otherwise cancel privately.
+  if(change.operation==='remove')change.operation=row.is_added?'remove_added':'cancel';
+  if(change.operation==='remove_added'&&change.mode!=='apply')fail(422,'INVALID_MODE','Usunięcie dopisku wykonuje się bez podglądu.');
   if(change.operation==='remove_added'){
     if(!row.is_added)fail(422,'NOT_ADDED','To nie są dopisane zajęcia. Użyj odwołania.');
     const {data:removed,error:removeError}=await ctx.db.from('user_added_events').update({status:'removed',removed_at:new Date().toISOString()})
