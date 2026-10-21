@@ -2,6 +2,7 @@
 const { getSupabaseAdminClient } = require('./supabaseAdmin');
 const { resolveUserIdByFirebaseUid } = require('./users');
 const FIELDS = 'id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status';
+const PROVIDERS = ['manual','n8n','odysseus','odysseus-calendar'];
 function fail(statusCode,code,message) { throw Object.assign(new Error(message),{statusCode,code}); }
 function keys(value,allowed) {
   if (!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k)))
@@ -54,7 +55,7 @@ function validateChange(args) {
 async function propose(ctx,args,provider='manual',sessionId='manual') {
   const change=validateChange(args);
   text(sessionId,128,true);
-  if(!['manual','n8n','odysseus'].includes(provider)) fail(422,'INVALID_PROVIDER','Nieprawidłowy agent.');
+  if(!PROVIDERS.includes(provider)) fail(422,'INVALID_PROVIDER','Nieprawidłowy agent.');
   const {data,error}=await ctx.db.rpc('propose_schedule_change',{
     p_user_id:ctx.userId,p_event_id:change.event_id,p_operation:change.operation,p_action:change.action,
     p_patch:change.patch,p_reason:change.reason,p_provider:provider,p_session_id:sessionId});
@@ -68,7 +69,7 @@ async function propose(ctx,args,provider='manual',sessionId='manual') {
 }
 async function confirm(ctx,args) {
   keys(args,['proposal_id','provider','session_id']);uuid(args.proposal_id);text(args.session_id,128,true);
-  if(!['manual','n8n','odysseus'].includes(args.provider)) fail(422,'INVALID_PROVIDER','Nieprawidłowy agent.');
+  if(!PROVIDERS.includes(args.provider)) fail(422,'INVALID_PROVIDER','Nieprawidłowy agent.');
   const {data,error}=await ctx.db.rpc('confirm_schedule_change',{p_user_id:ctx.userId,p_proposal_id:args.proposal_id,p_provider:args.provider,p_session_id:args.session_id});
   databaseError(error);return data;
 }

@@ -129,11 +129,13 @@ def seed(args):
     marker = pg("SELECT name FROM public.staging_marker")
     if marker != 'wieikschedule-local-staging':
         raise ValueError('Refusing to seed an unmarked database')
-    for signature, migration in [('apply_wieik_import(jsonb,jsonb)', '20261014_wieik_import.sql'),
-                                 ('bootstrap_wieik_import(jsonb,jsonb)', '20261015_unlinked_bootstrap.sql'),
-                                 ('confirm_schedule_change(uuid,uuid,text,text)', '20261015_personal_overrides.sql'),
-                                 ('use_calendar_link(text)', '20261021_calendar_links.sql')]:
-        initialized = pg("SELECT to_regprocedure('public." + signature + "') IS NOT NULL") == 't'
+    function = lambda signature: "SELECT to_regprocedure('public." + signature + "') IS NOT NULL"
+    for check, migration in [(function('apply_wieik_import(jsonb,jsonb)'), '20261014_wieik_import.sql'),
+                             (function('bootstrap_wieik_import(jsonb,jsonb)'), '20261015_unlinked_bootstrap.sql'),
+                             (function('confirm_schedule_change(uuid,uuid,text,text)'), '20261015_personal_overrides.sql'),
+                             (function('use_calendar_link(text)'), '20261021_calendar_links.sql'),
+                             ("SELECT to_regclass('public.schedule_proposals_session_idx') IS NOT NULL", '20261022_calendar_writes.sql')]:
+        initialized = pg(check) == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)
     pg("NOTIFY pgrst, 'reload schema'")

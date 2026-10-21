@@ -72,6 +72,77 @@ async function buildFeed(ctx,selection,window,load=loadPlan){
   const events=data.events.filter(row=>row.date>=window.date_from&&row.date<=window.date_to&&belongsToPlan(row,selection)).map(occurrence);
   return {events,version:sha256(JSON.stringify([selection,window,events.map(item=>item.event_id+item.version)])).slice(0,32)};
 }
+const PROVIDER='odysseus-calendar';
+const CHANGE_FIELDS=['date','start_time','duration_min','room'];
+function validateCalendarChange(body){
+  schedule.keys(body,['event_id','operation','values','expected_version','request_id','mode']);
+  schedule.uuid(body.event_id);
+  if(!['modify','cancel','restore','remove_added'].includes(body.operation))fail(422,'INVALID_OPERATION','Nieprawidłowa operacja.');
+  if(typeof body.expected_version!=='string'||!/^[0-9a-f]{16}$/.test(body.expected_version))fail(422,'INVALID_VERSION','Brak wersji zajęć z kalendarza.');
+  if(typeof body.request_id!=='string'||!/^[A-Za-z0-9_-]{8,64}$/.test(body.request_id))fail(422,'INVALID_REQUEST','Nieprawidłowy identyfikator żądania.');
+  const mode=body.mode??'apply';
+  if(!['apply','propose'].includes(mode))fail(422,'INVALID_MODE','Nieprawidłowy tryb zmiany.');
+  if(body.operation==='modify'){
+    schedule.keys(body.values,CHANGE_FIELDS);
+    if(!Object.keys(body.values).length)fail(422,'INVALID_PATCH','Wybierz przynajmniej jedno pole do zmiany.');
+  }else if(body.values!==undefined)fail(422,'INVALID_PATCH','Ta operacja nie przyjmuje zmian pól.');
+  if(body.operation==='remove_added'&&mode!=='apply')fail(422,'INVALID_MODE','Usunięcie dopisku wykonuje się bez podglądu.');
+  return {...body,mode};
+}
+async function previousOverride(ctx,eventId){
+  const {data,error}=await ctx.db.from('schedule_overrides').select('action,patch').eq('user_id',ctx.userId).eq('event_id',eventId).maybeSingle();
+  schedule.databaseError(error);return data;
+}
+// A change from the calendar is checked against the occurrence version the calendar last saw.
+async function calendarChange(ctx,link,body,{load=loadPlan,selectionOf=linkSelection}={}){
+  const change=validateCalendarChange(body);
+  const sessionId=`cal:${link.id}:${change.request_id}`;
+  const {data:done,error}=await ctx.db.from('schedule_change_proposals').select('id,result,consumed_at')
+    .eq('user_id',ctx.userId).eq('provider',PROVIDER).eq('session_id',sessionId).not('consumed_at','is',null).limit(1);
+  schedule.databaseError(error);
+  if(done.length)return {status:'applied',replayed:true,result:done[0].result};
+  const {selection}=await selectionOf(link);
+  const data=await load(ctx,selection,{includeCancelled:true});
+  const row=data.events.find(item=>item.id===change.event_id&&belongsToPlan(item,selection));
+  if(!row)fail(404,'NOT_IN_PLAN','Tych zajęć nie ma już w Twoim planie. Odśwież kalendarz.');
+  if(occurrence(row).version!==change.expected_version)
+    fail(409,'PLAN_CHANGED','Plan zmienił się w międzyczasie. Kalendarz zostanie odświeżony — spróbuj ponownie.');
+  if(row.status==='wolne')fail(422,'DAY_OFF','Dni wolnych nie można zmieniać.');
+  if(change.operation==='remove_added'){
+    if(!row.is_added)fail(422,'NOT_ADDED','To nie są dopisane zajęcia. Użyj odwołania.');
+    const {data:removed,error:removeError}=await ctx.db.from('user_added_events').update({status:'removed',removed_at:new Date().toISOString()})
+      .eq('user_id',ctx.userId).eq('event_id',row.id).eq('schedule_name',link.faculty).eq('status','active').select('id');
+    schedule.databaseError(removeError);
+    if(!removed.length)fail(409,'PLAN_CHANGED','Plan zmienił się w międzyczasie. Kalendarz zostanie odświeżony — spróbuj ponownie.');
+    return {status:'applied',result:{event_id:row.id,operation:'remove_added'}};
+  }
+  const previous=await previousOverride(ctx,row.id);
+  let args;
+  if(change.operation==='restore'){
+    if(!previous)fail(422,'NOTHING_TO_RESTORE','Te zajęcia nie mają prywatnej zmiany.');
+    args={event_id:row.id,operation:'delete'};
+  }else if(change.operation==='cancel'){
+    if(row.is_added)fail(422,'ADDED_EVENT','To są dopisane zajęcia. Usuń dopisek zamiast odwoływać.');
+    args={event_id:row.id,operation:'upsert',action:'cancel',patch:{}};
+  }else{
+    // An override replaces the whole patch: keep earlier private changes of other fields.
+    const values={...change.values};
+    if(values.room==='')values.room=null;
+    args={event_id:row.id,operation:'upsert',action:'modify',patch:{...(previous?.action==='modify'?previous.patch:{}),...values}};
+  }
+  const proposal=await schedule.propose(ctx,args,PROVIDER,sessionId);
+  if(change.mode==='propose')return {status:'proposed',proposal};
+  return {status:'applied',result:await schedule.confirm(ctx,{proposal_id:proposal.id,provider:PROVIDER,session_id:sessionId})};
+}
+// Confirms a preview created earlier through this same link (agent suggestions accepted in the calendar).
+async function confirmCalendarProposal(ctx,link,body){
+  schedule.keys(body,['proposal_id']);schedule.uuid(body.proposal_id);
+  const {data,error}=await ctx.db.from('schedule_change_proposals').select('session_id').eq('id',body.proposal_id)
+    .eq('user_id',ctx.userId).eq('provider',PROVIDER).maybeSingle();
+  schedule.databaseError(error);
+  if(!data||!data.session_id.startsWith(`cal:${link.id}:`))fail(404,'NOT_FOUND','Nie znaleziono podglądu zmiany.');
+  return {status:'applied',result:await schedule.confirm(ctx,{proposal_id:body.proposal_id,provider:PROVIDER,session_id:data.session_id})};
+}
 function bearer(req){
   const header=String(req.headers.authorization||'').trim();
   return header.toLowerCase().startsWith('bearer ')?header.slice(7).trim():'';
@@ -93,4 +164,4 @@ function linkEndpoint(method,handle,client=getSupabaseAdminClient){
       message:error.statusCode?error.message:'Synchronizacja kalendarza jest chwilowo niedostępna.'});}
   };
 }
-module.exports={LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,buildFeed,occurrence,linkEndpoint};
+module.exports={PROVIDER,validateCalendarChange,calendarChange,confirmCalendarProposal,LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,buildFeed,occurrence,linkEndpoint};

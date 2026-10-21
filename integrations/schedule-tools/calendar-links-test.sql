@@ -1,5 +1,5 @@
 \set ON_ERROR_STOP on
--- Requires DB/migrations/20261021_calendar_links.sql. Everything is rolled back.
+-- Requires DB/migrations/20261021_calendar_links.sql and 20261022_calendar_writes.sql. Everything is rolled back.
 BEGIN;
 DO $$
 DECLARE a uuid; b uuid; link jsonb; used jsonb; i integer;
@@ -55,5 +55,19 @@ BEGIN
     has_function_privilege('authenticated','public.create_calendar_link_code(uuid,text,text,text,text)','EXECUTE') THEN
    RAISE EXCEPTION 'Calendar link grants leaked'; END IF;
  RAISE NOTICE 'Calendar links: pairing, one-time codes, 180-day expiry, revocation, limits, hashes and grants passed';
+END $$;
+DO $$
+DECLARE u uuid; ev uuid; p jsonb; r jsonb;
+BEGIN
+ INSERT INTO public.users(firebase_uid) VALUES('synthetic-calendar-writes') RETURNING id INTO u;
+ SELECT id INTO ev FROM public.events WHERE source_system IS NOT NULL AND status='aktywne' AND extract(isodow FROM date)<=5 ORDER BY id LIMIT 1;
+ p:=public.propose_schedule_change(u,ev,'upsert','modify','{"start_time":"12:00:00"}',null,'odysseus-calendar','cal:link:req-1');
+ r:=public.confirm_schedule_change(u,(p->>'id')::uuid,'odysseus-calendar','cal:link:req-1');
+ IF r->'override'->'patch'<>'{"start_time":"12:00:00"}' THEN RAISE EXCEPTION 'Calendar provider failed'; END IF;
+ BEGIN
+   PERFORM public.propose_schedule_change(u,ev,'upsert','cancel','{}',null,'unknown','x');
+   RAISE EXCEPTION 'Unknown provider accepted';
+ EXCEPTION WHEN check_violation THEN NULL; END;
+ RAISE NOTICE 'Calendar writes: odysseus-calendar provider propose/confirm and constraint passed';
 END $$;
 ROLLBACK;

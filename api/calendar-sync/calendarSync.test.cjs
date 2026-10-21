@@ -93,3 +93,85 @@ test('a revoked or expired link is reported as invalid, not as an empty plan',as
   await handler({method:'GET',headers:{authorization:'Bearer '+sync.newToken()}},response);
   assert.equal(response.code,401);assert.equal(response.body.error,'LINK_INVALID');assert.equal(response.body.events,undefined);
 });
+// Chainable Supabase double: every builder call is recorded, awaiting resolves the table handler.
+function chainDb(handlers){
+  const calls=[];
+  return {calls,rpc:async(name,args)=>{calls.push(['rpc',name,args]);return handlers.rpc(name,args);},
+    from(table){
+      const query={table,ops:[]};calls.push(query);
+      const chain=new Proxy({},{get(_,key){
+        if(key==='then'){const result=handlers[table](query);return (resolve,reject)=>Promise.resolve(result).then(resolve,reject);}
+        return (...args)=>{query.ops.push([key,...args]);return chain;};
+      }});
+      return chain;
+    }};
+}
+const EVENT='00000000-0000-0000-0000-0000000000aa';
+const link={id:'11111111-1111-1111-1111-111111111111',faculty:'EiAs3'};
+function changeFixture({rowExtra={},previous=null,replay=[]}={}){
+  const plan=[row(EVENT,'2026-10-19','L1',rowExtra),row('00000000-0000-0000-0000-0000000000bb','2026-10-19','L2')];
+  const db=chainDb({
+    schedule_change_proposals:()=>({data:replay,error:null}),
+    schedule_overrides:()=>({data:previous,error:null}),
+    user_added_events:()=>({data:[{id:'x'}],error:null}),
+    rpc:(name,args)=>name==='propose_schedule_change'
+      ?{data:{id:'22222222-2222-2222-2222-222222222222',event_id:args.p_event_id,operation:args.p_operation,action:args.p_action,patch:args.p_patch,
+        provider:args.p_provider,session_id:args.p_session_id,expected_event:plan[0],expected_override:previous},error:null}
+      :{data:{event_id:EVENT,operation:'upsert'},error:null},
+  });
+  const deps={load:async(ctx,scope,options)=>{assert.deepEqual(options,{includeCancelled:true});return {source:plan,events:plan};},
+    selectionOf:async()=>({selection})};
+  const version=sync.occurrence(plan[0]).version;
+  return {db,deps,version,ctx:{db,userId:'u'}};
+}
+const body=(version,extra={})=>({event_id:EVENT,operation:'modify',values:{start_time:'12:00:00'},expected_version:version,request_id:'req-12345678',...extra});
+test('calendar changes are validated before touching data',()=>{
+  const ok=body('0123456789abcdef');
+  assert.equal(sync.validateCalendarChange(ok).mode,'apply');
+  for(const bad of [{operation:'delete'},{expected_version:'x'},{request_id:'a'},{values:{subject:'X'}},{values:{}},{mode:'force'},
+    {operation:'cancel'},{operation:'remove_added',values:undefined,mode:'propose'}])
+    assert.throws(()=>sync.validateCalendarChange({...ok,...bad}),error=>error.statusCode===422);
+  assert.equal(sync.validateCalendarChange({...ok,operation:'cancel',values:undefined}).operation,'cancel');
+});
+test('an own edit is applied at once and keeps earlier private changes of other fields',async()=>{
+  const f=changeFixture({previous:{action:'modify',patch:{room:'A2'}}});
+  const result=await sync.calendarChange(f.ctx,link,body(f.version,{values:{start_time:'12:00:00',room:''}}),f.deps);
+  assert.equal(result.status,'applied');
+  const [propose,confirm]=f.db.calls.filter(call=>call[0]==='rpc');
+  assert.equal(propose[1],'propose_schedule_change');
+  assert.deepEqual(propose[2].p_patch,{room:null,start_time:'12:00:00'});
+  assert.equal(propose[2].p_provider,'odysseus-calendar');
+  assert.equal(propose[2].p_session_id,`cal:${link.id}:req-12345678`);
+  assert.deepEqual([confirm[1],confirm[2].p_provider,confirm[2].p_session_id],['confirm_schedule_change','odysseus-calendar',propose[2].p_session_id]);
+});
+test('a stale calendar version is a conflict and nothing is proposed',async()=>{
+  const f=changeFixture();
+  await assert.rejects(sync.calendarChange(f.ctx,link,body('0000000000000000'),f.deps),{code:'PLAN_CHANGED',statusCode:409});
+  assert.equal(f.db.calls.filter(call=>call[0]==='rpc').length,0);
+});
+test('a retried request returns the applied result instead of changing the plan twice',async()=>{
+  const f=changeFixture({replay:[{id:'p',result:{event_id:EVENT},consumed_at:'now'}]});
+  const result=await sync.calendarChange(f.ctx,link,body(f.version),{...f.deps,load:async()=>{throw new Error('must not load');}});
+  assert.deepEqual(result,{status:'applied',replayed:true,result:{event_id:EVENT}});
+});
+test('agent previews are not confirmed; other groups and wrong operations are refused',async()=>{
+  let f=changeFixture();
+  const preview=await sync.calendarChange(f.ctx,link,body(f.version,{mode:'propose'}),f.deps);
+  assert.equal(preview.status,'proposed');
+  assert.deepEqual(f.db.calls.filter(call=>call[0]==='rpc').map(call=>call[1]),['propose_schedule_change']);
+  f=changeFixture();
+  await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),event_id:'00000000-0000-0000-0000-0000000000bb'},f.deps),{code:'NOT_IN_PLAN'});
+  await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'restore',values:undefined},f.deps),{code:'NOTHING_TO_RESTORE'});
+  await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove_added',values:undefined},f.deps),{code:'NOT_ADDED'});
+  f=changeFixture({rowExtra:{is_added:true}});
+  await assert.rejects(sync.calendarChange(f.ctx,link,{...body(f.version),operation:'cancel',values:undefined},f.deps),{code:'ADDED_EVENT'});
+  const removed=await sync.calendarChange(f.ctx,link,{...body(f.version),operation:'remove_added',values:undefined},f.deps);
+  assert.equal(removed.result.operation,'remove_added');
+  const update=f.db.calls.find(call=>call.table==='user_added_events');
+  assert.deepEqual(update.ops.filter(op=>op[0]==='eq'),[['eq','user_id','u'],['eq','event_id',EVENT],['eq','schedule_name','EiAs3'],['eq','status','active']]);
+});
+test('a link can only confirm previews it created itself',async()=>{
+  const db=chainDb({schedule_change_proposals:()=>({data:{session_id:'cal:other-link:req-1'},error:null}),rpc:()=>({data:{},error:null})});
+  await assert.rejects(sync.confirmCalendarProposal({db,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{code:'NOT_FOUND'});
+  assert.equal(db.calls.filter(call=>call[0]==='rpc').length,0);
+});
