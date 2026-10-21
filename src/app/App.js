@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WeekView from "../features/schedule/components/WeekView";
 import DayView from "../features/schedule/components/DayView";
 import FloatingMenu from "./navigation/FloatingMenu";
@@ -14,7 +14,9 @@ import { mergeEvents } from "../features/schedule/logic/mergeEvents";
 import { useFirebaseAuth } from "../features/auth/useFirebaseAuth";
 import { useGuestId } from "../features/auth/useGuestId";
 import { useMyPlanEvents } from "../features/my-plan/useMyPlanEvents";
-import {usePersonalOverrides} from '../features/my-plan/usePersonalOverrides';
+import {usePersonalPlan} from '../features/my-plan/usePersonalPlan';
+import UndoToast from '../features/my-plan/UndoToast';
+import {addEventToMyPlan} from '../features/my-plan/myPlanApi';
 import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effectiveSchedule';
 import PersonalChangeDialog from '../features/my-plan/PersonalChangeDialog';
 
@@ -28,9 +30,11 @@ export default function App() {
   const schedule = useScheduleManager(savedSettings);
   const personalEnabled=process.env.REACT_APP_PERSONAL_SCHEDULE==='true';
   const [editing,setEditing]=useState(null);
-  const [proposals,setProposals]=useState([]);
-  useEffect(()=>{setEditing(null);setProposals([]);},[user?.uid,schedule.currentSchedule]);
-  const personal=usePersonalOverrides(user,personalEnabled);
+  const [toast,setToast]=useState(null);
+  const [dismissed,setDismissed]=useState(()=>new Set());
+  useEffect(()=>{setEditing(null);setToast(null);},[user?.uid,schedule.currentSchedule]);
+  const dismissToast=useCallback(()=>setToast(null),[]);
+  const personal=usePersonalPlan(user,personalEnabled);
   const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows),[schedule.loadedTimetables,personal.rows]);
   const effectiveTable=tables[schedule.currentSchedule]||schedule.currentTimetable;
   const navigation = useScheduleNavigation({
@@ -53,6 +57,29 @@ export default function App() {
     ...personal.rows.map(row=>row.events).filter(Boolean),
   ].map(row=>[row.id,row])),[schedule.loadedTimetables,myPlan.allAddedEvents,personal.rows]);
   const source=editing&&user&&editing.uid===user.uid?(editing.proposal?.source||sourceById.get(editing.id)):null;
+  const proposals=personal.proposals.filter(proposal=>!dismissed.has(proposal.id));
+
+  // Own edits are saved at once; the toast offers to restore the previous state.
+  const applyChange=async change=>{
+    const undo=await personal.apply(change);
+    setEditing(null);myPlan.refresh();
+    const message=change.operation==='delete'?'Przywrócono plan uczelni.':change.action==='cancel'?'Odwołano zajęcia w Twoim planie.':'Zapisano zmianę w Twoim planie.';
+    setToast({message,undo:async()=>{await personal.apply(undo);myPlan.refresh();}});
+  };
+  const confirmProposal=async proposal=>{
+    await personal.confirmProposal(proposal);
+    setEditing(null);myPlan.refresh();
+    setToast({message:'Zatwierdzono propozycję agenta.'});
+  };
+  const removeAddedEvent=async addedEventId=>{
+    const removed=myPlan.allAddedEvents.find(event=>event.added_event_id===addedEventId);
+    await myPlan.removeEvent(addedEventId);
+    personal.refresh();
+    setToast({message:'Usunięto dopisane zajęcia z planu.',undo:removed?.event_id?async()=>{
+      await addEventToMyPlan({eventId:removed.event_id,scheduleName:schedule.currentSchedule});
+      myPlan.refresh();personal.refresh();
+    }:undefined});
+  };
 
   const eventOptions = useMemo(
     () => ({
@@ -108,7 +135,7 @@ export default function App() {
 
   const calendarProps = {
     subjects: schedule.subjects,
-    onRemoveAddedEvent: myPlan.removeEvent,
+    onRemoveAddedEvent: removeAddedEvent,
     removingAddedEventId: myPlan.removingAddedEventId,
     onEditEvent: user&&personalEnabled&&personal.ready?id=>setEditing({uid:user.uid,id}):undefined,
     ref: exportRef,
@@ -168,7 +195,8 @@ export default function App() {
           onOptimisticAdd: myPlan.optimisticAdd,
           onOptimisticAddConfirmed: myPlan.confirmAdd,
           onOptimisticAddFailed: myPlan.rollbackAdd,
-          onProposal: proposal=>setProposals(previous=>[...previous,{uid:user.uid,proposal}]),
+          // Agent previews are stored server-side; reload so they survive a page refresh.
+          onProposal: personal.refresh,
         }}
       />
       <div className="inline-flex gap-2">
@@ -183,13 +211,13 @@ export default function App() {
         </div>
       </div>
       {user&&personalEnabled&&<section className="mb-4 text-sm">
-        {proposals.filter(item=>item.uid===user.uid).map(({proposal})=><div key={proposal.id} className="my-2 rounded bg-sky-950 p-3">
-          Agent proponuje zmianę: {proposal.source.subject} ({proposal.source.date}). <button className="underline" onClick={()=>setEditing({uid:user.uid,id:proposal.event_id,proposal})}>Sprawdź podgląd</button>
-          <button className="ml-3 text-neutral-400" onClick={()=>setProposals(previous=>previous.filter(item=>item.proposal.id!==proposal.id))}>Odrzuć</button>
+        {proposals.map(proposal=><div key={proposal.id} className="my-2 rounded bg-sky-950 p-3">
+          Agent proponuje zmianę: {proposal.subject} ({proposal.original.date}). <button className="underline" onClick={()=>setEditing({uid:user.uid,id:proposal.event_id,proposal})}>Sprawdź podgląd</button>
+          <button className="ml-3 text-neutral-400" onClick={()=>setDismissed(previous=>new Set([...previous,proposal.id]))}>Odrzuć</button>
         </div>)}
         {!personal.ready&&<p role="status">{personal.error||'Sprawdzanie prywatnych zmian…'} <button onClick={personal.refresh} className="underline">Odśwież</button></p>}
-        {personal.ready&&personal.rows.length>0&&<details><summary className="cursor-pointer text-sky-300">Moje zmiany ({personal.rows.length})</summary>
-          {personal.rows.map(row=><button key={row.id} className="block p-2 underline" onClick={()=>setEditing({uid:user.uid,id:row.event_id})}>{row.events?.subject} — {row.action==='cancel'?'odwołane':'zmienione'} ({row.events?.date})</button>)}
+        {personal.ready&&personal.items.length>0&&<details><summary className="cursor-pointer text-sky-300">Moje zmiany ({personal.items.length})</summary>
+          {personal.items.map(item=><button key={`${item.kind}:${item.event_id}`} className="block p-2 underline" onClick={()=>setEditing({uid:user.uid,id:item.event_id})}>{item.subject} — {item.kind==='cancelled'?'odwołane':item.kind==='added'?'odrabianie':'zmienione'} ({(item.current||item.original).date})</button>)}
         </details>}
       </section>}
       {personal.ready&&(view.viewMode === "week" ? (
@@ -206,7 +234,8 @@ export default function App() {
           selection={navigation.daySelection.selection}
         />
       ))}
-      {source&&personal.ready&&<PersonalChangeDialog key={`${user.uid}:${editing.id}:${editing.proposal?.id||'manual'}`} source={source} initialProposal={editing.proposal} override={personal.rows.find(row=>row.event_id===source.id)} onClose={()=>setEditing(null)} onSaved={()=>{setProposals(previous=>previous.filter(item=>item.proposal.id!==editing.proposal?.id));setEditing(null);personal.refresh();myPlan.refresh();}}/>}
+      {source&&personal.ready&&<PersonalChangeDialog key={`${user.uid}:${editing.id}:${editing.proposal?.id||'manual'}`} source={source} initialProposal={editing.proposal} override={personal.rows.find(row=>row.event_id===source.id)} onClose={()=>setEditing(null)} onApply={applyChange} onConfirmProposal={confirmProposal}/>}
+      <UndoToast toast={toast} onDismiss={dismissToast}/>
       <FAQ />
     </div>
   );

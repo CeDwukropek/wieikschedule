@@ -35,11 +35,12 @@ async function personalPlan(ctx,now=new Date()){
   const proposals=data.map(row=>{
     const before=row.expected_override?.action==='cancel'?null:{...row.expected_event,...(row.expected_override?.patch||{})};
     const after=row.operation==='delete'?row.expected_event:row.action==='cancel'?null:{...row.expected_event,...row.patch};
-    return {...base(row.expected_event),kind:'proposal',id:row.id,operation:row.operation,action:row.action,reason:row.reason??null,
+    return {...base(row.expected_event),kind:'proposal',id:row.id,source:row.expected_event,operation:row.operation,action:row.action,reason:row.reason??null,
       provider:row.provider,session_id:row.session_id,expires_at:row.expires_at,original:pick(row.expected_event),
       before:pick(before),after:pick(after)};
   });
   const order=(a,b)=>(a.current||a.original).date.localeCompare((b.current||b.original).date);
-  return {items:items.sort(order),proposals};
+  // Raw overrides feed the effective plan (week, makeup classes, ICS) from this same response.
+  return {items:items.sort(order),proposals,overrides};
 }
 module.exports={personalPlan};
