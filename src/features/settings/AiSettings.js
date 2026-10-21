@@ -15,7 +15,7 @@ export default function AiSettings(){
     setState(null);setApiKey('');setNotice(null);setBusy(false);setNative(null);setLocalAccess(localToken(user?.uid));
     if(!user)return undefined;
     let active=true;
-    personalRequest('ai-settings').then(data=>{if(active)setState({...data.settings,uid:user.uid});}).catch(err=>{if(active)setNotice({tone:'error',text:err.message});});
+    personalRequest('ai-settings').then(data=>{if(active)setState({...data.settings,uid:user.uid});}).catch(err=>{if(active)setNotice({area:'load',tone:'error',text:err.message});});
     return ()=>{active=false;};
   },[user]);
   useEffect(()=>{
@@ -38,9 +38,9 @@ export default function AiSettings(){
         local_endpoint_id:state.local_endpoint_id||'',local_model:state.local_model||'',local_memory:state.local_memory||false,api_key:apiKey,remove_api_key:remove});
       if(activeUid.current!==user.uid)return;
       setLocalToken(user.uid,localAccess);
-      setState({...data.settings,uid:user.uid});setApiKey('');setNotice({tone:'ok',text:'Zapisano ustawienia AI.'});
+      setState({...data.settings,uid:user.uid});setApiKey('');setNotice({area:remove?'key':'save',tone:'ok',text:remove?'Usunięto zapisany klucz.':'Zapisano ustawienia AI.'});
       setCatalogVersion(value=>value+1);
-    }catch(err){if(activeUid.current===user.uid)setNotice({tone:'error',text:err.message});}finally{if(activeUid.current===user.uid)setBusy(false);}
+    }catch(err){if(activeUid.current===user.uid)setNotice({area:remove?'key':'save',tone:'error',text:err.message});}finally{if(activeUid.current===user.uid)setBusy(false);}
   };
   const connect=async()=>{
     setBusy(true);setNotice(null);setNative(null);
@@ -52,12 +52,13 @@ export default function AiSettings(){
       const endpoint=result.endpoints.find(row=>row.id===state.local_endpoint_id)||result.endpoints.find(row=>row.execution!=='cloud');
       setState(previous=>({...previous,local_endpoint_id:endpoint?.id||'',
         local_model:endpoint?(endpoint.models.includes(previous.local_model)?previous.local_model:endpoint.models[0]||''):''}));
-      setNotice({tone:'ok',text:'Połączenie z Odysseusem działa. Wybierz model i zapisz ustawienia.'});
-    }catch(err){if(activeUid.current===user.uid)setNotice({tone:'error',text:err.message});}finally{if(activeUid.current===user.uid)setBusy(false);}
+      setNotice({area:'connect',tone:'ok',text:'Połączenie działa. Wybierz model w kroku 2 i zapisz ustawienia.'});
+    }catch(err){if(activeUid.current===user.uid)setNotice({area:'connect',tone:'error',text:err.message});}finally{if(activeUid.current===user.uid)setBusy(false);}
   };
   const input='block w-full rounded border border-neutral-700 bg-neutral-800 p-2 text-sm';
   const card=selected=>`flex gap-3 rounded-lg border p-3 text-sm cursor-pointer ${selected?'border-sky-500 bg-sky-950/40':'border-neutral-700 hover:border-neutral-500'}`;
   const step='space-y-2 rounded-lg border border-neutral-800 p-3';
+  const message=area=>notice?.area===area&&<p role="status" className={`text-sm ${notice.tone==='ok'?'text-emerald-300':'text-rose-300'}`}>{notice.text}</p>;
   const selectedEndpoint=native?.endpoints.find(row=>row.id===state?.local_endpoint_id);
   return <section className="space-y-4" aria-labelledby="ai-settings-title">
     <h3 id="ai-settings-title" className="text-sm font-semibold text-gray-200">Asystent AI</h3>
@@ -76,6 +77,7 @@ export default function AiSettings(){
       {state.provider==='n8n'?<div className="space-y-3">
         <label className="block text-sm">Klucz API<input type="password" autoComplete="new-password" className={input} value={apiKey} maxLength={4096} placeholder={state.has_api_key?'Klucz zapisany — wpisz nowy, aby zastąpić':'Wpisz swój klucz API'} onChange={event=>setApiKey(event.target.value)}/></label>
         {state.has_api_key&&<button type="button" className="text-xs text-rose-300" disabled={busy} onClick={()=>save(true)}>Usuń zapisany klucz</button>}
+        {message('key')}
         <label className="block text-sm">Model OpenAI<select className={input} disabled={!state.has_api_key||catalog.loading} value={state.model} onChange={event=>setState({...state,model:event.target.value})}>
           <option value="">{catalog.loading?'Pobieranie modeli…':state.has_api_key?'Wybierz model':'Najpierw zapisz klucz API'}</option>
           {state.model&&!models.some(model=>model.id===state.model)&&<option value={state.model}>{state.model} (zapisany)</option>}
@@ -92,6 +94,7 @@ export default function AiSettings(){
           <p className="text-xs text-neutral-500">Token zostaje tylko w tej karcie przeglądarki; nie zapisujemy go.</p>
           <button type="button" className="rounded bg-neutral-800 px-3 py-1.5 text-sm" disabled={busy||!state.local_endpoint} onClick={connect}>Sprawdź połączenie z Odysseusem</button>
           {native&&<p className="text-xs text-emerald-300">Połączono · dostępnych połączeń z modelem: {native.endpoints.length}</p>}
+          {message('connect')}
         </div>
         <div className={step}>
           <p className="text-xs font-medium text-gray-300">2. Model</p>
@@ -121,7 +124,8 @@ export default function AiSettings(){
         </div>
       </details>
       <button type="button" className="w-full rounded bg-sky-700 px-3 py-2 text-sm font-medium" disabled={busy} onClick={()=>save()}>{busy?'Zapisywanie…':'Zapisz ustawienia AI'}</button>
+      {message('save')}
     </>:!notice&&<p className="text-sm">Ładowanie ustawień AI…</p>}
-    {notice&&<p role="status" className={`text-sm ${notice.tone==='ok'?'text-emerald-300':'text-rose-300'}`}>{notice.text}</p>}
+    {message('load')}
   </section>;
 }

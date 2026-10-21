@@ -97,3 +97,13 @@ test('connection discovery prefers a local model over a cloud model listed first
  expect(screen.getByLabelText('Model Odysseusa')).toHaveValue('local-test');
  expect(screen.queryByRole('note')).not.toBeInTheDocument();
 });
+test('a failed connection check is explained inside the connection step, next to its button',async()=>{
+ personalRequest.mockResolvedValue({settings:{...settings,provider:'odysseus',local_endpoint:'https://native.test'}});
+ nativeCapabilities.mockRejectedValueOnce(new Error('Odysseus wymaga logowania. Wpisz token dostępu albo zaloguj się do Odysseusa w tej przeglądarce.'));
+ render(<AiSettings/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Sprawdź połączenie z Odysseusem'}));
+ const message=await screen.findByText(/Odysseus wymaga logowania/);
+ const step=screen.getByRole('button',{name:'Sprawdź połączenie z Odysseusem'}).parentElement;
+ expect(step).toContainElement(message);
+ expect(screen.getByRole('button',{name:'Zapisz ustawienia AI'}).nextElementSibling).toBeNull();
+});
