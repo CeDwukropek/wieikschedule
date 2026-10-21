@@ -134,7 +134,8 @@ def seed(args):
                              (function('bootstrap_wieik_import(jsonb,jsonb)'), '20261015_unlinked_bootstrap.sql'),
                              (function('confirm_schedule_change(uuid,uuid,text,text)'), '20261015_personal_overrides.sql'),
                              (function('use_calendar_link(text)'), '20261021_calendar_links.sql'),
-                             ("SELECT to_regclass('public.schedule_proposals_session_idx') IS NOT NULL", '20261022_calendar_writes.sql')]:
+                             ("SELECT to_regclass('public.schedule_proposals_session_idx') IS NOT NULL", '20261022_calendar_writes.sql'),
+                             ("SELECT to_regclass('public.timetable_versions') IS NOT NULL", '20261023_plan_versions_and_hygiene.sql')]:
         initialized = pg(check) == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)

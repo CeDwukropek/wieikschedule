@@ -4,7 +4,7 @@ const {getSupabaseAdminClient}=require('./supabaseAdmin');
 const {getFirebaseAdminAuth}=require('./firebaseAdmin');
 const schedule=require('./schedule');
 const {validateSelection}=require('./scheduleSelection');
-const {loadPlan,clock}=require('./scheduleQueries');
+const {loadPlan,clock,pages}=require('./scheduleQueries');
 const {belongsToPlan,eventKind}=require('./scheduleSearch');
 const {fail}=schedule;
 // Unambiguous alphabet: the pairing code is typed by hand into Odysseus.
@@ -71,6 +71,18 @@ async function buildFeed(ctx,selection,window,load=loadPlan){
   if(!data.source.some(row=>row.faculty===selection.faculty))fail(503,'DATA_UNAVAILABLE','Brak danych wybranego planu. Lustro pozostaje bez zmian.');
   const events=data.events.filter(row=>row.date>=window.date_from&&row.date<=window.date_to&&belongsToPlan(row,selection)).map(occurrence);
   return {events,version:sha256(JSON.stringify([selection,window,events.map(item=>item.event_id+item.version)])).slice(0,32)};
+}
+// Stands in for the feed contents: plan versions plus the owner's private rows. A mirror that is
+// up to date gets 304 without the whole plan being read from the database. Bump on format changes.
+const FEED_FORMAT=1;
+async function feedFingerprint(ctx,selection,window){
+  const faculties=[...new Set([selection.faculty,'all',...(selection.external||[]).map(item=>item.faculty)])].sort();
+  const [versions,overrides,additions]=await Promise.all([
+    pages(ctx.db.from('timetable_versions').select('faculty,version').in('faculty',faculties).order('faculty')),
+    pages(ctx.db.from('schedule_overrides').select('event_id,action,revision').eq('user_id',ctx.userId).order('event_id')),
+    pages(ctx.db.from('user_added_events').select('event_id').eq('user_id',ctx.userId)
+      .eq('schedule_name',selection.faculty).eq('status','active').order('event_id'))]);
+  return sha256(JSON.stringify([FEED_FORMAT,selection,window,versions,overrides,additions])).slice(0,32);
 }
 const PROVIDER='odysseus-calendar';
 const CHANGE_FIELDS=['date','start_time','duration_min','room'];
@@ -175,4 +187,4 @@ function linkEndpoint(method,handle,client=getSupabaseAdminClient){
       message:error.statusCode?error.message:'Synchronizacja kalendarza jest chwilowo niedostępna.'});}
   };
 }
-module.exports={PROVIDER,validateCalendarChange,calendarChange,confirmCalendarProposal,listCalendarProposals,rejectCalendarProposal,LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,buildFeed,occurrence,linkEndpoint};
+module.exports={PROVIDER,validateCalendarChange,calendarChange,confirmCalendarProposal,listCalendarProposals,rejectCalendarProposal,LINK_DAYS,newCode,codeHash,newToken,tokenHash,linkError,readUserSettings,linkSelection,feedRange,feedFingerprint,buildFeed,occurrence,linkEndpoint};

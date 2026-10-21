@@ -14,8 +14,8 @@ function readEntry(key) {
   }
 }
 
-function saveEntry(key, data) {
-  const entry = { savedAt: Date.now(), data };
+function saveEntry(key, data, version = null) {
+  const entry = { savedAt: Date.now(), data, version };
   try {
     localStorage.setItem(key, JSON.stringify(entry));
   } catch {
@@ -75,8 +75,18 @@ export function isCachedTimetableStale(id) {
   return !scheduleId || isStale(getTimetableEntry(scheduleId));
 }
 
-export function storeTimetable(id, timetable) {
-  timetables.set(id, saveEntry(`${TIMETABLE_PREFIX}${id}`, timetable));
+export function getCachedTimetableVersion(id) {
+  return getTimetableEntry(String(id || "").trim())?.version ?? null;
+}
+
+// An unchanged plan stays cached; only this tab's freshness clock moves.
+export function touchTimetable(id) {
+  const entry = getTimetableEntry(id);
+  if (entry) entry.savedAt = Date.now();
+}
+
+export function storeTimetable(id, timetable, version = null) {
+  timetables.set(id, saveEntry(`${TIMETABLE_PREFIX}${id}`, timetable, version));
   const options = getCachedTimetableOptions();
   if (!options.some(option => option.id === id)) {
     storeTimetableOptions([...options, { id, name: id }]

@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
-test("device B cannot overwrite cloud sets before server hydration and saves hydrated groups", async () => {
+test("device B cannot overwrite cloud sets before server hydration and does not write them back unchanged", async () => {
   const { result } = renderHook(useSyncedGroups);
   tick();
   expect(setDoc).not.toHaveBeenCalled();
@@ -52,10 +52,30 @@ test("device B cannot overwrite cloud sets before server hydration and saves hyd
   expect(result.current.activeGroupSetName).toBe("Saved on A");
   tick();
   await act(async () => {});
-  expect(setDoc).toHaveBeenCalledWith("userSettings/account-a", {
-    settings: cloudSettings, updatedAt: "server-time",
-  });
+  expect(setDoc).not.toHaveBeenCalled();
+  act(() => result.current.handleGroupChange("Ć", "Ć7"));
+  tick();
+  await act(async () => {});
   expect(setDoc).toHaveBeenCalledTimes(1);
+  expect(setDoc.mock.calls[0][1].settings.scheduleGroupSets.main.sets[0].groups).toEqual({ "Ć": "Ć7" });
+});
+
+test("the viewed week stays on this device and is never written to the cloud", async () => {
+  function useWeek({ weekOffset }) {
+    const loaded = useSettings();
+    usePersistSettings({ ...cloudSettings, weekOffset }, !loaded.isLoading);
+    return loaded;
+  }
+  const { result, rerender } = renderHook(useWeek, { initialProps: { weekOffset: 0 } });
+  deliver(snapshot({ ...cloudSettings, weekOffset: 7 }));
+  expect(result.current.savedSettings.weekOffset).toBeUndefined();
+  for (const weekOffset of [1, 2, 3]) {
+    rerender({ weekOffset });
+    tick();
+    await act(async () => {});
+  }
+  expect(setDoc).not.toHaveBeenCalled();
+  expect(JSON.parse(localStorage.getItem("wieikschedule.account-a.settings")).weekOffset).toBe(3);
 });
 
 test("auth restoration blocks guest persistence", () => {

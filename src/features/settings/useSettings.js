@@ -24,6 +24,19 @@ function serializeSettings(value) {
   });
 }
 
+// The viewed week belongs to this device; syncing it would write to Firestore on every week change.
+const LOCAL_ONLY = ["weekOffset"];
+const cloudPart = (value) => Object.fromEntries(Object.entries(value || {}).filter(([key]) => !LOCAL_ONLY.includes(key)));
+const localPart = (value) => Object.fromEntries(Object.entries(value || {}).filter(([key]) => LOCAL_ONLY.includes(key)));
+// What Firestore holds for the account, so unchanged settings are not written again.
+const cloudKey = (uid) => `wieikschedule.${uid}.cloudSignature`;
+function readCloudSignature(uid) {
+  try { return localStorage.getItem(cloudKey(uid)); } catch { return null; }
+}
+function storeCloudSignature(uid, signature) {
+  try { localStorage.setItem(cloudKey(uid), signature); } catch { /* the next save simply writes again */ }
+}
+
 export function useSettings() {
   const guestId = useGuestId();
   const { user, isLoading: authLoading, isConfigured } = useFirebaseAuth();
@@ -47,9 +60,10 @@ export function useSettings() {
     return onSnapshot(doc(db, "userSettings", uid), { includeMetadataChanges: true }, snapshot => {
       if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
       const remote = snapshot.exists() ? snapshot.data()?.settings : null;
-      const settings = remote || local;
+      if (remote) storeCloudSignature(uid, serializeSettings(cloudPart(remote)));
+      const settings = remote ? { ...cloudPart(remote), ...localPart(readSettings(settingsKey)) } : local;
       // Our own writes are already reflected in the UI; do not replay them.
-      if (hydrated && serializeSettings(remote) === serializeSettings(readSettings(settingsKey))) return;
+      if (hydrated && serializeSettings(cloudPart(remote)) === serializeSettings(cloudPart(readSettings(settingsKey)))) return;
       hydrated = true;
       if (settings) {
         try {
@@ -92,10 +106,17 @@ export function usePersistSettings(settings, enabled = true) {
           lastSavedSignatureRef.current = signature;
           return;
         }
+        const cloud = cloudPart(settings);
+        const cloudSignature = serializeSettings(cloud);
+        if (readCloudSignature(uid) === cloudSignature) {
+          lastSavedSignatureRef.current = signature;
+          return;
+        }
         // Replace the settings map so deleting sets also removes them remotely.
         setDoc(doc(db, "userSettings", uid), {
-          settings, updatedAt: serverTimestamp(),
+          settings: cloud, updatedAt: serverTimestamp(),
         }).then(() => {
+          storeCloudSignature(uid, cloudSignature);
           lastSavedSignatureRef.current = signature;
         }).catch(error => {
           console.error("Failed to save cloud settings:", error);

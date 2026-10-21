@@ -196,3 +196,23 @@ test('a link lists and declines only the previews it created',async()=>{
   const none=chainDb({schedule_change_proposals:()=>({data:[],error:null})});
   await assert.rejects(sync.rejectCalendarProposal({db:none,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{code:'NOT_FOUND'});
 });
+test('feed fingerprint changes only with plan versions, private rows, selection or range',async()=>{
+  const state={versions:[{faculty:'EiAs3',version:4},{faculty:'all',version:1}],overrides:[{event_id:EVENT,action:'modify',revision:1}],added:[]};
+  const db=chainDb({timetable_versions:()=>({data:state.versions,error:null}),
+    schedule_overrides:()=>({data:state.overrides,error:null}),user_added_events:()=>({data:state.added,error:null})});
+  const ctx={db,userId:'u'},print=(scope=selection,range=window)=>sync.feedFingerprint(ctx,scope,range);
+  const first=await print();
+  assert.match(first,/^[0-9a-f]{32}$/);
+  assert.equal(await print(),first);
+  assert.deepEqual(db.calls.find(call=>call.table==='timetable_versions').ops.find(([name])=>name==='in'),['in','faculty',['EiAs3','all']]);
+  assert.ok(db.calls.filter(call=>call.table!=='timetable_versions').every(call=>call.ops.some(op=>op[0]==='eq'&&op[1]==='user_id'&&op[2]==='u')));
+  const changes=[
+    ()=>{state.versions=[{faculty:'EiAs3',version:5},{faculty:'all',version:1}];},
+    ()=>{state.overrides=[{event_id:EVENT,action:'modify',revision:2}];},
+    ()=>{state.added=[{event_id:EVENT}];},
+  ];
+  let previous=first;
+  for(const change of changes){change();const next=await print();assert.notEqual(next,previous);previous=next;}
+  assert.notEqual(await print({...selection,groups:{L:'L2'}}),previous);
+  assert.notEqual(await print(selection,{...window,date_to:'2026-11-01'}),previous);
+});

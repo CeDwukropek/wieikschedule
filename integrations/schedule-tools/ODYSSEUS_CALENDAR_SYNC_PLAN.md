@@ -223,7 +223,7 @@ widoczne w wieikschedule natychmiast, bo zapis przechodzi przez backend.
   - Odysseus: przesunięcie, długość i sala zapisują się od razu jako prywatna zmiana;
     usunięcie = prywatne odwołanie albo usunięcie dopisku; „Przywróć termin”
     w formularzu i lista odwołanych w ustawieniach; tytuł/opis/powtarzanie
-    zablokowane; odświeżanie co 3 min przy otwartym kalendarzu i co 5 min w tle.
+    zablokowane; odświeżanie co 3 min przy otwartym kalendarzu i co 15 min w tle.
   - Próba na żywo: zmiana sali z Odysseusa → override w Supabase, źródło bez
     zmian → przywrócenie → 0 overrides.
 - **E3 zaimplementowane i wdrożone na stagingu (21.10.2026):** `manage_calendar`
@@ -239,6 +239,17 @@ widoczne w wieikschedule natychmiast, bo zapis przechodzi przez backend.
 - **Pozostaje:** E4 (zastąpienie starego kalendarza `timetable` w głównym Odysseusie,
   wymaga zgody, bo dotyczy działającej instancji) i E5 (wydanie produkcyjne razem
   z etapem 7 ROADMAP).
+
+- **Oszczędny transfer przed wydaniem (21.10.2026, gałąź `perf/plan-versions`):** migracja
+  `20261023_plan_versions_and_hygiene.sql` — tabela `timetable_versions` z triggerem na `events`
+  (wersja rośnie tylko przy faktycznej zmianie wiersza), indeksy planu i dopisków, jeden aktywny
+  dopisek na zajęcia, `ON DELETE CASCADE` dla danych konta, czyszczenie wygasłych podglądów (30 dni)
+  i kodów (1 dzień). Przeglądarka pobiera semestr stronami po 1000 wierszy i tylko po zmianie wersji,
+  listę planów z `timetable_versions`, nie odświeża ukrytej karty i nie zapisuje do Firestore
+  niezmienionych ustawień ani oglądanego tygodnia. Feed dla Odysseusa liczy ETag z wersji i prywatnych
+  wierszy przed wczytaniem planu; Odysseus pobiera w tle co 15 min. Test SQL:
+  [plan-versions-test.sql](plan-versions-test.sql). Kopia przed migracją:
+  `.staging/backups/before-plan-versions-*.sql`.
 
 Wycofanie E2 na stagingu: obraz `wieikschedule-staging-app:before-calendar-writes`,
 kopie `*before-calendar-writes-*`.

@@ -56,13 +56,17 @@ export function useTimetableData(savedSettings) {
 
   const scheduleLoadRequestIdRef = useRef(0);
 
+  // A tab in the background does not refresh; it catches up as soon as it is shown again.
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setScheduleRefreshTick((value) => value + 1);
-    }, SCHEDULE_REFRESH_CHECK_INTERVAL_MS);
+    const tick = () => {
+      if (document.visibilityState !== "hidden") setScheduleRefreshTick((value) => value + 1);
+    };
+    const intervalId = window.setInterval(tick, SCHEDULE_REFRESH_CHECK_INTERVAL_MS);
+    document.addEventListener("visibilitychange", tick);
 
     return () => {
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", tick);
     };
   }, []);
 

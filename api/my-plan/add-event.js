@@ -131,6 +131,24 @@ module.exports = async function handler(req, res) {
       .select("id,event_id,status,reason,created_at")
       .single();
 
+    // Two parallel requests: the unique index lets one in, the other gets the saved row.
+    if (insertError?.code === "23505") {
+      const { data: raced, error: racedError } = await supabase
+        .from("user_added_events")
+        .select("id,event_id,status,reason,created_at")
+        .eq("user_id", userId)
+        .eq("event_id", eventId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (racedError || !raced?.id) throw racedError || insertError;
+      return respond(res, 200, {
+        ok: true,
+        already_added: true,
+        added_event: raced,
+        message: "Ten termin jest juz dodany do Twojego planu.",
+      });
+    }
+
     if (insertError || !addedRow?.id) {
       throw insertError || new Error("Insert failed");
     }

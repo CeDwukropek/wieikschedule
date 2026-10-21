@@ -141,4 +141,4 @@ async function queryPlan(ctx,selection,name,args,now=new Date(),load=loadPlan){
     message:slots.length?`Znaleziono ${choices.length} istniejących terminów innych grup. Wybierz termin z kart poniżej. Brak kolizji nie oznacza zgody prowadzącego.`:
       'Nie znaleziono terminów innych grup do odrobienia w tym zakresie dostępnych danych.'};
 }
-module.exports={SEMANTIC_TOOLS,queryPlan,loadPlan,clock};
+module.exports={SEMANTIC_TOOLS,queryPlan,loadPlan,clock,pages};

@@ -30,3 +30,26 @@ test("authenticated add includes the schedule_name required by the schema", asyn
   assert.equal(inserted.schedule_name, "TEST");
   assert.equal(inserted.user_id, "synthetic-user-uuid");
 });
+
+test("a parallel add of the same class returns the row saved by the other request", async () => {
+  let lookups = 0;
+  const saved = { id: "synthetic-raced", event_id: "synthetic-event", status: "active" };
+  const query = (table) => ({
+    select() { return this; }, eq() { return this; }, insert() { return this; },
+    async maybeSingle() {
+      if (table === "events") return { data: { id: "synthetic-event", faculty: "TEST", status: "aktywne" } };
+      lookups += 1;
+      return { data: lookups === 1 ? null : saved };
+    },
+    async single() { return { data: null, error: { code: "23505" } }; },
+  });
+  require.cache[require.resolve("../_lib/supabaseAdmin")].exports = { getSupabaseAdminClient: () => ({ from: query }) };
+  delete require.cache[require.resolve("./add-event.js")];
+  const handler = require("./add-event.js");
+  const response = { statusCode: 200, setHeader() {}, status(value) { this.statusCode = value; return this; },
+    json(value) { this.body = value; } };
+  await handler({ method: "POST", body: { event_id: "synthetic-event", scheduleName: "TEST" } }, response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.already_added, true);
+  assert.equal(response.body.added_event.id, "synthetic-raced");
+});
