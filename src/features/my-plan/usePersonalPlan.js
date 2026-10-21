@@ -1,7 +1,7 @@
 import {useState,useEffect,useCallback,useRef} from 'react';
 import {authorizedRequest,personalRequest} from './personalScheduleApi';
 const EMPTY=[];
-const requestId=()=>(globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g,'');
+const requestId=()=>(window.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g,'');
 // "Mój plan": private changes, cancellations, makeup classes and agent previews from one request.
 export function usePersonalPlan(user,enabled) {
   const uid=enabled?user?.uid||'':'';
