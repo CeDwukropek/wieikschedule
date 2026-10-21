@@ -20,7 +20,7 @@ import {addEventToMyPlan} from '../features/my-plan/myPlanApi';
 import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effectiveSchedule';
 import MyPlanPanel from '../features/my-plan/MyPlanPanel';
 import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
-import {dialogEventFromItem,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
+import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
 import {getWeekStart} from '../utils/date';
 
 export default function App() {
@@ -99,23 +99,31 @@ export default function App() {
       view.showAll,
     ],
   );
+  // Cancelled classes and moved-from slots are shown faded; they are not part of the plan itself.
+  const showGhosts=Boolean(user&&personalEnabled&&personal.ready);
+  const ghostFaculties=useMemo(()=>[schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)],
+    [schedule.currentSchedule,schedule.activeExternalSelections]);
   const weekEvents = useMemo(
-    () =>
-      mergeEvents({
+    () => [
+      ...mergeEvents({
         ...eventOptions,
         weekStart: navigation.viewedWeekStart,
         addedEvents,
       }),
-    [eventOptions, navigation.viewedWeekStart, addedEvents],
+      ...(showGhosts?ghostEvents(personal.items,{faculties:ghostFaculties,weekStart:navigation.viewedWeekStart,hideLectures:view.hideLectures}):[]),
+    ],
+    [eventOptions, navigation.viewedWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
   );
   const dayEvents = useMemo(
-    () =>
-      mergeEvents({
+    () => [
+      ...mergeEvents({
         ...eventOptions,
         weekStart: navigation.selectedDayWeekStart,
         addedEvents,
       }),
-    [eventOptions, navigation.selectedDayWeekStart, addedEvents],
+      ...(showGhosts?ghostEvents(personal.items,{faculties:ghostFaculties,weekStart:navigation.selectedDayWeekStart,hideLectures:view.hideLectures}):[]),
+    ],
+    [eventOptions, navigation.selectedDayWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
   );
 
   usePersistSettings(

@@ -40,7 +40,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
       <section className="event-details-content">
         <header className="event-details-header">
           <div>
-            <p className="event-details-eyebrow">Szczegóły zajęć</p>
+            <p className="event-details-eyebrow">{ev.ghost ? 'Oryginalny termin uczelni' : 'Szczegóły zajęć'}</p>
             <h2 id={titleId}>{subject.name}</h2>
           </div>
           <button type="button" className="event-details-close" aria-label="Zamknij szczegóły zajęć" disabled={busy} onClick={onClose}><X size={20}/></button>
@@ -48,7 +48,9 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
         <div className="event-details-badges">
           {ev.type && <span>{ev.type}</span>}
           {ev.origin === 'added' && <span className="event-details-personal">Odrobienie</span>}
-          {ev.personal_override && <span className="event-details-personal">Zmienione u mnie</span>}
+          {ev.ghost === 'cancelled' && <span className="event-details-ghost">Odwołane u mnie</span>}
+          {ev.ghost === 'moved-from' && <span className="event-details-ghost">Przeniesione</span>}
+          {ev.personal_override && !ev.ghost && <span className="event-details-personal">Zmienione u mnie</span>}
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
         </div>
         <dl className="event-details-list">

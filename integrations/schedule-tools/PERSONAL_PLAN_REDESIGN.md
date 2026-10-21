@@ -70,4 +70,9 @@ i odpowiedzi agenta pokazują ten sam plan; testy A/B, CAS i konfliktów przecho
   panel boczny „Mój plan” z propozycjami agenta. Usunięto `PersonalChangeDialog`.
   Nowe edycje łączą się z wcześniejszym `patch`. Testy React: 80.
   Wycofanie: obraz `wieikschedule-staging-app:before-personal-plan-b`.
-- **Następny: krok C** — odwołane jako wyblakłe kafelki, obrys oryginalnego miejsca przeniesionych.
+- **Krok C gotowy:** odwołane zajęcia jako wyblakłe, przekreślone kafelki, a oryginalne
+  miejsce przeniesionych z przerywanym obrysem i „→ czw 22.10 12:00”; w oknie takiego
+  kafelka jedyną akcją jest „Przywróć”. Kafelki są tylko do wyświetlania: nie trafiają do
+  planu efektywnego, ICS, kolizji ani eksportu PNG. Odrabiania mają znacznik „odr.”.
+  Testy React: 82. Wycofanie: obraz `wieikschedule-staging-app:before-personal-plan-c`.
+- Przebudowa „Mojego planu” zakończona; dalej E3 integracji z Odysseusem.

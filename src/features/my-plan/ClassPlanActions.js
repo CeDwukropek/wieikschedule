@@ -32,6 +32,14 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
   const moveError = validateMove(form, planActions.bounds);
   const changes = moveChanges(current, form);
 
+  if (ev.ghost) return <div className="event-details-actions">
+    <p>{ev.ghost === 'cancelled' ? 'Te zajęcia są odwołane tylko w Twoim planie.' : `Zajęcia przeniesiono na ${describeSlot(ev.movedTo)}.`}</p>
+    <button type="button" className="event-details-edit" disabled={busy} onClick={() => run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }))}>
+      <RotateCcw size={16}/>{ev.ghost === 'cancelled' ? 'Przywróć zajęcia' : 'Przywróć ten termin'}
+    </button>
+    {error && <p role="alert" className="event-details-error">{error}</p>}
+  </div>;
+
   return <div className="event-details-actions">
     {original && <p className="plan-original">Oryginalnie: {describeSlot(original)}</p>}
     {mode === 'view' && <>

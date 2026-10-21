@@ -151,6 +151,21 @@
   border-radius: 50%;
   background: #7dd3fc;
 }
+/* Personal markers: makeup classes, cancelled classes and moved-from slots */
+.week-event-card[data-added]::before {
+  content: 'odr.'; position: absolute; right: 3px; bottom: 2px; font-size: 9px; line-height: 1; color: #7dd3fc;
+}
+.week-event-card[data-ghost] {
+  opacity: .55;
+  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 5px, transparent 5px 10px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.week-event-card[data-ghost]:hover, .week-event-card[data-ghost]:focus-visible { opacity: .9; }
+.week-event-card[data-ghost="cancelled"] .week-event-title { text-decoration: line-through; }
+.week-event-card[data-ghost="moved-from"] { box-shadow: none; outline: 1px dashed #a3a3a3; outline-offset: -1px; }
+.week-event-card[data-ghost="moved-from"] .week-event-room { color: #fcd34d; display: block; }
+.day-event-ghost { opacity: .55; outline: 1px dashed #a3a3a3; outline-offset: -1px; }
+.event-details-badges .event-details-ghost { background: #404040; color: #fde68a; }
 .week-event-color { width: 3px; flex: 0 0 3px; }
 .week-event-content {
   min-width: 0;

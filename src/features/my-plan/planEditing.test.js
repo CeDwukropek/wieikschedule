@@ -1,4 +1,4 @@
-import {describeChange,describeSlot,dialogEventFromItem,mergePatch,moveChanges,startTimeOptions,validateMove} from './planEditing';
+import {describeChange,describeSlot,dialogEventFromItem,ghostEvents,mergePatch,moveChanges,startTimeOptions,validateMove} from './planEditing';
 const row={date:'2026-10-19',start_time:'07:30:00',duration_min:90,room:'A2',instructor:'T'};
 test('a new edit keeps earlier private changes of other fields',()=>{
   expect(mergePatch({action:'modify',patch:{room:'B1'}},{start_time:'12:00:00'})).toEqual({room:'B1',start_time:'12:00:00'});
@@ -33,4 +33,16 @@ test('a plan entry opens as a calendar event with its current time',()=>{
   const ev=dialogEventFromItem({kind:'modified',event_id:'e',subject:'MUD',type:'Lab',group:'L1',original:row,
     current:{...row,start_time:'12:00:00'},override:{action:'modify'}});
   expect([ev.event_id,ev.start,ev.end,ev.origin,ev.personal_override]).toEqual(['e','12:00','13:30','base',true]);
+});
+test('cancelled classes and moved-from slots become display-only tiles in their own week',()=>{
+  const items=[
+    {kind:'cancelled',event_id:'c',faculty:'EiAs3',subject:'AOE',type:'Ćw',group:'C1',original:row,current:null},
+    {kind:'modified',event_id:'m',faculty:'EiAs3',subject:'MUD',type:'Lab',group:'L1',original:row,current:{...row,date:'2026-10-22',start_time:'12:00:00'}},
+    {kind:'modified',event_id:'r',faculty:'EiAs3',subject:'Room only',original:row,current:{...row,room:'C3'}},
+    {kind:'cancelled',event_id:'x',faculty:'Other',subject:'Elsewhere',original:row,current:null},
+  ];
+  const tiles=ghostEvents(items,{faculties:['EiAs3'],weekStart:new Date(2026,9,19)});
+  expect(tiles.map(tile=>[tile.ghost,tile.event_id,tile.start,tile.day])).toEqual([['cancelled','c','07:30',0],['moved-from','m','07:30',0]]);
+  expect(tiles[1].movedTo.start_time).toBe('12:00:00');
+  expect(ghostEvents(items,{faculties:['EiAs3'],weekStart:new Date(2026,9,26)})).toEqual([]);
 });

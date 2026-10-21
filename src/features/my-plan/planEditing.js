@@ -1,5 +1,6 @@
 import { addMinutes, normalizeTime, timeToMinutes } from '../../utils/time';
 import { mapAddedEvent } from './eventMappers';
+import { filterEvents } from '../schedule/logic/filterEvents';
 
 const DAY_NAMES = ['nd', 'pon', 'wt', 'śr', 'czw', 'pt', 'sob'];
 const LAST_END = 22 * 60;
@@ -83,4 +84,21 @@ export function dialogEventFromItem(item) {
     subject: item.subject, type: item.type, group: item.group });
   if (!event) return null;
   return { ...event, origin: item.kind === 'added' ? 'added' : 'base', personal_override: Boolean(item.override) };
+}
+
+// Display-only tiles: privately cancelled classes and the slot a class was moved from.
+// They never enter the effective plan, so export, collisions and agents ignore them.
+export function ghostEvents(items, { faculties, weekStart, hideLectures = false }) {
+  return items.flatMap(item => {
+    if (!faculties.includes(item.faculty)) return [];
+    const moved = item.kind === 'modified' && item.current &&
+      (item.current.date !== item.original.date || item.current.start_time !== item.original.start_time);
+    const ghost = item.kind === 'cancelled' ? 'cancelled' : moved ? 'moved-from' : null;
+    if (!ghost) return [];
+    const event = mapAddedEvent({ ...item.original, event_id: item.event_id, subject: item.subject, type: item.type, group: item.group });
+    if (!event) return [];
+    const tile = { ...event, id: `ghost-${ghost}-${item.event_id}`, origin: 'ghost', ghost, added_event_id: undefined,
+      movedTo: item.current, personal_override: true };
+    return filterEvents([tile], {}, hideLectures, true, weekStart).length ? [tile] : [];
+  });
 }

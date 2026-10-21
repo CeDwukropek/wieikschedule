@@ -1,6 +1,13 @@
 import { MapPin, Users, Clock, UserRound, Tag } from "lucide-react";
 import { useState } from "react";
 import { splitTeacherDisplay } from "../logic/teacherDisplay";
+import { shortDate } from "../../my-plan/planEditing";
+
+// "→ czw 23.10 12:00" for the slot a class was moved from.
+function movedToLabel(ev) {
+  return ev?.movedTo ? `→ ${shortDate(ev.movedTo.date)} ${String(ev.movedTo.start_time).slice(0, 5)}` : "";
+}
+const GHOST_LABELS = { cancelled: "Odwołane u mnie", "moved-from": "Przeniesione" };
 
 const EVENT_TINT_BY_BG_CLASS = {
   "bg-indigo-900": "rgba(49, 46, 129, 0.1)",
@@ -70,17 +77,18 @@ export default function EventCard({
       className={`week-event-card ${ev.__optimistic === 'adding' ? 'event-card-optimistic' : ''}`}
       style={{ backgroundColor: eventTint }}
       onClick={() => onOpenDetails?.(ev)}
-      aria-label={`${subj.name}, ${ev.type || 'zajęcia'}, ${ev.start}–${ev.end}${ev.groups?.length ? ', ' + ev.groups.join(', ') : ''}. Pokaż szczegóły`}
+      aria-label={`${ev.ghost ? GHOST_LABELS[ev.ghost] + ': ' : ''}${subj.name}, ${ev.type || 'zajęcia'}, ${ev.start}–${ev.end}${ev.ghost === 'moved-from' ? ' ' + movedToLabel(ev) : ''}${ev.groups?.length ? ', ' + ev.groups.join(', ') : ''}. Pokaż szczegóły`}
       aria-haspopup="dialog"
       data-added={isAdded || undefined}
-      data-modified={ev.personal_override || undefined}
+      data-modified={(!ev.ghost && ev.personal_override) || undefined}
+      data-ghost={ev.ghost || undefined}
     >
       <span className={`week-event-color ${colorBg}`} aria-hidden="true" />
       <span className="week-event-content">
         <span className="week-event-time">
           <span>{ev.start}<span className="week-event-end">–{ev.end}</span></span>
           <span className="week-event-kind">{shortType(ev.type)}</span>
-          <span className="week-event-room">{ev.room}</span>
+          <span className="week-event-room">{ev.ghost === 'moved-from' ? movedToLabel(ev) : ev.room}</span>
         </span>
         <span className="week-event-title">{subj.name}</span>
       </span>
@@ -109,15 +117,22 @@ export default function EventCard({
     <div
       className={`w-full h-full flex overflow-hidden shadow-sm ${
         isExternal ? "border border-amber-400/70" : ""
-      } ${ev?.__optimistic === "adding" ? "event-card-optimistic" : ""}`}
+      } ${ev?.__optimistic === "adding" ? "event-card-optimistic" : ""} ${ev?.ghost ? "day-event-ghost" : ""}`}
+      data-ghost={ev?.ghost || undefined}
       style={{ backgroundColor: eventTint }}
     >
       <div className={`${colorBg} w-1 shrink-0`} />
 
       <div className="flex-1 p-2 flex flex-col">
-        <div className={`${colorText} text-[0.7rem] font-semibold`}>
+        <div className={`${colorText} text-[0.7rem] font-semibold ${ev?.ghost === "cancelled" ? "line-through" : ""}`}>
           {subj.name}
         </div>
+
+        {ev?.ghost ? (
+          <div className="mt-1 inline-flex w-fit items-center rounded bg-neutral-700/60 px-1.5 py-0.5 text-[10px] font-medium text-neutral-200">
+            {GHOST_LABELS[ev.ghost]}{ev.ghost === "moved-from" ? ` ${movedToLabel(ev)}` : ""}
+          </div>
+        ) : null}
 
         {isExternal ? (
           <div className="mt-1 inline-flex w-fit items-center rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-200">

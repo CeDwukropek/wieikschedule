@@ -42,6 +42,8 @@ export function ExportPngButton({
           pixelRatio: 2, // wyraźniejszy eksport
           backgroundColor: "#000", // wymuszamy czarne, pełne tło (bez przezroczystości)
           cacheBust: true,
+          // Faded cancelled/moved-from tiles are hints on screen, not part of the exported plan.
+          filter: node => !node.dataset?.ghost,
         });
         const a = document.createElement("a");
         a.href = dataUrl;

@@ -103,3 +103,17 @@ test('overlapping events remain independently selectable and cancel closes detai
   fireEvent(dialog, new Event('cancel', {cancelable: true}));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+test('a cancelled class stays visible faded and can be restored from its details', async () => {
+  const actions = planActions();
+  const ghost = {...event, id: 'ghost-cancelled-occurrence-a', origin: 'ghost', ghost: 'cancelled', personal_override: true};
+  const moved = {...event, id: 'ghost-moved', event_id: 'occurrence-b', origin: 'ghost', ghost: 'moved-from', personal_override: true,
+    movedTo: {date: '2026-10-22', start_time: '12:00:00', duration_min: 90, room: 'A-101'}};
+  render(<WeekView events={[ghost, moved]} viewedWeekStart={monday} planActions={actions}/>);
+  expect(screen.getByRole('button', {name: /^Odwołane u mnie: Modelowanie/})).toHaveAttribute('data-ghost', 'cancelled');
+  expect(screen.getByRole('button', {name: /^Przeniesione: .*→ czw 22\.10 12:00/})).toHaveAttribute('data-ghost', 'moved-from');
+  fireEvent.click(screen.getByRole('button', {name: /^Odwołane u mnie/}));
+  expect(screen.queryByRole('button', {name: 'Przenieś'})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Przywróć zajęcia'}));
+  await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id: 'occurrence-a', operation: 'delete'}));
+});
