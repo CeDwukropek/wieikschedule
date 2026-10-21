@@ -193,6 +193,33 @@ widoczne w wieikschedule natychmiast, bo zapis przechodzi przez backend.
 - Ustawienia — łączenie, stan i rozłączenie.
 - Harmonogram zadań — okresowe pobieranie dla kont z aktywnym połączeniem.
 
+## Stan realizacji (21.10.2026)
+
+- **E0 gotowe.** Główny Odysseus (`odysseus-odysseus-1`) działa na obrazie zbudowanym
+  z niezatwierdzonego checkoutu `dev`; błąd `_create_lendar_reminder` jest aktywny.
+  Stagingowy `odysseus-local` montuje worktree wskazany w `ODYSSEUS_INTEGRATION_ROOT`.
+- **E1 zaimplementowane i wdrożone na stagingu**, bez głównego Odysseusa i produkcji:
+  - wieikschedule `feat/odysseus-calendar-sync`: migracja `20261021_calendar_links.sql`,
+    `api/calendar-sync/{links,pair,feed,unlink}`, Opcje → „Kalendarz w Odysseusie”
+    za flagą `REACT_APP_CALENDAR_SYNC`, zapis `subjectName` w dodatkowych grupach;
+  - Odysseus `feat/wieik-calendar-sync` (z `fix/google-calendar-sync`): kalendarz
+    `Plan zajęć` tylko do odczytu, ustawienia kalendarza → „Plan zajęć wieikschedule”,
+    pobieranie przy otwarciu, ręcznie i co 15 min (gdy pollery są włączone),
+    `tidy_calendar` z filtrem właściciela.
+  - Testy: Node 33, React 68, SQL `calendar-links-test.sql`, Python 11 nowych
+    i 342 powiązanych z kalendarzem/planem; syntetyczna próba
+    pair → błąd zestawu → rozłączenie z unieważnieniem tokenu na stagingu.
+- **Do zrobienia w E1:** próba z zalogowanym użytkownikiem (prawdziwy zestaw grup
+  z Firestore). Na stagingu pobieranie okresowe jest wyłączone
+  (`ODYSSEUS_INPROCESS_POLLERS=0`), działa przy otwarciu kalendarza i ręcznie.
+- Istniejące dodatkowe grupy bez `subjectName` dają czytelny błąd feedu;
+  wystarczy ponownie wybrać przedmiot w aplikacji.
+
+Wycofanie stagingu: obraz `wieikschedule-staging-app:before-calendar-sync`,
+kopie `.staging/backups/*before-calendar-*`, poprzedni
+`ODYSSEUS_INTEGRATION_ROOT=/home/cedwukropek/odysseus-schedule-providers`.
+Nowe tabele można zostawić; nie zmieniają istniejących danych.
+
 ## Etapy i warunki ukończenia
 
 ### E0. Decyzje i punkt wyjścia
