@@ -10,7 +10,7 @@ const handlers = Object.fromEntries(["add-event", "added-events", "remove-event"
 for (const name of ['overrides','propose','confirm','context','tools','ai-settings','models','pending','chat']) {
   handlers[`/api/schedule/${name}`] = require(`../../api/schedule/${name}.js`);
 }
-for (const name of ['links','pair','feed']) {
+for (const name of ['links','pair','feed','unlink']) {
   handlers[`/api/calendar-sync/${name}`] = require(`../../api/calendar-sync/${name}.js`);
 }
 const types = { ".html": "text/html; charset=utf-8", ".js": "application/javascript",
