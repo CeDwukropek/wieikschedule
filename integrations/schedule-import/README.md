@@ -219,9 +219,28 @@ czas krótkiej transakcji i porównuje kompletny snapshot bazy przed aktualizacj
 Wiele zmian i kolizje kluczy są transakcyjne; UUID istniejących rekordów nie są
 zmieniane. Przy błędzie CAS pobierz pełny eksport i ponownie przejrzyj plan.
 
-Nie łącz podglądu ze starym node’em Supabase Create. Docelowa konfiguracja
-schedulera/writera w n8n jest kolejnym krokiem po testach mapowania i zatwierdzeniu
-wdrożenia. Sama publikacja tego PR nie zmienia sposobu synchronizacji produkcji.
+Nie łącz podglądu ze starym node’em Supabase Create.
+
+### Nocny import (22.10.2026)
+
+`n8n-nightly.json` (generowany przez `build-nightly.cjs`, kontrola `--check`) codziennie
+o 23:00 czasu warszawskiego pobiera `stac` i `block`, eksportuje `events` oraz UUID,
+do których odwołują się prywatne dane (zmiany, aktywne dopiski, tagi), i liczy plan
+według [nightly.cjs](nightly.cjs). „Run now” uruchamia to samo ręcznie.
+
+- Bez przeglądu: zmiany przy tym samym kluczu (sala, godzina, prowadzący, odwołanie),
+  nowe klucze oraz zniknięte zajęcia bez prywatnych danych (stają się `nieaktywne`).
+- Blokada, bez zapisu: zniknięte zajęcia z prywatnymi danymi, wiersz spoza importera,
+  zniknięcie więcej niż `max(50, 10%)` aktywnych zajęć (niepełne źródło). Zablokowany
+  przebieg kończy się błędem z listą blokad; ostatni poprawny stan zostaje.
+- Niedostępne źródło (np. „Site Maintenance”, HTTP 500) zatrzymuje workflow na pobraniu.
+
+Zapis idzie wyłącznie przez `apply_wieik_import` węzłem Postgres (Supabase session
+pooler, rola `postgres`), bez limitu 8 s API. Funkcja odrzuca plan, jeśli `events`
+zmieniło się od eksportu. Po imporcie workflow jest nieaktywny: wybierz credential
+„wieikschedule Supabase (session pooler)”, wyłącz stary workflow „Firebase Insert”
+i dopiero wtedy aktywuj. Próba na stagingu (n8n 2.43.5): bez zmian → `none`;
+rozjechana sala → `updated: 1` i nowa wersja planu; niedostępne źródło → brak zapisu.
 
 ## Testy i wycofanie
 
