@@ -5,14 +5,9 @@ const path = require("node:path");
 const { pipeline } = require("node:stream");
 
 const root = path.resolve(__dirname, "../../build");
-const handlers = Object.fromEntries(["add-event", "added-events", "remove-event", "changes"].map((name) =>
-  [`/api/my-plan/${name}`, require(`../../api/my-plan/${name}.js`)]));
-for (const name of ['overrides','propose','confirm','apply','reject','context','tools','ai-settings','models','pending','chat']) {
-  handlers[`/api/schedule/${name}`] = require(`../../api/schedule/${name}.js`);
-}
-for (const name of ['links','pair','feed','unlink','changes','confirm','proposals','reject']) {
-  handlers[`/api/calendar-sync/${name}`] = require(`../../api/calendar-sync/${name}.js`);
-}
+// Same per-area routers as the Vercel functions api/<area>/[action].js.
+const routers = Object.fromEntries(["my-plan", "schedule", "calendar-sync"].map((area) =>
+  [area, require(`../../api/${area}/[action].js`)]));
 const types = { ".html": "text/html; charset=utf-8", ".js": "application/javascript",
   ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
   ".ico": "image/x-icon", ".woff2": "font/woff2" };
@@ -66,7 +61,8 @@ const server = http.createServer(async (req, res) => {
         ['/local-odysseus/api/schedule/capabilities','/local-odysseus/api/schedule/chat'].includes(url.pathname)) {
       return proxy(req,res,new URL('http://odysseus-local:7000'+url.pathname.slice('/local-odysseus'.length)));
     }
-    if (handlers[url.pathname]) return await api(req, res, handlers[url.pathname], url);
+    const area = url.pathname.match(/^\/api\/(my-plan|schedule|calendar-sync)\/[^/]+$/);
+    if (area) return await api(req, res, routers[area[1]], url);
     if (url.pathname.startsWith("/api/")) return json(res, 404, { ok: false, error: "NOT_FOUND" });
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
     const filename = path.resolve(root, "." + decodeURIComponent(url.pathname));
