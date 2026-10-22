@@ -5,14 +5,18 @@ on:
       - 'ops/staging/**'
       - 'src/lib/**'
       - 'src/features/chat/n8nClient.js'
-      - 'api/my-plan/add-event*'
+      - 'api/_routes/my-plan/add-event*'
+      - 'api/my-plan/**'
+      - 'api/_lib/router.js'
       - '.github/workflows/local-staging.yml'
   push:
     paths:
       - 'ops/staging/**'
       - 'src/lib/**'
       - 'src/features/chat/n8nClient.js'
-      - 'api/my-plan/add-event*'
+      - 'api/_routes/my-plan/add-event*'
+      - 'api/my-plan/**'
+      - 'api/_lib/router.js'
       - '.github/workflows/local-staging.yml'
 permissions:
   contents: read
@@ -29,5 +33,5 @@ jobs:
       - run: npm test -- --watch=false --runInBand
         env:
           CI: 'true'
-      - run: node --test api/my-plan/add-event.test.cjs
+      - run: node --test api/_routes/my-plan/add-event.test.cjs api/_routes/router.test.cjs
       - run: python3 -m unittest discover -s ops/staging -p 'test_*.py'
