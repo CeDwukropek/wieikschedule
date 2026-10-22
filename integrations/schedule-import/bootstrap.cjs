@@ -26,4 +26,15 @@ function createUnlinkedBootstrap(snapshot, existingRows, confirmed = false, make
       note: "Unmatched legacy UUIDs remain inactive; no fuzzy identity assignments are made." } };
 }
 
-module.exports = { createUnlinkedBootstrap };
+// Release reload of a database whose events nothing references: every source row gets a new UUID.
+// The plan expects an empty table; ops/release/fresh-load.sql empties it in the same transaction
+// after checking that no private row points at an event.
+function createFreshLoad(snapshot, makeUUID) {
+  const plan = createPlan(snapshot, [], { create: snapshot.rows.map((row) => row.source_key) }, makeUUID);
+  assert(plan.ready && plan.rpc.p_changes.length <= 50000, "Fresh load exceeds supported import size");
+  return { ...plan, rpc_function: "apply_wieik_import",
+    fresh_load: { requires_empty_events_in_same_transaction: true, requires_zero_personal_event_data: true,
+      execution_approved: false } };
+}
+
+module.exports = { createUnlinkedBootstrap, createFreshLoad };

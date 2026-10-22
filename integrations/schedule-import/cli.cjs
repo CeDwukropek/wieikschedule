@@ -6,7 +6,7 @@ const { transformSnapshots } = require("./transform.cjs");
 const { createPlan } = require("./plan.cjs");
 const { createHash } = require("node:crypto");
 const { readEventsCSV, backfillReport } = require("./backfill.cjs");
-const { createUnlinkedBootstrap } = require("./bootstrap.cjs");
+const { createUnlinkedBootstrap, createFreshLoad } = require("./bootstrap.cjs");
 
 // Offline only: no credentials, database connection or write switch.
 function read(path) {
@@ -34,7 +34,9 @@ try {
     const parsed = readEventsCSV(fs.readFileSync(paths[1], "utf8"));
     output = createUnlinkedBootstrap(read(paths[0]), parsed.rows, true);
     output.csv_evidence = { null_convention: parsed.null_convention, inferred_nulls: parsed.inferred_nulls };
-  } else throw new Error("Usage: node cli.cjs transform stac.json block.json | plan normalized.json events.json [decisions.json] | report normalized.json events.csv | bootstrap normalized.json events.csv --confirm-no-personal-event-data");
+  } else if (command === "fresh" && paths.length === 1)
+    output = createFreshLoad(read(paths[0]));
+  else throw new Error("Usage: node cli.cjs transform stac.json block.json | plan normalized.json events.json [decisions.json] | report normalized.json events.csv | bootstrap normalized.json events.csv --confirm-no-personal-event-data | fresh normalized.json");
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`Import preparation failed: ${error.message}\n`);

@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createUnlinkedBootstrap } = require("./bootstrap.cjs");
+const { createUnlinkedBootstrap, createFreshLoad } = require("./bootstrap.cjs");
 const { createPlan } = require("./plan.cjs");
 const ID = "00000000-0000-4000-8000-000000000001";
 const ID2 = "00000000-0000-4000-8000-000000000002";
@@ -44,4 +44,16 @@ test("duplicate legacy payloads are archived instead of arbitrarily assigning an
   assert.equal(plan.bootstrap.preserved_exact_uuids, 0);
   assert.equal(plan.bootstrap.archived_legacy_uuids, 2);
   assert.equal(plan.bootstrap.new_source_uuids, 1);
+});
+
+test("fresh load creates every source row against an empty table and repeats as a no-op", () => {
+  const other = { ...source, source_key: "second-source", group: "L2" };
+  const ids = [ID, ID2];
+  const plan = createFreshLoad(snapshot([source, other]), () => ids.shift());
+  assert.equal(plan.ready, true);
+  assert.equal(plan.rpc_function, "apply_wieik_import");
+  assert.equal(plan.fresh_load.execution_approved, false);
+  assert.deepEqual(plan.rpc.p_expected, []);
+  assert.deepEqual(plan.rpc.p_changes.map((row) => [row.id, row.source_key]), [[ID, source.source_key], [ID2, other.source_key]]);
+  assert.deepEqual(createPlan(snapshot([source, other]), plan.rpc.p_changes).rpc.p_changes, []);
 });
