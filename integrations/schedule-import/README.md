@@ -237,10 +237,14 @@ według [nightly.cjs](nightly.cjs). „Run now” uruchamia to samo ręcznie.
 
 Zapis idzie wyłącznie przez `apply_wieik_import` węzłem Postgres (Supabase session
 pooler, rola `postgres`), bez limitu 8 s API. Funkcja odrzuca plan, jeśli `events`
-zmieniło się od eksportu. Po imporcie workflow jest nieaktywny: wybierz credential
-„wieikschedule Supabase (session pooler)”, wyłącz stary workflow „Firebase Insert”
-i dopiero wtedy aktywuj. Próba na stagingu (n8n 2.43.5): bez zmian → `none`;
-rozjechana sala → `updated: 1` i nowa wersja planu; niedostępne źródło → brak zapisu.
+zmieniło się od eksportu. Każdy nieudany przebieg (blokada, niedostępne źródło, błąd
+bazy) uruchamia workflow „nightly import alert”, który wysyła e-mail przez SMTP.
+Import: [ops/release/n8n-import.sh](../../ops/release/n8n-import.sh) z `ALERT_EMAIL`
+(adres nie jest zapisywany w repozytorium). Po imporcie oba workflow są nieaktywne:
+wybierz credentiale i aktywuj oba — nieaktywny workflow alertu n8n 2.x pomija.
+Próba na stagingu (n8n 2.43.5): bez zmian → `none`; rozjechana sala → `updated: 1`
+i nowa wersja planu; niedostępne źródło → brak zapisu i e-mail z krokiem, błędem
+i linkiem do wykonania.
 
 ## Testy i wycofanie
 

@@ -10,7 +10,8 @@ docker run --rm --env-file <plik z DB_URL> -v "$PWD":/repo:ro -v <katalog planu>
 ```
 
 1. **Kopia:** `pg_dump --schema=public -Fc` przed jakąkolwiek zmianą.
-2. **Stary writer:** wyłączyć workflow „Firebase Insert” w n8n (kasuje i wstawia `events`).
+2. **Stary writer:** workflow „Firebase Insert” nie działa (jednorazowe ręczne uruchomienie
+   ok. 3 miesiące temu). Nie uruchamiać go ponownie: kasuje i wstawia `events`.
 3. `check` — liczba wydarzeń, brak kolumn źródła, 0 dopisków i tagów, rola `service_role`.
 4. `identity` — `20261014_wieik_import`, `20261015_unlinked_bootstrap`.
 5. Plan czystego przeładowania z aktualnego źródła:
@@ -23,8 +24,11 @@ docker run --rm --env-file <plik z DB_URL> -v "$PWD":/repo:ro -v <katalog planu>
    `20261022_calendar_writes`, `20261023_plan_versions_and_hygiene`, `20261024_release_hardening`.
 8. `verify` — liczności, brak wierszy bez źródła, największy plan (limit 1000 wierszy API),
    `anon` czyta tylko `events`/`faculties`/`timetable_versions`, FK do `events` = RESTRICT.
-9. Import nocnego workflow ([n8n-nightly.json](../../integrations/schedule-import/n8n-nightly.json)),
-   credential, aktywacja; potem deploy aplikacji.
+9. Nocny import: `ALERT_EMAIL=<adres> ops/release/n8n-import.sh <kontener n8n>` importuje import
+   i workflow alertu (adres podstawiany w locie, nie trafia do repozytorium). W n8n wybrać
+   credentiale „wieikschedule Supabase (session pooler)” i „wieikschedule alerts (SMTP)”, potem
+   aktywować **oba** workflow — w n8n 2.x nieaktywny workflow alertu nie zostanie wywołany.
+   Na koniec deploy aplikacji.
 
 Próba 22.10.2026 na kopii schematu produkcji z 06.09 z ustawieniami Supabase (domyślne
 uprawnienia, `rls_auto_enable`, CASCADE): wszystkie kroki w 2,5 s, 7027 wierszy z migawki

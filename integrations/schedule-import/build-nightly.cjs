@@ -45,9 +45,12 @@ return [{ json: { action: plan.action, nightly: plan.nightly, result, warnings: 
 `;
 const credentials = { postgres: { id: "", name: "wieikschedule Supabase (session pooler)" } };
 const start = ["Fetch stac", "Fetch block", "Export events"].map((node) => ({ node, type: "main", index: 0 }));
+// Fixed IDs let the import keep the error-workflow link. The recipient is substituted at import time
+// (ops/release/n8n-import.sh) so no address is committed.
+const ALERT_ID = "wieikImportAlert";
 const workflow = {
-  name: "WIEiK schedule — nightly import", active: false,
-  settings: { executionOrder: "v1", timezone: "Europe/Warsaw", saveDataSuccessExecution: "none" },
+  id: "wieikImportNight", name: "WIEiK schedule — nightly import", active: false,
+  settings: { executionOrder: "v1", timezone: "Europe/Warsaw", saveDataSuccessExecution: "none", errorWorkflow: ALERT_ID },
   nodes: [
     { id: "nightly", name: "Every day at 23:00", type: "n8n-nodes-base.scheduleTrigger", typeVersion: 1.2,
       position: [0, -100], parameters: { rule: { interval: [{ field: "cronExpression", expression: "0 23 * * *" }] } } },
@@ -85,7 +88,28 @@ const workflow = {
     "Apply reviewed plan": { main: [[{ node: "Report", type: "main", index: 0 }]] },
   },
 };
-const output = `${JSON.stringify(workflow, null, 2)}\n`;
+const alertText = `=Nocny import planu WIEiK nie został zapisany. Ostatni poprawny plan pozostał bez zmian.
+
+Workflow: {{ $json.workflow.name }}
+Krok: {{ $json.execution.lastNodeExecuted }}
+Błąd: {{ $json.execution.error.message }}
+Wykonanie: {{ $json.execution.url }}
+
+Po usunięciu przyczyny uruchom „Run now”. Opis blokad: integrations/schedule-import/README.md, sekcja „Nocny import”.`;
+// Every failed run (blocked plan, unreachable source, database error) ends here.
+const alert = {
+  id: ALERT_ID, name: "WIEiK schedule — nightly import alert", active: false,
+  settings: { executionOrder: "v1", timezone: "Europe/Warsaw" },
+  nodes: [
+    { id: "failed", name: "Import failed", type: "n8n-nodes-base.errorTrigger", typeVersion: 1, position: [0, 0], parameters: {} },
+    { id: "mail", name: "Send alert", type: "n8n-nodes-base.emailSend", typeVersion: 2.1, position: [240, 0],
+      credentials: { smtp: { id: "", name: "wieikschedule alerts (SMTP)" } },
+      parameters: { fromEmail: "alert-sender@example.invalid", toEmail: "alert-recipient@example.invalid",
+        subject: "wieikschedule: nocny import planu wymaga uwagi", emailFormat: "text", text: alertText, options: {} } },
+  ],
+  connections: { "Import failed": { main: [[{ node: "Send alert", type: "main", index: 0 }]] } },
+};
+const output = `${JSON.stringify([workflow, alert], null, 2)}\n`;
 const target = path.join(__dirname, "n8n-nightly.json");
 if (process.argv.includes("--check")) {
   if (fs.readFileSync(target, "utf8") !== output) throw new Error("Regenerate n8n-nightly.json");
