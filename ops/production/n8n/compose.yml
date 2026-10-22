@@ -1,0 +1,32 @@
+# Production n8n for the nightly schedule import, separate from staging (own data, credentials, port).
+# docker compose --env-file /home/cedwukropek/services/n8n-production/.env -f ops/production/n8n/compose.yml up -d
+# The env file holds N8N_ENCRYPTION_KEY and N8N_PUBLIC_URL; keep a copy of the key, credentials are unreadable without it.
+name: wieikschedule-production-n8n
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.43.5
+    restart: unless-stopped
+    environment:
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in the env file}
+      N8N_HOST: localhost
+      N8N_PORT: '5678'
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: ${N8N_PUBLIC_URL:?Set N8N_PUBLIC_URL in the env file}
+      WEBHOOK_URL: ${N8N_PUBLIC_URL}/
+      N8N_PROXY_HOPS: '1'
+      GENERIC_TIMEZONE: Europe/Warsaw
+      TZ: Europe/Warsaw
+      N8N_DIAGNOSTICS_ENABLED: 'false'
+      N8N_PERSONALIZATION_ENABLED: 'false'
+      N8N_VERSION_NOTIFICATIONS_ENABLED: 'false'
+      N8N_TEMPLATES_ENABLED: 'false'
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
+      EXECUTIONS_DATA_PRUNE: 'true'
+      EXECUTIONS_DATA_MAX_AGE: '336'
+    ports:
+      - '127.0.0.1:5680:5678'
+    volumes:
+      - n8n_data:/home/node/.n8n
+    mem_limit: 1g
+volumes:
+  n8n_data:

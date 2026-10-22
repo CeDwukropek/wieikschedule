@@ -24,7 +24,9 @@ docker run --rm --env-file <plik z DB_URL> -v "$PWD":/repo:ro -v <katalog planu>
    `20261022_calendar_writes`, `20261023_plan_versions_and_hygiene`, `20261024_release_hardening`.
 8. `verify` — liczności, brak wierszy bez źródła, największy plan (limit 1000 wierszy API),
    `anon` czyta tylko `events`/`faculties`/`timetable_versions`, FK do `events` = RESTRICT.
-9. Nocny import: `ALERT_EMAIL=<adres> ops/release/n8n-import.sh <kontener n8n>` importuje import
+9. Nocny import działa na osobnym, produkcyjnym n8n ([compose](../production/n8n/compose.yml),
+   kontener `wieikschedule-production-n8n-n8n-1`, panel w tailnecie na porcie 8446).
+   `ALERT_EMAIL=<adres> ops/release/n8n-import.sh <kontener n8n>` importuje import
    i workflow alertu (adres podstawiany w locie, nie trafia do repozytorium). W n8n wybrać
    credentiale „wieikschedule Supabase (session pooler)” i „wieikschedule alerts (SMTP)”, potem
    aktywować **oba** workflow — w n8n 2.x nieaktywny workflow alertu nie zostanie wywołany.
