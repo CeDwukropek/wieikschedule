@@ -65,3 +65,20 @@ i odmawia, dopóki istnieje jakikolwiek wpis albo rola inna niż admin (dane uż
 nie są kasowane po cichu). Najpierw nocny workflow z poprzedniej wersji repozytorium, potem
 skrypt. Sprawdzone na tej samej kopii: odmowa przy danych, schemat identyczny jak przed migracją,
 ponowne nałożenie migracji działa.
+
+# Konflikty bez pętli PostgREST (20261026)
+
+PostgREST ponawia transakcję bez limitu, gdy funkcja kończy się SQLSTATE `40001`. Zatwierdzenie
+wygasłego lub nieaktualnego podglądu (`confirm_schedule_change`) i zapis nieaktualnego wpisu
+(`save_plan_items`, `remove_plan_items`) zawieszały więc żądanie, a funkcja wykonywała się tysiące
+razy na sekundę (na stagingu 7662 próby w 4 s). Migracja zmienia tylko kod tych błędów na `PT409`:
+PostgREST odpowiada wtedy od razu HTTP 409.
+
+```sh
+docker run --rm --env-file <plik z DB_URL> -v "$PWD":/repo:ro postgres:17-bookworm \
+  sh /repo/ops/release/apply.sh migration 20261026_conflicts_without_retry
+```
+
+Bez deployu aplikacji: API rozpoznaje oba kody. Sprawdzone na kopii produkcji (testy SQL, `verify`)
+i na stagingu przez prawdziwy PostgREST (`conflict-status-staging-test.cjs`: 409 w 11–28 ms).
+Wycofanie: ponownie nałożyć definicje funkcji z migracji 20261015 i 20261025.

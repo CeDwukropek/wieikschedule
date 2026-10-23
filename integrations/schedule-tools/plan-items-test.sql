@@ -143,7 +143,7 @@ BEGIN
   BEGIN
     PERFORM public.save_plan_items(leader, jsonb_build_array(jsonb_build_object('id', quiz->>'id', 'revision', 99, 'title', 'Nowy')));
     RAISE EXCEPTION 'Stale update accepted';
-  EXCEPTION WHEN serialization_failure THEN NULL; END;
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL; END;
   quiz := public.save_plan_items(leader, jsonb_build_array(jsonb_build_object('id', quiz->>'id', 'revision', quiz->'revision',
     'details', 'Rozdziały 1–4')))->0;
   IF (quiz->>'revision')::integer <> 2 OR quiz->>'details' <> 'Rozdziały 1–4' THEN RAISE EXCEPTION 'Update failed: %', quiz; END IF;
