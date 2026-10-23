@@ -44,7 +44,11 @@ test('feed contains only the user plan with cancellations, days off, private cha
     row('cancelled','2026-10-08','L1',{override_action:'cancel',override_revision:1}),
     row('free','2026-10-09',null,{status:'wolne',subject:'Dzień wolny',type:null}),row('late','2026-11-02','L1')];
   const load=async(ctx,scope,options)=>{assert.deepEqual(options,{includeCancelled:true});return {source:rows,events:rows};};
-  const feed=await sync.buildFeed({},selection,window,load);
+  let entries=[];
+  const entriesOf=async(ctx,scope,range,planRows)=>{
+    assert.deepEqual(planRows.map(item=>item.id),['own','added','moved','cancelled','free']);return entries;};
+  const build=()=>sync.buildFeed({},selection,window,load,entriesOf);
+  const feed=await build();
   const byId=Object.fromEntries(feed.events.map(item=>[item.event_id,item]));
   assert.deepEqual(Object.keys(byId),['own','added','moved','cancelled','free']);
   assert.equal(byId.own.status,'scheduled');assert.equal(byId.own.kind,'laboratory');
@@ -52,13 +56,20 @@ test('feed contains only the user plan with cancellations, days off, private cha
   assert.equal(byId.moved.modified,true);assert.equal(byId.moved.start_time,'12:00:00');assert.equal(byId.moved.override_revision,2);
   assert.equal(byId.cancelled.status,'cancelled');
   assert.equal(byId.free.status,'day_off');
-  const again=await sync.buildFeed({},selection,window,load);
+  assert.deepEqual(feed.entries,[]);
+  const again=await build();
   assert.equal(again.version,feed.version);
   rows[0].room='13';
-  const changed=await sync.buildFeed({},selection,window,load);
+  const changed=await build();
   assert.notEqual(changed.version,feed.version);
   assert.notEqual(changed.events[0].version,feed.events[0].version);
-  await assert.rejects(sync.buildFeed({},{faculty:'Other',groups:{}},window,load),{code:'DATA_UNAVAILABLE'});
+  // A new entry, a new revision of it or a change of the owner's progress all change the version.
+  let previous=changed.version;
+  for(const next of [[{id:'e1',revision:1,progress:'todo'}],[{id:'e1',revision:2,progress:'todo'}],[{id:'e1',revision:2,progress:'done'}]]){
+    entries=next;const built=await build();
+    assert.deepEqual(built.entries,next);assert.notEqual(built.version,previous);previous=built.version;
+  }
+  await assert.rejects(sync.buildFeed({},{faculty:'Other',groups:{}},window,load,entriesOf),{code:'DATA_UNAVAILABLE'});
 });
 function fakeDb(tables){
   return {from(name){
@@ -197,19 +208,30 @@ test('a link lists and declines only the previews it created',async()=>{
   await assert.rejects(sync.rejectCalendarProposal({db:none,userId:'u'},link,{proposal_id:'22222222-2222-2222-2222-222222222222'}),{code:'NOT_FOUND'});
 });
 test('feed fingerprint changes only with plan versions, private rows, selection or range',async()=>{
-  const state={versions:[{faculty:'EiAs3',version:4},{faculty:'all',version:1}],overrides:[{event_id:EVENT,action:'modify',revision:1}],added:[]};
+  const state={versions:[{faculty:'EiAs3',version:4},{faculty:'all',version:1}],overrides:[{event_id:EVENT,action:'modify',revision:1}],added:[],
+    group:[],own:[],states:[]};
   const db=chainDb({timetable_versions:()=>({data:state.versions,error:null}),
-    schedule_overrides:()=>({data:state.overrides,error:null}),user_added_events:()=>({data:state.added,error:null})});
+    schedule_overrides:()=>({data:state.overrides,error:null}),user_added_events:()=>({data:state.added,error:null}),
+    plan_items:query=>({data:query.ops.some(op=>op[0]==='eq'&&op[1]==='scope')?state.group:state.own,error:null}),
+    plan_item_state:()=>({data:state.states,error:null})});
   const ctx={db,userId:'u'},print=(scope=selection,range=window)=>sync.feedFingerprint(ctx,scope,range);
   const first=await print();
   assert.match(first,/^[0-9a-f]{32}$/);
   assert.equal(await print(),first);
   assert.deepEqual(db.calls.find(call=>call.table==='timetable_versions').ops.find(([name])=>name==='in'),['in','faculty',['EiAs3','all']]);
-  assert.ok(db.calls.filter(call=>call.table!=='timetable_versions').every(call=>call.ops.some(op=>op[0]==='eq'&&op[1]==='user_id'&&op[2]==='u')));
+  const own=call=>call.ops.some(op=>op[0]==='eq'&&['user_id','owner_id'].includes(op[1])&&op[2]==='u');
+  assert.ok(db.calls.filter(call=>!['timetable_versions','plan_items'].includes(call.table)).every(own));
+  const items=db.calls.filter(call=>call.table==='plan_items').slice(0,2);
+  assert.ok(items.some(own));
+  assert.deepEqual(items.find(call=>!own(call)).ops.find(([name])=>name==='in'),['in','faculty',['EiAs3']]);
   const changes=[
     ()=>{state.versions=[{faculty:'EiAs3',version:5},{faculty:'all',version:1}];},
     ()=>{state.overrides=[{event_id:EVENT,action:'modify',revision:2}];},
     ()=>{state.added=[{event_id:EVENT}];},
+    ()=>{state.group=[{id:'g1',revision:1}];},
+    ()=>{state.group=[{id:'g1',revision:2}];},
+    ()=>{state.own=[{id:'p1',revision:1}];},
+    ()=>{state.states=[{item_id:'g1',hidden:false,progress:'done',updated_at:'t'}];},
   ];
   let previous=first;
   for(const change of changes){change();const next=await print();assert.notEqual(next,previous);previous=next;}

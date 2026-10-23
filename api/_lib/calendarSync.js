@@ -6,18 +6,13 @@ const schedule=require('./schedule');
 const {validateSelection}=require('./scheduleSelection');
 const {loadPlan,clock,pages}=require('./scheduleQueries');
 const {belongsToPlan,eventKind}=require('./scheduleSearch');
+const {feedEntries,entriesFingerprint}=require('./planItems');
 const {fail}=schedule;
-// Unambiguous alphabet: the pairing code is typed by hand into Odysseus.
-const CODE_ALPHABET='ABCDEFGHJKMNPQRSTVWXYZ23456789';
+const {newCode,rawCode,sha256}=require('./codes');
 const LINK_DAYS=180,MAX_RANGE_DAYS=200;
-const sha256=value=>crypto.createHash('sha256').update(value).digest('hex');
-function newCode(){
-  const raw=Array.from({length:12},()=>CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join('');
-  return raw.match(/.{4}/g).join('-');
-}
 function codeHash(code){
-  const raw=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(raw.length!==12||[...raw].some(char=>!CODE_ALPHABET.includes(char)))fail(422,'INVALID_CODE','Nieprawidłowy kod połączenia.');
+  const raw=rawCode(code);
+  if(!raw)fail(422,'INVALID_CODE','Nieprawidłowy kod połączenia.');
   return sha256('code:'+raw);
 }
 function newToken(){return 'wkc_'+crypto.randomBytes(32).toString('base64url');}
@@ -66,23 +61,26 @@ function occurrence(row){
     added:Boolean(row.is_added),modified:row.override_action==='modify',override_revision:row.override_revision||0};
   return {...item,version:sha256(JSON.stringify(item)).slice(0,16)};
 }
-async function buildFeed(ctx,selection,window,load=loadPlan){
+async function buildFeed(ctx,selection,window,load=loadPlan,entriesOf=feedEntries){
   const data=await load(ctx,selection,{includeCancelled:true});
   if(!data.source.some(row=>row.faculty===selection.faculty))fail(503,'DATA_UNAVAILABLE','Brak danych wybranego planu. Lustro pozostaje bez zmian.');
-  const events=data.events.filter(row=>row.date>=window.date_from&&row.date<=window.date_to&&belongsToPlan(row,selection)).map(occurrence);
-  return {events,version:sha256(JSON.stringify([selection,window,events.map(item=>item.event_id+item.version)])).slice(0,32)};
+  const rows=data.events.filter(row=>row.date>=window.date_from&&row.date<=window.date_to&&belongsToPlan(row,selection));
+  const events=rows.map(occurrence),entries=await entriesOf(ctx,selection,window,rows);
+  return {events,entries,version:sha256(JSON.stringify([selection,window,events.map(item=>item.event_id+item.version),
+    entries.map(item=>item.id+':'+item.revision+':'+item.progress)])).slice(0,32)};
 }
 // Stands in for the feed contents: plan versions plus the owner's private rows. A mirror that is
 // up to date gets 304 without the whole plan being read from the database. Bump on format changes.
-const FEED_FORMAT=1;
+const FEED_FORMAT=2;
 async function feedFingerprint(ctx,selection,window){
   const faculties=[...new Set([selection.faculty,'all',...(selection.external||[]).map(item=>item.faculty)])].sort();
-  const [versions,overrides,additions]=await Promise.all([
+  const [versions,overrides,additions,entries]=await Promise.all([
     pages(ctx.db.from('timetable_versions').select('faculty,version').in('faculty',faculties).order('faculty')),
     pages(ctx.db.from('schedule_overrides').select('event_id,action,revision').eq('user_id',ctx.userId).order('event_id')),
     pages(ctx.db.from('user_added_events').select('event_id').eq('user_id',ctx.userId)
-      .eq('schedule_name',selection.faculty).eq('status','active').order('event_id'))]);
-  return sha256(JSON.stringify([FEED_FORMAT,selection,window,versions,overrides,additions])).slice(0,32);
+      .eq('schedule_name',selection.faculty).eq('status','active').order('event_id')),
+    entriesFingerprint(ctx,selection)]);
+  return sha256(JSON.stringify([FEED_FORMAT,selection,window,versions,overrides,additions,entries])).slice(0,32);
 }
 const PROVIDER='odysseus-calendar';
 const CHANGE_FIELDS=['date','start_time','duration_min','room'];
