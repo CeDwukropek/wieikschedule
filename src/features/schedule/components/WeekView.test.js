@@ -53,13 +53,15 @@ test('moving keeps an earlier private room change and shows collisions', async (
     patch:{room:'A-101',date:'2026-10-22',start_time:'12:00:00'},reason:null}));
 });
 
-test('a weekend date is refused before saving and a failed save keeps the dialog open', async () => {
+test('a date outside the plan is refused before saving and a failed save keeps the dialog open', async () => {
   const actions = planActions({apply:jest.fn().mockRejectedValue(new Error('Plan zmienił się lub podgląd wygasł.'))});
   render(<WeekView events={[event]} viewedWeekStart={monday} planActions={actions}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
   fireEvent.click(screen.getByRole('button', {name: 'Przenieś'}));
   fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-24'}});
-  expect(screen.getByRole('alert')).toHaveTextContent('poniedziałku do piątku');
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2027-03-01'}});
+  expect(screen.getByRole('alert')).toHaveTextContent('poza zakresem');
   expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button', {name: 'Anuluj'}));
   fireEvent.click(screen.getByRole('button', {name: 'Zmień salę'}));

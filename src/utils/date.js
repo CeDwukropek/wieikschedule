@@ -1,4 +1,5 @@
 export const WEEKDAYS = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
+export const WEEKEND = ["Sobota", "Niedziela"];
 
 export function getWeekStart(date) {
   const d = new Date(date);
@@ -42,6 +43,6 @@ export function parseDaySelection(value, defaultDay = 0) {
   const offset = rawOffset === "current" ? 0 : rawOffset === "next" ? 1 : Number(rawOffset);
   return {
     weekOffset: Number.isFinite(offset) ? offset : 0,
-    dayIndex: Number.isFinite(day) ? Math.min(Math.max(day, 0), 4) : defaultDay,
+    dayIndex: Number.isFinite(day) ? Math.min(Math.max(day, 0), 6) : defaultDay,
   };
 }

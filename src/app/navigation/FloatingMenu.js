@@ -42,6 +42,8 @@ export default function FloatingMenu({
     setHideLectures,
     showAll,
     setShowAll,
+    alwaysShowWeekend,
+    setAlwaysShowWeekend,
   } = viewState || {};
   const {
     studentGroups,
@@ -500,6 +502,8 @@ export default function FloatingMenu({
           onToggleHideLectures: () => setHideLectures((prev) => !prev),
           showAll,
           onToggleShowAll: () => setShowAll((prev) => !prev),
+          alwaysShowWeekend,
+          onToggleAlwaysShowWeekend: () => setAlwaysShowWeekend((prev) => !prev),
         }}
         filterState={{
           schedule,

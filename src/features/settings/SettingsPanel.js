@@ -1,6 +1,6 @@
 import { selectExportEvents } from "../schedule/export/selectExportEvents";
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, Book, CalendarOff, X } from "lucide-react";
+import { ChevronRight, Book, CalendarOff, CalendarRange, X } from "lucide-react";
 import GroupFiltersPanel from "../schedule/components/GroupFiltersPanel";
 import GroupSetManager from "../schedule/components/GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
@@ -94,6 +94,8 @@ export default function SettingsPanel({
     onToggleHideLectures,
     showAll,
     onToggleShowAll,
+    alwaysShowWeekend,
+    onToggleAlwaysShowWeekend,
   } = viewState || {};
   const {
     schedule,
@@ -101,7 +103,7 @@ export default function SettingsPanel({
     groupConfigs,
     onGroupChange,
   } = filterState || {};
-  const { exportRef, viewedWeekRange, selection, combinedOptions, addedEvents=[], personalReady=true } =
+  const { exportRef, viewedWeekRange, selection, combinedOptions, addedEvents=[], personalReady=true, planItems=[] } =
     exportState || {};
   const scheduleOptions = (
     timetableOptions.length > 0
@@ -125,7 +127,7 @@ export default function SettingsPanel({
   const handleExportICS = () => exportICS(selectExportEvents({
     schedule, scheduleId: currentSchedule, groups: studentGroups, hideLectures, showAll,
     externalSelections, timetables: loadedTimetables, addedEvents,
-  }));
+  }), planItems);
 
   return (
     <>
@@ -265,7 +267,14 @@ export default function SettingsPanel({
                   label="Pokaż tylko wybrane grupy"
                   icon={<CalendarOff className="w-4 h-4" />}
                 />
+                {onToggleAlwaysShowWeekend && <FilterToggle
+                  pressed={Boolean(alwaysShowWeekend)}
+                  onToggle={onToggleAlwaysShowWeekend}
+                  label="Zawsze pokazuj weekend"
+                  icon={<CalendarRange className="w-4 h-4" />}
+                />}
               </div>
+              <p className="text-xs text-neutral-400">Sobota i niedziela pojawiają się w tygodniach, w których coś się w nie dzieje{alwaysShowWeekend ? "; teraz zawsze" : ""}.</p>
             </section>
             {/* Export buttons */}
             <section className="space-y-2 border-t border-neutral-800 pt-4">

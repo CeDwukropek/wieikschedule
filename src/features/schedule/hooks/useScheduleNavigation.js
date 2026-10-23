@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { formatDate, getWeekStart, parseDaySelection, WEEKDAYS } from "../../../utils/date";
+import { formatDate, getWeekStart, parseDaySelection, WEEKDAYS, WEEKEND } from "../../../utils/date";
 
 function savedWeekOffset(settings) {
   if (Number.isFinite(Number(settings?.weekOffset))) return Number(settings.weekOffset);
   return settings?.activeWeekKey === "prev" ? -1 : settings?.activeWeekKey === "next" ? 1 : 0;
 }
 
-export function useScheduleNavigation({ minDate, maxDate, savedSettings }) {
+const NO_WEEKEND = () => false;
+// showWeekend(weekStart) tells whether a week's Saturday and Sunday are offered in the day view.
+export function useScheduleNavigation({ minDate, maxDate, savedSettings, showWeekend = NO_WEEKEND }) {
   const [today] = useState(() => new Date());
   const thisWeekStart = useMemo(() => getWeekStart(today), [today]);
-  const defaultDay = Math.min((today.getDay() + 6) % 7, 4);
+  const todayIndex = (today.getDay() + 6) % 7;
+  const defaultDay = todayIndex <= 4 || showWeekend(thisWeekStart) ? todayIndex : 4;
   const [weekOffset, setWeekOffset] = useState(() => savedWeekOffset(savedSettings));
   const [selection, setSelection] = useState(`0:${defaultDay}`);
   const hasNavigated = useRef(false);
@@ -55,11 +58,11 @@ export function useScheduleNavigation({ minDate, maxDate, savedSettings }) {
   const weekOptions = useMemo(() => (offsets || [-1, 0, 1])
     .map(value => ({ value, label: getRangeByOffset(value) })), [offsets, getRangeByOffset]);
   const dayOptions = useMemo(() => (offsets || [0, 1]).flatMap(offset =>
-    WEEKDAYS.map((label, day) => {
+    (showWeekend(getWeekStartByOffset(offset)) ? [...WEEKDAYS, ...WEEKEND] : WEEKDAYS).map((label, day) => {
       const date = getWeekStartByOffset(offset);
       date.setDate(date.getDate() + day);
       return { value: `${offset}:${day}`, label, date: formatDate(date) };
-    })), [offsets, getWeekStartByOffset]);
+    })), [offsets, getWeekStartByOffset, showWeekend]);
 
   useEffect(() => {
     if (!dayOptions.length || dayOptions.some(option => option.value === selection)) return;

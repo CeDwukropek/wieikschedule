@@ -4,11 +4,12 @@ import { X, Clock, MapPin, Users, UserRound, CalendarDays } from 'lucide-react';
 import { splitTeacherDisplay } from '../logic/teacherDisplay';
 import { eventSubject } from './EventCard';
 import ClassPlanActions from '../../my-plan/ClassPlanActions';
+import PlanItemSummary from '../../plan-items/PlanItemSummary';
 import { timeToMinutes } from '../../../utils/time';
 
 const isoDate = value => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 
-export default function EventDetailsDialog({ ev, subjects, date, onClose, planActions }) {
+export default function EventDetailsDialog({ ev, subjects, date, onClose, planActions, onItemState }) {
   const dialog = useRef(null);
   const titleId = useId();
   const [busy, setBusy] = useState(false);
@@ -60,6 +61,10 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           <div><dt><UserRound size={17}/>Prowadzący</dt><dd>{teachers.length ? teachers.map(teacher => <span key={teacher}>{teacher}</span>) : 'Nie podano'}</dd></div>
           <div><dt><Users size={17}/>Grupa</dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
         </dl>
+        {ev.entries?.length > 0 && <section className="event-details-entries" aria-label="Terminy na tych zajęciach">
+          <h3>Na tych zajęciach</h3>
+          {ev.entries.map(item => <PlanItemSummary key={item.id} item={item} onState={onItemState}/>)}
+        </section>}
         {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}/>}
       </section>
     </dialog>, document.body,

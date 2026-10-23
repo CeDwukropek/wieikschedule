@@ -9,11 +9,6 @@ export function parseDate(value) {
   return new Date(`${value}T12:00:00`);
 }
 
-export function isWeekday(value) {
-  const day = parseDate(value).getDay();
-  return day >= 1 && day <= 5;
-}
-
 export function shortDate(value) {
   const date = parseDate(value);
   return `${DAY_NAMES[date.getDay()]} ${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -63,7 +58,8 @@ export function moveChanges(current, { date, start, end, instructor }) {
 }
 
 export function validateMove({ date, start, end }, bounds = {}) {
-  if (!date || !isWeekday(date)) return 'Wybierz dzień od poniedziałku do piątku.';
+  // Weekends are allowed: the grid shows Saturday and Sunday in weeks that have anything then.
+  if (!date || Number.isNaN(parseDate(date).getTime())) return 'Wybierz datę.';
   if ((bounds.min && date < bounds.min) || (bounds.max && date > bounds.max)) return 'Ta data jest poza zakresem planu.';
   if (!start || !end) return 'Podaj godzinę rozpoczęcia i zakończenia.';
   const from = timeToMinutes(start), to = timeToMinutes(end);

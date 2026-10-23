@@ -5,6 +5,8 @@ import EventDetailsDialog from "./EventDetailsDialog";
 import EventTooltipWrapper from "./EventTooltipWrapper";
 import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
+import { tileKey } from "../logic/eventIdentity";
+import DayStrip from "../../plan-items/DayStrip";
 import "./ScheduleView.css";
 
 const DayView = forwardRef(function DayView(
@@ -14,6 +16,9 @@ const DayView = forwardRef(function DayView(
     selection: externalSelection,
     weekStart,
     planActions,
+    strip = {},
+    onOpenItem,
+    onItemState,
   },
   ref,
 ) {
@@ -23,11 +28,8 @@ const DayView = forwardRef(function DayView(
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
   const today = React.useMemo(() => new Date(), []);
-  // default selected day index (clamped to 0..4) - used to detect "today"
-  const defaultDayIndex = useMemo(
-    () => Math.min(Math.max((today.getDay() + 6) % 7, 0), 4),
-    [today],
-  );
+  // weekday index of today (Monday = 0) - used to detect "today"
+  const defaultDayIndex = useMemo(() => (today.getDay() + 6) % 7, [today]);
 
   const selection = externalSelection;
   const { dayIndex: selectedDayIndex, weekOffset: selectedWeekOffset } = parseDaySelection(selection, defaultDayIndex);
@@ -48,13 +50,20 @@ const DayView = forwardRef(function DayView(
   // highlight if the displayed day is today in the current week
   const isTodayDisplayed =
     selectedWeekOffset === 0 && selectedDayIndex === defaultDayIndex;
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  useEffect(() => setSelectedEvent(null), [events, selection]);
+  // The dialog follows the tile through recomputed events and closes when it is gone or the day changes.
+  const [selectedKey, setSelectedKey] = useState(null);
+  useEffect(() => setSelectedKey(null), [selection]);
+  const selectedEvent = selectedKey ? events.find(ev => tileKey(ev) === selectedKey) || null : null;
+  const setSelectedEvent = ev => setSelectedKey(ev ? tileKey(ev) : null);
   const displayedDate = weekStart
     ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + selectedDayIndex) : null;
 
+  const openDetails = ev => ev.planItem ? onOpenItem?.(ev.planItem) : setSelectedEvent(ev);
   return (
     <div>
+      {strip[selectedDayIndex]?.length > 0 && <div className="day-view-strip">
+        <DayStrip items={strip[selectedDayIndex]} limit={4} onOpen={item => onOpenItem?.(item)} />
+      </div>}
       <style>{`
         .day-grid {
           display: grid;
@@ -133,13 +142,15 @@ const DayView = forwardRef(function DayView(
                     width: `calc(${width}% - 2px)`,
                   }}
                 >
-                  <EventTooltipWrapper ev={ev}>
-                    <EventCard
-                      ev={ev}
-                      subjects={subjects}
-                      onOpenDetails={displayedDate ? setSelectedEvent : undefined}
-                    />
-                  </EventTooltipWrapper>
+                  {ev.planItem ? <EventCard ev={ev} subjects={subjects} onOpenDetails={openDetails} /> : (
+                    <EventTooltipWrapper ev={ev}>
+                      <EventCard
+                        ev={ev}
+                        subjects={subjects}
+                        onOpenDetails={displayedDate ? openDetails : undefined}
+                      />
+                    </EventTooltipWrapper>
+                  )}
                 </div>
               );
             },
@@ -158,6 +169,7 @@ const DayView = forwardRef(function DayView(
         date={displayedDate}
         onClose={() => setSelectedEvent(null)}
         planActions={planActions}
+        onItemState={onItemState}
       />}
     </div>
   );

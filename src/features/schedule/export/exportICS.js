@@ -1,4 +1,5 @@
 // exportICS.js
+import { describeAudience, itemEnd, kindOf } from "../../plan-items/planItemLogic";
 
 // Zwraca "YYYYMMDDTHHMMSS" (bez "Z") — tzw. "floating time" w lokalnej strefie,
 // dzięki czemu kalendarze nie przesuwają godzin o strefy/DST.
@@ -29,8 +30,23 @@ function makeUid(e, dateStr) {
   return `${base}-${dateStr}@wieikschedule`;
 }
 
+const compactDate = date => date.replace(/-/g, "");
+const nextDay = date => { const value = new Date(`${date}T12:00:00`); value.setDate(value.getDate() + 1); return compactDate(value.toISOString().slice(0, 10)); };
+// Kolokwia, deadlines and other entries; a deadline without an hour is an all-day event.
+function itemEvent(item) {
+  const time = value => String(value).slice(0, 5).replace(":", "") + "00";
+  const when = item.timing === "due"
+    ? item.due_time
+      ? [`DTSTART:${compactDate(item.date)}T${time(item.due_time)}`] // no DTEND: the deadline is an instant (RFC 5545)
+      : [`DTSTART;VALUE=DATE:${compactDate(item.date)}`, `DTEND;VALUE=DATE:${nextDay(item.date)}`]
+    : [`DTSTART:${compactDate(item.date)}T${time(item.start_time)}`, `DTEND:${compactDate(item.date)}T${time(itemEnd(item))}`];
+  const description = [item.subject, describeAudience(item), item.details].filter(Boolean).join("\n");
+  return ["BEGIN:VEVENT", `UID:item-${item.id}@wieikschedule`, `SUMMARY:${icsEscape(`${kindOf(item).label}: ${item.title}`)}`,
+    `DESCRIPTION:${icsEscape(description)}`, ...when, "END:VEVENT"].join("\r\n") + "\r\n";
+}
+
 // --- Główny eksport -----------------------------------------------------------
-export function buildICS(events) {
+export function buildICS(events, items = []) {
 
   // Nagłówek kalendarza
   let ics =
@@ -91,13 +107,15 @@ export function buildICS(events) {
     });
   });
 
+  items.forEach((item) => { ics += itemEvent(item); });
+
   ics += "END:VCALENDAR";
   return ics;
 }
 
-export function exportICS(events) {
-  if (!events?.length) { alert("Brak wydarzeń do eksportu."); return; }
-  const ics=buildICS(events);
+export function exportICS(events, items = []) {
+  if (!events?.length && !items.length) { alert("Brak wydarzeń do eksportu."); return; }
+  const ics=buildICS(events, items);
 
   // Zapis pliku
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });

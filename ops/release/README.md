@@ -82,3 +82,18 @@ docker run --rm --env-file <plik z DB_URL> -v "$PWD":/repo:ro postgres:17-bookwo
 Bez deployu aplikacji: API rozpoznaje oba kody. Sprawdzone na kopii produkcji (testy SQL, `verify`)
 i na stagingu przez prawdziwy PostgREST (`conflict-status-staging-test.cjs`: 409 w 11–28 ms).
 Wycofanie: ponownie nałożyć definicje funkcji z migracji 20261015 i 20261025.
+
+# E6.2/E6.3 — API i widok wpisów
+
+API (`api/plan-items/*`) nie wymaga migracji. Widok wpisów jest za flagą `REACT_APP_PLAN_ITEMS`;
+weekend w siatce i w przenoszeniu zajęć działa bez flagi.
+
+1. **Kopia**, potem `apply.sh migration 20261027_weekend_changes` (prywatne przeniesienie zajęć
+   może trafić na sobotę lub niedzielę) i `apply.sh migration 20261028_series_of_one_kind` (kilka
+   wpisów zapisanych razem tworzy serię tylko przy tym samym rodzaju i przedmiocie).
+2. Flaga w Vercelu (Production i Preview gałęzi): dopisać `REACT_APP_PLAN_ITEMS=true` do pliku
+   źródłowego i wgrać tylko ją, `ONLY=REACT_APP_PLAN_ITEMS` w `vercel-env-upload.cjs`.
+3. Deploy (merge do `main`). Flaga wbudowuje się przy buildzie, więc zmiana wymaga nowego deployu.
+
+Wycofanie: flaga `false` i nowy deploy chowa wpisy. Weekend zostaje; 20261027 wycofuje się, nakładając
+`validate_schedule_patch` z 20261015, a 20261028 — `save_plan_items` z 20261026.

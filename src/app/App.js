@@ -21,7 +21,13 @@ import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effe
 import MyPlanPanel from '../features/my-plan/MyPlanPanel';
 import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
 import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
-import {getWeekStart} from '../utils/date';
+import {getWeekStart,toIsoDate} from '../utils/date';
+import {usePlanItems} from '../features/plan-items/usePlanItems';
+import {itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
+import PlanItemDialog from '../features/plan-items/PlanItemDialog';
+import UpcomingPanel from '../features/plan-items/UpcomingPanel';
+
+const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
 export default function App() {
   const exportRef = useRef(null);
@@ -40,10 +46,48 @@ export default function App() {
   const personal=usePersonalPlan(user,personalEnabled);
   const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows),[schedule.loadedTimetables,personal.rows]);
   const effectiveTable=tables[schedule.currentSchedule]||schedule.currentTimetable;
+  const eventOptions = useMemo(
+    () => ({
+      schedule: effectiveTable.schedule,
+      scheduleId: schedule.currentSchedule,
+      groups: schedule.studentGroups,
+      hideLectures: view.hideLectures,
+      showAll: view.showAll,
+      externalSelections: schedule.activeExternalSelections,
+      timetables: tables,
+    }),
+    [
+      effectiveTable.schedule,
+      schedule.currentSchedule,
+      schedule.studentGroups,
+      schedule.activeExternalSelections,
+      tables,
+      view.hideLectures,
+      view.showAll,
+    ],
+  );
+  // Kolokwia, deadlines and other entries of the shown plans; group entries also for guests.
+  const itemsOn=planItemsEnabled();
+  const [today]=useState(()=>new Date());
+  const itemsRange=useMemo(()=>itemsWindow(today),[today]);
+  const faculties=useMemo(()=>[...new Set([schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)].filter(Boolean))],
+    [schedule.currentSchedule,schedule.activeExternalSelections]);
+  const planItems=usePlanItems({enabled:itemsOn,uid:user?.uid,faculties,window:itemsRange});
+  // Every occurrence of the plan (lectures included, so an entry on a hidden lecture still shows).
+  const planEvents=useMemo(()=>mergeEvents({...eventOptions,hideLectures:false,weekStart:null}),[eventOptions]);
+  const items=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll}),
+    [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
+  const weekendSet=useMemo(()=>weekendWeeks(planEvents,items),[planEvents,items]);
+  const showWeekend=useCallback(weekStart=>view.alwaysShowWeekend||weekendSet.has(toIsoDate(weekStart)),[view.alwaysShowWeekend,weekendSet]);
+  const [openItemId,setOpenItemId]=useState(null);
+  const [upcomingOpen,setUpcomingOpen]=useState(false);
+  const openItem=planItems.items.find(item=>item.id===openItemId&&!item.my_state?.hidden);
+  const onItemState=user&&itemsOn?planItems.setItemState:undefined;
   const navigation = useScheduleNavigation({
     minDate: effectiveTable.minDate,
     maxDate: effectiveTable.maxDate,
     savedSettings,
+    showWeekend,
   });
   const myPlan = useMyPlanEvents({
     scheduleName: schedule.currentSchedule,
@@ -78,26 +122,6 @@ export default function App() {
     }:undefined});
   };
 
-  const eventOptions = useMemo(
-    () => ({
-      schedule: effectiveTable.schedule,
-      scheduleId: schedule.currentSchedule,
-      groups: schedule.studentGroups,
-      hideLectures: view.hideLectures,
-      showAll: view.showAll,
-      externalSelections: schedule.activeExternalSelections,
-      timetables: tables,
-    }),
-    [
-      effectiveTable.schedule,
-      schedule.currentSchedule,
-      schedule.studentGroups,
-      schedule.activeExternalSelections,
-      tables,
-      view.hideLectures,
-      view.showAll,
-    ],
-  );
   // Cancelled classes and moved-from slots are shown faded; they are not part of the plan itself.
   const showGhosts=Boolean(user&&personalEnabled&&personal.ready);
   const ghostFaculties=useMemo(()=>[schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)],
@@ -124,12 +148,18 @@ export default function App() {
     ],
     [eventOptions, navigation.selectedDayWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
   );
+  const weekPlaced=useMemo(()=>placeItems(items,navigation.viewedWeekStart,weekEvents),[items,navigation.viewedWeekStart,weekEvents]);
+  const dayPlaced=useMemo(()=>placeItems(items,navigation.selectedDayWeekStart,dayEvents),[items,navigation.selectedDayWeekStart,dayEvents]);
+  const weekDays=useMemo(()=>showWeekend(navigation.viewedWeekStart)||weekPlaced.events.some(ev=>ev.day>=5)
+    ||Object.keys(weekPlaced.strip).some(day=>Number(day)>=5)?WHOLE_WEEK:WORKDAYS,[showWeekend,navigation.viewedWeekStart,weekPlaced]);
+  const upcomingCount=useMemo(()=>{const {upcoming,overdue}=upcomingItems(items,today);return upcoming.length+overdue.length;},[items,today]);
 
   usePersistSettings(
     {
       viewMode: view.viewMode,
       hideLectures: view.hideLectures,
       showAll: view.showAll,
+      alwaysShowWeekend: view.alwaysShowWeekend,
       weekOffset: navigation.weekOffset,
       currentSchedule: schedule.currentSchedule,
       scheduleGroupSets: schedule.scheduleGroupSets,
@@ -157,8 +187,10 @@ export default function App() {
     subjects: schedule.subjects,
     planActions,
     ref: exportRef,
+    onOpenItem: item=>setOpenItemId(item.id),
+    onItemState,
   };
-  const today=new Date().toISOString().slice(0,10);
+  const todayIso=toIsoDate(today);
   const shownEvent=shownItem&&dialogEventFromItem(shownItem);
 
   return (
@@ -202,7 +234,7 @@ export default function App() {
           onRemoveExternalSelection: schedule.handleRemoveExternalSelection,
           onScheduleChange: schedule.handleScheduleChange,
         }}
-        exportState={{ exportRef, addedEvents, personalReady:personal.ready }}
+        exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items }}
         chatState={{
           enabled: process.env.REACT_APP_ENABLE_AI_CHAT !== "false",
           scheduleName: schedule.currentSchedule,
@@ -230,6 +262,13 @@ export default function App() {
           <p>Schedule App</p>
         </div>
       </div>
+      {itemsOn&&<section className="mb-2 text-sm">
+        {planItems.error&&<p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
+          <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p>}
+        {planItems.ready&&<button type="button" className="plan-panel-trigger plan-items-trigger" aria-haspopup="dialog" onClick={()=>setUpcomingOpen(true)}>
+          Nadchodzące terminy{upcomingCount>0&&<span className="plan-panel-count">{upcomingCount}</span>}
+        </button>}
+      </section>}
       {user&&personalEnabled&&<section className="mb-4 text-sm">
         {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
         {/* The university plan stays visible; only private changes, edits and ICS export wait for the API. */}
@@ -245,24 +284,30 @@ export default function App() {
       {view.viewMode === "week" ? (
         <WeekView
           {...calendarProps}
-          events={weekEvents}
+          events={weekPlaced.events}
+          strip={weekPlaced.strip}
+          days={weekDays}
           viewedWeekStart={navigation.viewedWeekStart}
         />
       ) : (
         <DayView
           {...calendarProps}
           key={navigation.daySelection.selection}
-          events={dayEvents}
+          events={dayPlaced.events}
+          strip={dayPlaced.strip}
           weekStart={navigation.selectedDayWeekStart}
           selection={navigation.daySelection.selection}
         />
       )}
-      {planOpen&&planActions&&<MyPlanPanel items={personal.items} proposals={proposals} today={today} onClose={()=>setPlanOpen(false)}
+      {planOpen&&planActions&&<MyPlanPanel items={personal.items} proposals={proposals} today={todayIso} onClose={()=>setPlanOpen(false)}
         onApply={applyChange} onRemoveAdded={removeAddedEvent} onConfirmProposal={confirmProposal}
         onDismissProposal={personal.rejectProposal}
         onShow={item=>{setPlanOpen(false);setShownItem(item);}}/>}
       {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={schedule.subjects} date={parseDate((shownItem.current||shownItem.original).date)}
         onClose={()=>setShownItem(null)} planActions={planActions}/>}
+      {upcomingOpen&&<UpcomingPanel items={items} today={today} onClose={()=>setUpcomingOpen(false)}
+        onOpen={item=>{setUpcomingOpen(false);setOpenItemId(item.id);}}/>}
+      {openItem&&<PlanItemDialog item={openItem} onClose={()=>setOpenItemId(null)} onState={onItemState}/>}
       <UndoToast toast={toast} onDismiss={dismissToast}/>
       <FAQ />
     </div>
