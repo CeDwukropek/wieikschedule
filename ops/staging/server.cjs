@@ -6,7 +6,7 @@ const { pipeline } = require("node:stream");
 
 const root = path.resolve(__dirname, "../../build");
 // Same per-area routers as the Vercel functions api/<area>/[action].js.
-const routers = Object.fromEntries(["my-plan", "schedule", "calendar-sync"].map((area) =>
+const routers = Object.fromEntries(["my-plan", "schedule", "calendar-sync", "plan-items"].map((area) =>
   [area, require(`../../api/${area}/[action].js`)]));
 const types = { ".html": "text/html; charset=utf-8", ".js": "application/javascript",
   ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
@@ -61,7 +61,7 @@ const server = http.createServer(async (req, res) => {
         ['/local-odysseus/api/schedule/capabilities','/local-odysseus/api/schedule/chat'].includes(url.pathname)) {
       return proxy(req,res,new URL('http://odysseus-local:7000'+url.pathname.slice('/local-odysseus'.length)));
     }
-    const area = url.pathname.match(/^\/api\/(my-plan|schedule|calendar-sync)\/[^/]+$/);
+    const area = url.pathname.match(/^\/api\/(my-plan|schedule|calendar-sync|plan-items)\/[^/]+$/);
     if (area) return await api(req, res, routers[area[1]], url);
     if (url.pathname.startsWith("/api/")) return json(res, 404, { ok: false, error: "NOT_FOUND" });
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });

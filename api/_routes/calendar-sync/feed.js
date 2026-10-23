@@ -9,5 +9,5 @@ module.exports=linkEndpoint('GET',async(req,ctx,link,res)=>{
   if(String(req.headers['if-none-match']||'')===etag){res.statusCode=304;res.end();return undefined;}
   const feed=await buildFeed(ctx,selection,window);
   return {link:{id:link.id,label:link.label,faculty:link.faculty,group_set_id:link.group_set_id,group_set_name:name},
-    timezone:'Europe/Warsaw',...window,version:feed.version,events:feed.events};
+    timezone:'Europe/Warsaw',...window,version:feed.version,events:feed.events,entries:feed.entries};
 });

@@ -183,7 +183,7 @@ użytkownik po próbie na kopii, jak przy E5.
 | Etap | Zakres |
 | --- | --- |
 | E6.1 Baza i role | Tabele z modelu, funkcje z kontrolą ról, testy SQL w CI, skrypt pierwszego admina. Wpisy przenoszą się i czekają na sprawdzenie przy zmianie zajęć (wyzwalacz), nocny mail wymienia zniknięte zajęcia z wpisami (potem ponowny import workflow do n8n). |
-| E6.2 API | Wpisy i serie, podpowiedzi terminów, role i kody zaproszeń, osobisty stan. Wpisy w kalendarzu Odysseusa i w ICS. Endpointy w istniejących routerach albo jednym nowym (limit Vercela: dziś 3 z 12). |
+| E6.2 API | `api/plan-items/*`: `list` (także bez logowania: wpisy grupowe), `save`, `remove` (z cofnięciem), `state`, `roles`, `invite`, `redeem`, `revoke` — jedna funkcja Vercela (4 z 12). Feed kalendarza Odysseusa zawiera `entries`; ich wyświetlanie w Odysseusie razem z przypomnieniami (E6.8). Podpowiedzi terminów liczy przeglądarka z wczytanego planu (E6.4), agent dostaje własne narzędzie (E6.7). ICS razem z widokiem (E6.3). |
 | E6.3 Widok | Pasek pod datami, weekend, znaczniki i bloki, lista „Nadchodzące”, kolory i filtr. Weekend w walidacji prywatnych zmian dopiero razem z kolumnami weekendu, żeby przeniesione zajęcia nie znikały z siatki. |
 | E6.4 Dodawanie ręczne | Z okna zajęć i z siatki, seria przez „+”, edycja i usuwanie serii, cofanie. |
 | E6.5 Role w interfejsie | Panel starosty: kody zaproszeń, starostowie grup, wpisy do sprawdzenia, historia zmian. |
