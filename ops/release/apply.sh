@@ -3,7 +3,8 @@
 # /repo (read-only) and the reviewed fresh-load changes at /plan/changes.json:
 #   docker run --rm --env-file <file with DB_URL> -v "$PWD":/repo:ro -v <plan dir>:/plan:ro \
 #     postgres:17-bookworm sh /repo/ops/release/apply.sh <step>
-# Steps: check | identity | reload | private | verify | all (E5), plan-items | grant-admin (E6.1).
+# Steps: check | identity | reload | private | verify | all (E5), plan-items | grant-admin (E6.1),
+# migration <name> (one later migration from DB/migrations, without .sql).
 # Every step stops at the first error. grant-admin needs ADMIN_FIREBASE_UID (Firebase console → Authentication).
 set -eu
 : "${DB_URL:?DB_URL is required}"
@@ -82,5 +83,8 @@ case "${1:-}" in
   all) check; identity; reload; private; verify ;;
   plan-items) plan_items ;;
   grant-admin) grant_admin ;;
-  *) echo "usage: apply.sh check|identity|reload|private|verify|all|plan-items|grant-admin" >&2; exit 64 ;;
+  migration) name="${2:?migration name is required}"
+    case "$name" in *[!0-9a-z_]*) echo "invalid migration name" >&2; exit 64 ;; esac
+    run -f "$M/$name.sql" ;;
+  *) echo "usage: apply.sh check|identity|reload|private|verify|all|plan-items|grant-admin|migration <name>" >&2; exit 64 ;;
 esac

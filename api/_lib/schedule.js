@@ -16,7 +16,7 @@ function text(value,max,required=false) {
 }
 function databaseError(error) {
   if (!error) return;
-  if (error.code==='40001'||error.code==='23505') fail(409,'PLAN_CHANGED','Plan zmienił się lub podgląd wygasł. Przygotuj nowy podgląd.');
+  if (error.code==='PT409'||error.code==='40001'||error.code==='23505') fail(409,'PLAN_CHANGED','Plan zmienił się lub podgląd wygasł. Przygotuj nowy podgląd.');
   if (error.code==='P0002') fail(404,'NOT_FOUND','Nie znaleziono wydarzenia lub podglądu.');
   if (error.code==='54000') fail(429,'TOO_MANY_PROPOSALS','Masz zbyt wiele otwartych podglądów. Spróbuj za kilka minut.');
   if (error.code?.startsWith('22')||error.code==='23514') fail(422,'INVALID_CHANGE','Zmiana jest nieprawidłowa. Sprawdź datę, pola i zakres 07:00–22:00.');

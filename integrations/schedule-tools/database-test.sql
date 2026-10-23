@@ -29,13 +29,13 @@ BEGIN
  BEGIN
    PERFORM public.confirm_schedule_change(a,(preview->>'id')::uuid,'n8n','test');
    RAISE EXCEPTION 'Stale override accepted';
- EXCEPTION WHEN serialization_failure THEN NULL; END;
+ EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL; END;
  preview:=public.propose_schedule_change(a,ev,'upsert','cancel','{}',null,'manual','test');
  UPDATE public.events SET room=coalesce(room,'')||' test' WHERE id=ev;
  BEGIN
    PERFORM public.confirm_schedule_change(a,(preview->>'id')::uuid,'manual','test');
    RAISE EXCEPTION 'Stale source accepted';
- EXCEPTION WHEN serialization_failure THEN NULL; END;
+ EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL; END;
  preview:=public.propose_schedule_change(a,ev,'upsert','cancel','{}',null,'manual','test');
  PERFORM public.confirm_schedule_change(a,(preview->>'id')::uuid,'manual','test');
  IF (SELECT action FROM public.schedule_overrides WHERE user_id=a AND event_id=ev)<>'cancel' THEN RAISE EXCEPTION 'Cancel failed'; END IF;
@@ -47,7 +47,7 @@ BEGIN
  BEGIN
    PERFORM public.confirm_schedule_change(a,(preview->>'id')::uuid,'manual','test');
    RAISE EXCEPTION 'Expired preview accepted';
- EXCEPTION WHEN serialization_failure THEN NULL; END;
+ EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL; END;
  BEGIN
    PERFORM public.validate_schedule_patch(before_source,'modify','{"user_id":"x"}',null);
    RAISE EXCEPTION 'Owner injection accepted';
