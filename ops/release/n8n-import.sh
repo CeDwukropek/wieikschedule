@@ -18,7 +18,7 @@ docker exec "$container" sh -c 'n8n export:workflow --all --output=/tmp/wieik-cu
 active="$(docker exec "$container" node /tmp/wieik-keep.cjs /tmp/wieik-new.json /tmp/wieik-current.json /tmp/wieik-merged.json)"
 docker exec "$container" n8n import:workflow --input=/tmp/wieik-merged.json
 if [ -n "$active" ]; then
-  for id in $active; do docker exec "$container" n8n update:workflow --id="$id" --active=true; done
+  for id in $active; do docker exec "$container" n8n publish:workflow --id="$id"; done
   docker restart "$container" >/dev/null
   echo "Re-activated: $active (container restarted)"
 fi
