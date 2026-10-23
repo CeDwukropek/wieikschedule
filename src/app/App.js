@@ -26,8 +26,11 @@ import {usePlanItems} from '../features/plan-items/usePlanItems';
 import {filterItems,isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
 import PlanItemDialog from '../features/plan-items/PlanItemDialog';
 import UpcomingPanel from '../features/plan-items/UpcomingPanel';
+import StarostaPanel from '../features/plan-items/StarostaPanel';
+import {planItemsRequest} from '../features/plan-items/planItemsApi';
 import {slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
-import {CalendarPlus} from 'lucide-react';
+import {reviewItems} from '../features/plan-items/planRoles';
+import {CalendarPlus,ShieldCheck} from 'lucide-react';
 
 const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
@@ -89,6 +92,7 @@ export default function App() {
   const showWeekend=useCallback(weekStart=>view.alwaysShowWeekend||weekendSet.has(toIsoDate(weekStart)),[view.alwaysShowWeekend,weekendSet]);
   const [openItemId,setOpenItemId]=useState(null);
   const [upcomingOpen,setUpcomingOpen]=useState(false);
+  const [starostaOpen,setStarostaOpen]=useState(false);
   const openItem=planItems.items.find(item=>item.id===openItemId&&!item.my_state?.hidden);
   const onItemState=user&&itemsOn?planItems.setItemState:undefined;
   const navigation = useScheduleNavigation({
@@ -160,6 +164,7 @@ export default function App() {
   const dayPlaced=useMemo(()=>placeItems(items,navigation.selectedDayWeekStart,dayEvents),[items,navigation.selectedDayWeekStart,dayEvents]);
   const weekDays=useMemo(()=>showWeekend(navigation.viewedWeekStart)||weekPlaced.events.some(ev=>ev.day>=5&&!isDayOff(ev))
     ||Object.keys(weekPlaced.strip).some(day=>Number(day)>=5)?WHOLE_WEEK:WORKDAYS,[showWeekend,navigation.viewedWeekStart,weekPlaced]);
+  const reviewCount=useMemo(()=>reviewItems(planItems.items).length,[planItems.items]);
   const upcomingCount=useMemo(()=>{const {upcoming,overdue}=upcomingItems(items,today);return upcoming.length+overdue.length;},[items,today]);
 
   usePersistSettings(
@@ -213,6 +218,14 @@ export default function App() {
       setToast({message:members.length>1?`Usunięto ${termsLabel(members.length)}.`:'Usunięto termin.',undo:async()=>{await planItems.remove(done,true);}});
     },
   }:undefined;
+  // A role from an invite code; the entries reload so that the new rights apply at once.
+  const redeemInvite=async code=>{
+    const {role}=await planItemsRequest('redeem',{method:'POST',body:{code}});
+    planItems.refresh();
+    return role;
+  };
+  const groupsFor=useCallback(faculty=>(tables[faculty]||(faculty===schedule.currentSchedule?effectiveTable:null))?.schedule||[],
+    [tables,schedule.currentSchedule,effectiveTable]);
   const newDraft=()=>{
     const weekStart=toIsoDate(navigation.viewedWeekStart),inWeek=todayIso>=weekStart&&todayIso<=toIsoDate(new Date(navigation.viewedWeekStart.getFullYear(),navigation.viewedWeekStart.getMonth(),navigation.viewedWeekStart.getDate()+6));
     const start=inWeek?Math.min(Math.max(new Date().getHours()+1,8),20)*60:8*60;
@@ -233,7 +246,7 @@ export default function App() {
     <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       <FloatingMenu
         panelState={{ open, setOpen }}
-        viewState={{...view,entriesOn:itemsOn}}
+        viewState={{...view,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined}}
         weekNavigation={navigation.weekNavigation}
         weekSelection={navigation.weekSelection}
         dayNavigation={navigation.dayNavigation}
@@ -306,6 +319,9 @@ export default function App() {
         </button>}
         {itemActions&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog" onClick={newDraft}>
           <CalendarPlus size={15} aria-hidden="true"/>Dodaj termin</button>}
+        {itemActions&&planItems.roles.length>0&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog"
+          onClick={()=>setStarostaOpen(true)}><ShieldCheck size={15} aria-hidden="true"/>Panel starosty
+          {reviewCount>0&&<span className="plan-panel-count plan-panel-count-attention">{reviewCount} do sprawdzenia</span>}</button>}
       </section>}
       {user&&personalEnabled&&<section className="mb-4 text-sm">
         {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
@@ -348,6 +364,9 @@ export default function App() {
         onOpen={item=>{setUpcomingOpen(false);setOpenItemId(item.id);}}/>}
       {openItem&&<PlanItemDialog key={openItem.id} item={openItem} onClose={()=>setOpenItemId(null)} onState={onItemState} actions={itemActions}/>}
       {draft&&itemActions&&<PlanItemDialog draft={draft} onClose={()=>setDraft(null)} actions={itemActions}/>}
+      {starostaOpen&&itemActions&&<StarostaPanel roles={planItems.roles} items={planItems.items} scheduleId={schedule.currentSchedule}
+        timetableOptions={schedule.timetableOptions} groupsFor={groupsFor} onChanged={planItems.refresh} onClose={()=>setStarostaOpen(false)}
+        onOpenItem={item=>{setStarostaOpen(false);setOpenItemId(item.id);}}/>}
       <UndoToast toast={toast} onDismiss={dismissToast}/>
       <FAQ />
     </div>

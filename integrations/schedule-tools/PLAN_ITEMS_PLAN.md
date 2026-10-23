@@ -1,6 +1,6 @@
 # Kolokwia, sprawozdania i inne terminy — projekt E6
 
-Status: decyzje użytkownika z 23.10.2026. E6.1 na produkcji; E6.2 (API) i E6.3 (widok) w PR #117; E6.4 (dodawanie ręczne) na stagingu.
+Status: decyzje użytkownika z 23.10.2026. E6.1 na produkcji; E6.2–E6.4 w `main` (#117, #119), na produkcji za flagą; E6.5 (panel starosty) na stagingu.
 E6.1 (baza i role):
 [migracja](../../DB/migrations/20261025_plan_items_and_roles.sql), [test](plan-items-test.sql),
 [wydanie](../../ops/release/README.md#e61--wpisy-w-planie-i-role).
@@ -187,7 +187,7 @@ użytkownik po próbie na kopii, jak przy E5.
 | E6.2 API | `api/plan-items/*`: `list` (także bez logowania: wpisy grupowe), `save`, `remove` (z cofnięciem), `state`, `roles`, `invite`, `redeem`, `revoke` — jedna funkcja Vercela (4 z 12). Feed kalendarza Odysseusa zawiera `entries`; ich wyświetlanie w Odysseusie razem z przypomnieniami (E6.8). Podpowiedzi terminów liczy przeglądarka z wczytanego planu (E6.4), agent dostaje własne narzędzie (E6.7). ICS razem z widokiem (E6.3). |
 | E6.3 Widok | Pasek pod datami, weekend (siatka, widok dnia, ustawienie „Zawsze pokazuj weekend”, walidacja prywatnych zmian), znaczniki na zajęciach i bloki, okno wpisu z postępem i ukrywaniem, panel „Nadchodzące terminy”, kolory rodzajów, ICS. Flaga `REACT_APP_PLAN_ITEMS`. Filtr rodzajów przechodzi do E6.4, razem z dodawaniem. |
 | E6.4 Dodawanie ręczne | „Dodaj kolokwium lub termin” w oknie zajęć (najbliższe zajęcia grupy do zaznaczenia, „Kolejny termin” z własną datą), „Zmień salę” w „Więcej”. Kliknięcie lub przeciągnięcie po wolnym miejscu siatki (na telefonie po długim przytrzymaniu) i przycisk „Dodaj termin”: przedmiot, grupa spośród tych z prawem zapisu, tydzień i dwa tygodnie później. Edycja i usuwanie „tylko ten / ten i następne / wszystkie” (przesunięcie serii o tyle samo dni; zajęcia szukane w tym samym dniu), cofanie z powiadomienia. Filtr „Kolokwia i terminy” w ustawieniach (wszystkie, grupowe, moje, rodzaje). Serie obejmują wpisy z wczytanego okna dat (około 9 tygodni wstecz, 19 naprzód). Serie prywatnych zmian zajęć przechodzą do E6.6. |
-| E6.5 Role w interfejsie | Panel starosty: kody zaproszeń, starostowie grup, wpisy do sprawdzenia, historia zmian. |
+| E6.5 Role w interfejsie | „Panel starosty” dla osób z rolą (z licznikiem wpisów do sprawdzenia): wpisy do sprawdzenia po zmianie planu (potwierdzenie albo zmiana), kod zaproszenia (admin: starosta kierunku lub grupy na dowolnym planie; starosta: starosta grupy swojego planu; podpowiedź grup bez starosty; kod widoczny raz, z kopiowaniem instrukcji), role z rezygnacją i odbieraniem, historia zmian wpisów grupowych z cofnięciem ostatniej zmiany wpisu. Autorzy w historii tylko jako rola („starosta grupy Lk4”, „Ty”). Akcja API `history` (starosta grupy widzi swoje grupy). „Mam kod zaproszenia” w ustawieniach dla każdego zalogowanego. |
 | E6.6 Zmiany planu | Komunikaty przy przeniesieniu zajęć z kolokwium, odrobienie u innej grupy, serie prywatnych zmian zajęć. |
 | E6.7 Agent | Tryb rozmowy, narzędzia, karta podglądu, powiększany czat, PR w Odysseusie; wdrożenie na główny Odysseus po zgodzie użytkownika. |
 | E6.8 Przypomnienia | Domyślne przypomnienia według rodzaju, ustawienia osobiste, ICS. |

@@ -169,6 +169,42 @@ async function revokeRole(ctx,body){
   itemError(error);
   return {role:data};
 }
+// Latest changes of group entries in one plan, for those who may write there (a group starosta sees their groups).
+// Who made a change is told by role only; each change comes with the version before it and the entry as it is now,
+// which is what undoing it needs.
+const SNAPSHOT=['title','kind','timing','event_id','date','start_time','duration_min','due_time','subject','group','details','state','review_reason'];
+const snapshot=item=>(item?Object.fromEntries(SNAPSHOT.map(key=>[key,item[key]??null])):null);
+async function listHistory(ctx,query){
+  keys(query,['faculty']);
+  const faculty=text(query.faculty,256,true).trim();
+  const roles=await myRoles(ctx);
+  const whole=roles.some(role=>role.role==='admin'||(role.role==='starosta'&&role.faculty===faculty));
+  const groups=roles.filter(role=>role.role==='group_starosta'&&role.faculty===faculty).map(role=>role.group);
+  if(!whole&&!groups.length)fail(403,'FORBIDDEN','Historia zmian jest dostępna dla starostów.');
+  let changes=ctx.db.from('plan_item_history').select('id,item_id,revision,operation,actor_id,item,created_at').eq('item->>faculty',faculty);
+  if(!whole)changes=changes.in('item->>group',groups);
+  const {data:rows,error}=await changes.order('id',{ascending:false}).limit(60);
+  itemError(error);
+  const ids=[...new Set(rows.map(row=>row.item_id))],actors=[...new Set(rows.map(row=>row.actor_id).filter(Boolean))];
+  const [versions,current,actorRoles]=await Promise.all([
+    ids.length?pages(ctx.db.from('plan_item_history').select('item_id,revision,item').in('item_id',ids).order('id')):[],
+    ids.length?pages(ctx.db.from('plan_items').select('id,revision,deleted_at').in('id',ids).order('id')):[],
+    actors.length?pages(ctx.db.from('plan_roles').select('user_id,role,faculty,group').in('user_id',actors).order('id')):[]]);
+  const version=new Map(versions.map(row=>[row.item_id+'#'+row.revision,row.item]));
+  const now=new Map(current.map(row=>[row.id,{revision:row.revision,deleted:row.deleted_at!=null}]));
+  const who=(actor,operation)=>{
+    if(!actor)return operation==='review'?'zmiana planu uczelni':'konto usunięte';
+    if(actor===ctx.userId)return 'Ty';
+    const held=actorRoles.filter(role=>role.user_id===actor);
+    if(held.some(role=>role.role==='admin'))return 'admin';
+    if(held.some(role=>role.role==='starosta'&&role.faculty===faculty))return 'starosta';
+    const group=held.find(role=>role.role==='group_starosta'&&role.faculty===faculty);
+    return group?`starosta grupy ${group.group}`:'osoba bez roli';
+  };
+  return {changes:rows.map(row=>({id:row.id,item_id:row.item_id,revision:row.revision,operation:row.operation,
+    actor:who(row.actor_id,row.operation),created_at:row.created_at,item:snapshot(row.item),
+    previous:snapshot(version.get(row.item_id+'#'+(row.revision-1))),current:now.get(row.item_id)||null}))};
+}
 // Calendar mirror: entries of the plan's groups and the owner's own; an entry for every group of a
 // subject belongs to the plan when the plan has that subject.
 function entryBelongs(item,selection,subjects){
@@ -192,4 +228,4 @@ async function entriesFingerprint(ctx,selection){
   return [group,personal,states];
 }
 module.exports={KINDS,itemError,validateItem,canEdit,listItems,saveItems,removeItems,setState,inviteHash,listRoles,
-  createInvite,redeemInvite,revokeRole,entryBelongs,feedEntries,entriesFingerprint};
+  listHistory,createInvite,redeemInvite,revokeRole,entryBelongs,feedEntries,entriesFingerprint};
