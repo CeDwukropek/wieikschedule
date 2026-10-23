@@ -4,9 +4,11 @@ import React, { forwardRef, useEffect, useState } from "react";
 import EventDetailsDialog from "./EventDetailsDialog";
 import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
+import { tileKey } from "../logic/eventIdentity";
+import DayStrip from "../../plan-items/DayStrip";
 import "./ScheduleView.css";
 
-const DAYS = [0, 1, 2, 3, 4]; // Pon–Pt
+const WORKDAYS = [0, 1, 2, 3, 4]; // Pon–Pt; Sob/Nd only when the week has something then
 
 const WeekView = forwardRef(function WeekView(
   {
@@ -14,6 +16,10 @@ const WeekView = forwardRef(function WeekView(
     subjects = {},
     viewedWeekStart,
     planActions,
+    days: DAYS = WORKDAYS,
+    strip = {},
+    onOpenItem,
+    onItemState,
   },
   ref,
 ) {
@@ -24,11 +30,18 @@ const WeekView = forwardRef(function WeekView(
   const slotsPerHour = 60 / slotMinutes;
   const totalSlots = (endHour - startHour) * slotsPerHour;
   const totalMinutes = (endHour - startHour) * 60;
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  useEffect(() => setSelectedEvent(null), [events, viewedWeekStart]);
+  // The dialog follows the tile through recomputed events and closes when it is gone or the week changes.
+  const [selectedKey, setSelectedKey] = useState(null);
+  useEffect(() => setSelectedKey(null), [viewedWeekStart]);
+  const selectedEvent = selectedKey ? events.find(ev => tileKey(ev) === selectedKey) || null : null;
+  const setSelectedEvent = ev => setSelectedKey(ev ? tileKey(ev) : null);
 
-  const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
-  const shortDayNames = ["Pon.", "Wt.", "Śr.", "Czw.", "Pt."];
+  const dayNames = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
+  const shortDayNames = ["Pon.", "Wt.", "Śr.", "Czw.", "Pt.", "Sob.", "Nd."];
+  // Whole-day entries get their own row under the dates only in weeks that have some.
+  const hasStrip = DAYS.some(day => strip[day]?.length);
+  const firstSlotRow = hasStrip ? 4 : 3;
+  const openDetails = ev => ev.planItem ? onOpenItem?.(ev.planItem) : setSelectedEvent(ev);
 
   const monday =
     viewedWeekStart instanceof Date
@@ -54,33 +67,34 @@ const WeekView = forwardRef(function WeekView(
     });
 
     return map;
-  }, [events, startHour, endHour]);
+  }, [events, startHour, endHour, DAYS]);
 
   return (
     <div className="week-overview">
       <p className="week-overview-hint">Cały tydzień <span>· Kliknij zajęcia, aby zobaczyć szczegóły</span></p>
-      <div ref={ref} className="week-grid" style={{gridTemplateRows: `auto auto repeat(${totalSlots}, var(--week-slot-height))`}} aria-label="Plan od poniedziałku do piątku, od 7:00 do 22:00">
+      <div ref={ref} className="week-grid" style={{"--week-days": DAYS.length, gridTemplateRows: `auto auto ${hasStrip ? "auto " : ""}repeat(${totalSlots}, var(--week-slot-height))`}}
+        aria-label={`Plan od poniedziałku do ${DAYS.length > 5 ? "niedzieli" : "piątku"}, od 7:00 do 22:00`}>
         {/* Header row - Day names */}
-        {dayNames.map((name, dayIndex) => (
+        {DAYS.map((dayIndex, column) => (
           <div
             key={dayIndex}
             className="week-day-name"
             style={{
-              gridColumn: dayIndex + 2,
+              gridColumn: column + 2,
               gridRow: 1,
             }}
           >
-            <span className="week-day-long">{name}</span><abbr className="week-day-short" title={name}>{shortDayNames[dayIndex]}</abbr>
+            <span className="week-day-long">{dayNames[dayIndex]}</span><abbr className="week-day-short" title={dayNames[dayIndex]}>{shortDayNames[dayIndex]}</abbr>
           </div>
         ))}
 
         {/* Date row - under day names */}
-        {dayNames.map((name, dayIndex) => (
+        {DAYS.map((dayIndex, column) => (
           <div
             key={`date-${dayIndex}`}
             className="week-day-date"
             style={{
-              gridColumn: dayIndex + 2,
+              gridColumn: column + 2,
               gridRow: 2,
             }}
           >
@@ -88,10 +102,17 @@ const WeekView = forwardRef(function WeekView(
           </div>
         ))}
 
+        {/* Whole-day entries and deadlines */}
+        {hasStrip && DAYS.map((dayIndex, column) => (
+          <div key={`strip-${dayIndex}`} className="week-day-strip" style={{ gridColumn: column + 2, gridRow: 3 }}>
+            <DayStrip items={strip[dayIndex]} onOpen={item => onOpenItem?.(item)} />
+          </div>
+        ))}
+
         {/* Empty corner above time column */}
         <div
           className="z-10 border-r border-neutral-700 bg-neutral-900"
-          style={{ gridColumn: 1, gridRow: 1, gridRowEnd: 3 }}
+          style={{ gridColumn: 1, gridRow: `1 / ${firstSlotRow}` }}
         />
 
         {/* Time column labels - only on hourly rows */}
@@ -101,8 +122,7 @@ const WeekView = forwardRef(function WeekView(
             className="week-hour-label border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
-              gridRow: i * slotsPerHour + 3,
-              gridRowEnd: (i + 1) * slotsPerHour + 3,
+              gridRow: `${i * slotsPerHour + firstSlotRow} / ${(i + 1) * slotsPerHour + firstSlotRow}`,
             }}
           >
             <span className="mt-[0.25em]">{startHour + i}:00</span>
@@ -110,7 +130,7 @@ const WeekView = forwardRef(function WeekView(
         ))}
 
         {/* Day columns with time slots as background */}
-        {DAYS.map((day) => {
+        {DAYS.map((day, column) => {
           return timeSlots.map((slot) => {
             const isHourBoundary = slot.index % slotsPerHour === 0;
             const hourBlock = Math.floor(slot.index / slotsPerHour);
@@ -122,8 +142,8 @@ const WeekView = forwardRef(function WeekView(
                   isHourBoundary ? "border-neutral-700" : "border-neutral-800"
                 } ${hourBlock % 2 === 0 ? "hour-even" : ""}`}
                 style={{
-                  gridColumn: day + 2,
-                  gridRow: slot.index + 3,
+                  gridColumn: column + 2,
+                  gridRow: slot.index + firstSlotRow,
                 }}
               />
             );
@@ -131,7 +151,7 @@ const WeekView = forwardRef(function WeekView(
         })}
 
         {/* Absolute overlay for day events */}
-        {DAYS.map((day) => {
+        {DAYS.map((day, column) => {
           const positionedEvents = layoutByDay.get(day) || [];
 
           return (
@@ -139,9 +159,10 @@ const WeekView = forwardRef(function WeekView(
               key={`overlay-${day}`}
               className="week-events-overlay"
               style={{
-                gridColumn: day + 2,
-                gridRow: 3,
-                gridRowEnd: `span ${totalSlots}`,
+                gridColumn: column + 2,
+                // One shorthand: React updates only changed properties, and setting grid-row alone
+                // would reset a separately kept grid-row-end (the overlay collapsed to one slot).
+                gridRow: `${firstSlotRow} / span ${totalSlots}`,
               }}
             >
               {positionedEvents.map(
@@ -170,7 +191,7 @@ const WeekView = forwardRef(function WeekView(
                           ev={ev}
                           subjects={subjects}
                           compact
-                          onOpenDetails={setSelectedEvent}
+                          onOpenDetails={openDetails}
                         />
                     </div>
                   );
@@ -186,6 +207,7 @@ const WeekView = forwardRef(function WeekView(
         date={new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedEvent.day)}
         onClose={() => setSelectedEvent(null)}
         planActions={planActions}
+        onItemState={onItemState}
       />}
     </div>
   );

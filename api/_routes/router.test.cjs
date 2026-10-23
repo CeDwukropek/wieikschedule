@@ -24,7 +24,7 @@ test('unknown and inherited action names return 404 without calling a handler',a
   }
 });
 test('every handler in api/_routes is registered in its area router',()=>{
-  for(const area of ['schedule','my-plan','calendar-sync']){
+  for(const area of ['schedule','my-plan','calendar-sync','plan-items']){
     const files=fs.readdirSync(path.join(API,'_routes',area)).filter(name=>name.endsWith('.js')).map(name=>name.slice(0,-3)).sort();
     const source=fs.readFileSync(path.join(API,area,'[action].js'),'utf8');
     const registered=[...source.matchAll(/'([a-z-]+)':require\('\.\.\/_routes\/([a-z-]+)\/([a-z-]+)'\)/g)];

@@ -82,7 +82,7 @@ def prepare(args):
         private_file(secret_file, json.dumps(local, indent=2) + '\n')
     client = {key: supplied.get(key, '') for key in CLIENT_KEYS}
     client.update(REACT_APP_LOCAL_STAGING='true', REACT_APP_PERSONAL_SCHEDULE='true', REACT_APP_ENABLE_AI_CHAT='true',
-                  REACT_APP_CALENDAR_SYNC='true',
+                  REACT_APP_CALENDAR_SYNC='true', REACT_APP_PLAN_ITEMS='true',
                   REACT_APP_API_BASE_URL='', REACT_APP_SUPABASE_URL='http://localhost:3100/supabase',
                   REACT_APP_SUPABASE_ANON_KEY=local['anon_jwt'], REACT_APP_N8N_CHAT_WEBHOOK='/staging/chat')
     # Never copy production Supabase credentials, webhook URLs or unrelated secrets.
@@ -139,7 +139,11 @@ def seed(args):
                              ("SELECT to_regclass('public.user_added_events_event_idx') IS NOT NULL", '20261024_release_hardening.sql'),
                              ("SELECT to_regclass('public.plan_items') IS NOT NULL", '20261025_plan_items_and_roles.sql'),
                              ("SELECT prosrc LIKE '%PT409%' FROM pg_proc WHERE oid = to_regprocedure('public.confirm_schedule_change(uuid,uuid,text,text)')",
-                              '20261026_conflicts_without_retry.sql')]:
+                              '20261026_conflicts_without_retry.sql'),
+                             ("SELECT prosrc NOT LIKE '%isodow%' FROM pg_proc WHERE oid = to_regprocedure('public.validate_schedule_patch(jsonb,text,jsonb,text)')",
+                              '20261027_weekend_changes.sql'),
+                             ("SELECT prosrc LIKE '%same kind of thing%' FROM pg_proc WHERE oid = to_regprocedure('public.save_plan_items(uuid,jsonb)')",
+                              '20261028_series_of_one_kind.sql')]:
         initialized = pg(check) == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)

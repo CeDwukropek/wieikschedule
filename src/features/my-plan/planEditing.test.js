@@ -10,10 +10,11 @@ test('a move sends only what changed, with the length taken from the end time',(
   expect(moveChanges(row,{date:'2026-10-22',start:'12:00',end:'13:30',instructor:'T'})).toEqual({date:'2026-10-22',start_time:'12:00:00'});
   expect(moveChanges(row,{date:'2026-10-19',start:'07:30',end:'10:00',instructor:' '})).toEqual({duration_min:150,instructor:null});
 });
-test('moves are limited to weekdays, the plan range and 07:00–22:00',()=>{
+test('moves are limited to the plan range and 07:00–22:00, weekends included',()=>{
   const bounds={min:'2026-10-01',max:'2027-02-01'};
   expect(validateMove({date:'2026-10-22',start:'12:00',end:'13:30'},bounds)).toBe('');
-  expect(validateMove({date:'2026-10-24',start:'12:00',end:'13:30'},bounds)).toMatch(/poniedziałku do piątku/);
+  expect(validateMove({date:'2026-10-24',start:'12:00',end:'13:30'},bounds)).toBe('');
+  expect(validateMove({date:'',start:'12:00',end:'13:30'},bounds)).toMatch(/Wybierz datę/);
   expect(validateMove({date:'2027-03-01',start:'12:00',end:'13:30'},bounds)).toMatch(/poza zakresem/);
   expect(validateMove({date:'2026-10-22',start:'06:30',end:'08:00'},bounds)).toMatch(/07:00/);
   expect(validateMove({date:'2026-10-22',start:'21:00',end:'22:30'},bounds)).toMatch(/22:00/);

@@ -56,10 +56,12 @@ BEGIN
    PERFORM public.validate_schedule_patch(before_source,'modify','{"start_time":"21:30:00","duration_min":90}',null);
    RAISE EXCEPTION 'Overnight accepted';
  EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ -- Weekends are valid since 20261027; impossible dates are not.
+ PERFORM public.validate_schedule_patch(before_source,'modify','{"date":"2026-10-17"}',null);
  BEGIN
-   PERFORM public.validate_schedule_patch(before_source,'modify','{"date":"2026-10-17"}',null);
-   RAISE EXCEPTION 'Unsupported weekend accepted';
- EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+   PERFORM public.validate_schedule_patch(before_source,'modify','{"date":"2026-02-30"}',null);
+   RAISE EXCEPTION 'Impossible date accepted';
+ EXCEPTION WHEN invalid_parameter_value OR datetime_field_overflow THEN NULL; END;
  IF has_table_privilege('anon','public.schedule_overrides','SELECT') OR
     has_table_privilege('authenticated','public.schedule_overrides','UPDATE') OR
     has_function_privilege('anon','public.confirm_schedule_change(uuid,uuid,text,text)','EXECUTE') OR
