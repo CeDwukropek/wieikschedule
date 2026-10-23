@@ -103,6 +103,16 @@ export function newItems(form, terms) {
     ...termToItem(term) }));
 }
 
+// An entry the database would refuse as a duplicate (same class and kind, or same subject, group, kind, day and
+// hour), hidden ones included: they stay in the plan of everyone else.
+export function existingFor(items, term, { scope, kind, faculty, subject, group }, exceptId = null) {
+  const time = value => hhmm(value) || "00:00";
+  return items.find(item => item.id !== exceptId && item.scope === scope && item.kind === kind && (term.timing === "class"
+    ? item.timing === "class" && String(item.event_id) === String(term.event_id)
+    : item.timing !== "class" && item.faculty === faculty && (item.subject || "") === (subject || "")
+      && (item.group || "") === (scope === "group" ? group || "" : "") && item.date === term.date
+      && time(item.start_time || item.due_time) === time(term.timing === "slot" ? term.start : term.due_time))) || null;
+}
 export const termsLabel = count => `${count} ${count === 1 ? "termin"
   : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? "terminy" : "terminów"}`;
 export const SERIES_CHOICES = { one: "Tylko ten", following: "Ten i następne", all: "Wszystkie" };

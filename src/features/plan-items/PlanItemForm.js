@@ -1,7 +1,7 @@
-import { useId, useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, Eye, Plus, X } from 'lucide-react';
 import { KINDS } from './planItemLogic';
-import { addDays, canWriteAnyGroup, canWriteGroup, classGroup, classOf, classTerms, describeTerm, editItems, facultyOf,
+import { addDays, canWriteAnyGroup, canWriteGroup, classGroup, classOf, classTerms, describeTerm, editItems, existingFor, facultyOf,
   laterTerms, newItems, SERIES_CHOICES, seriesOf, termError, termOfItem, termsLabel, writableGroups } from './planItemEditing';
 
 const MAX_TERMS = 20;
@@ -43,6 +43,9 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     : editing && editing.timing !== 'class' ? [{ ...termOfItem(editing), key: 'custom-0' }] : []);
   const [which, setWhich] = useState('one');
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const alert = useRef(null);
+  // A refusal from the server shows where the person is looking, not below the fold.
+  useEffect(() => { if (error) alert.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); }, [error]);
 
   const groupOptions = useMemo(() => {
     if (onClass) return [];
@@ -52,14 +55,19 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   const mayGroup = editing ? editing.scope === 'group' : host ? canWriteGroup(roles, faculty, classGroup(host)) : canWriteAnyGroup(roles, faculty);
   const group = form.scope === 'group' && !onClass && !groupOptions.includes(form.group) ? groupOptions[0] : form.group;
 
-  const terms = [...suggestions.filter(term => picked.has(term.key)), ...customs];
+  // Terms that already have such an entry cannot be added again; a hidden one can be shown instead.
+  const values = { ...form, group };
+  const takenBy = term => existingFor(actions.items, term, values, editing?.id);
+  const terms = [...suggestions.filter(term => picked.has(term.key) && !takenBy(term)), ...customs];
+  const takenCustom = customs.map(takenBy).find(Boolean);
   const members = editing ? seriesOf(actions.items, editing, which) : [];
   const seriesSize = editing?.series_id ? actions.items.filter(item => item.series_id === editing.series_id).length : 1;
   const problem = !terms.length ? 'Wybierz co najmniej jeden termin.'
     : terms.length > MAX_TERMS ? `Seria może mieć najwyżej ${MAX_TERMS} terminów.`
     : form.scope === 'group' && !onClass && !form.subject ? 'Wybierz przedmiot.'
     : form.scope === 'group' && !onClass && group === undefined ? 'Nie możesz dodawać wpisów grupowych z tego przedmiotu.'
-    : terms.map(termError).find(Boolean) || '';
+    : terms.map(termError).find(Boolean)
+    || (takenCustom ? `${KINDS[form.kind].label} ${describeTerm(termOfItem(takenCustom))} już jest wpisane${takenCustom.my_state?.hidden ? ' (ukryte u Ciebie)' : ''}.` : '');
 
   // Editing keeps one term: picking a suggestion drops the own date and the other way round.
   const toggle = term => {
@@ -69,7 +77,11 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   const addCustom = () => {
     // A week after the latest term chosen so far, at the same time.
     const last = [...terms].sort((a, b) => a.date.localeCompare(b.date)).pop();
-    const base = last ? { ...last, date: addDays(last.date, 7) } : { date: today, start: '08:00', end: '09:30' };
+    // Dates already on the list (ticked or not) are skipped.
+    const listed = new Set([...suggestions, ...customs].map(term => term.date));
+    let date = last ? addDays(last.date, 7) : today;
+    while (last && listed.has(date)) date = addDays(date, 7);
+    const base = last ? { ...last, date } : { date, start: '08:00', end: '09:30' };
     const timing = last?.timing === 'due' || (!last && defaultTiming(form.kind) === 'due') ? 'due' : 'slot';
     const term = { timing, date: base.date, start: base.start || '08:00', end: base.end || '09:30', due_time: base.due_time || '', key: `custom-${Date.now()}` };
     if (editing) setPicked(new Set());
@@ -80,7 +92,6 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   const submit = async event => {
     event.preventDefault();
     if (problem || busy) return;
-    const values = { ...form, group };
     setBusy(true); setError('');
     try {
       if (editing) {
@@ -89,7 +100,12 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
         if (result.changes.length) await actions.update(result.changes, result.undo);
       } else await actions.create(newItems(values, terms));
       onDone();
-    } catch (failure) { setError(failure.message || 'Nie udało się zapisać.'); setBusy(false); }
+    } catch (failure) {
+      setError(failure.code === 'DUPLICATE'
+        ? 'Ten termin jest już wpisany. Jeśli go nie widać, może być ukryty u Ciebie: „Nadchodzące terminy” → „Ukryte u mnie”.'
+        : failure.message || 'Nie udało się zapisać.');
+      setBusy(false);
+    }
   };
 
   return <form className="plan-form plan-item-form" onSubmit={submit} aria-label={editing ? 'Edycja terminu' : 'Nowy termin'}>
@@ -123,9 +139,17 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     <fieldset className="plan-item-terms">
       <legend>{editing ? 'Termin' : 'Terminy'}</legend>
       {suggestions.length > 0 && <ul className="plan-item-suggestions" aria-label={host ? 'Najbliższe zajęcia grupy' : 'Tydzień i dwa tygodnie później'}>
-        {suggestions.map(term => <li key={term.key}><label>
-          <input type={editing ? 'radio' : 'checkbox'} name={`${id}-term`} checked={picked.has(term.key)} onChange={() => toggle(term)}/>
-          {describeTerm(term)}</label></li>)}
+        {suggestions.map(term => {
+          const taken = takenBy(term);
+          return <li key={term.key} data-taken={taken ? true : undefined}><label>
+            <input type={editing ? 'radio' : 'checkbox'} name={`${id}-term`} disabled={Boolean(taken)}
+              checked={!taken && picked.has(term.key)} onChange={() => toggle(term)}/>
+            {describeTerm(term)}{taken && <span className="plan-item-taken">
+              {taken.my_state?.hidden ? ' · już wpisane, ukryte u Ciebie' : ` · już wpisane: ${taken.title}`}</span>}</label>
+            {taken?.my_state?.hidden && actions.show && <button type="button" className="plan-item-show"
+              onClick={() => actions.show(taken.id)}><Eye size={14} aria-hidden="true"/>Pokaż</button>}
+          </li>;
+        })}
       </ul>}
       {customs.map(term => <div key={term.key} className="plan-item-custom">
         <select aria-label="Rodzaj terminu" value={term.timing} onChange={event => setCustom(term.key, { timing: event.target.value })}>
@@ -151,7 +175,8 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     </fieldset>}
     {form.scope === 'group' && !editing && group !== undefined && <p className="plan-item-hint">
       {(onClass ? classGroup(host) : group) == null ? 'Zobaczą go wszystkie grupy przedmiotu.' : `Zobaczy go cała grupa ${onClass ? classGroup(host) : group}.`}</p>}
-    {(error || (problem && terms.length > 0)) && <p role="alert" className="event-details-error">{error || problem}</p>}
+    {error ? <p role="alert" ref={alert} className="plan-item-alert"><AlertTriangle size={16} aria-hidden="true"/>{error}</p>
+      : problem && terms.length > 0 && <p role="status" className="plan-item-problem">{problem}</p>}
     <div className="plan-form-buttons">
       <button type="submit" className="event-details-edit" disabled={busy || Boolean(problem)}>
         {busy ? 'Zapisywanie…' : editing ? 'Zapisz' : terms.length > 1 ? `Dodaj ${termsLabel(terms.length)}` : 'Dodaj'}</button>

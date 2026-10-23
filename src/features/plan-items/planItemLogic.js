@@ -124,7 +124,8 @@ export function describeItemTime(item) {
 }
 export function describeAudience(item) {
   if (item.scope === "personal") return "Tylko Ty";
-  return item.group ? `Grupa ${item.group}` : "Wszystkie grupy";
+  // "W" is the lecture: the whole year, not a group of its own.
+  return item.group && item.group !== "W" ? `Grupa ${item.group}` : "Wszystkie grupy";
 }
 const REVIEW = {
   moved: "Uczelnia przeniosła te zajęcia. Termin przesunął się razem z nimi — potwierdź go u prowadzącego.",

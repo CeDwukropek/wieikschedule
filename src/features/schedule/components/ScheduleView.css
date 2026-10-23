@@ -416,9 +416,13 @@
 .plan-item-scope-fixed { color: #d8b4fe; }
 .plan-item-suggestions { display: grid; gap: 4px; }
 .plan-item-suggestions li { padding: 6px 8px; border-radius: 8px; background: #1f1f1f; }
-.plan-item-custom { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+/* Two lines in the narrow dialog: kind and date, then the hours (or the hand-in time) and the remove button. */
+.plan-item-custom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center;
+  padding-bottom: 6px; border-bottom: 1px solid #262626; }
+.plan-item-custom > input[type="date"] { grid-column: 2 / 4; }
 .plan-item-custom select, .plan-item-custom input { min-width: 0; padding: 8px 6px !important; }
-.plan-item-form .plan-item-custom-remove { padding: 8px; background: #262626; color: #a3a3a3; }
+.plan-item-form .plan-item-custom-remove { grid-column: 3; padding: 8px; background: #262626; color: #a3a3a3; }
+.plan-item-problem { font-size: 13px; color: #fbbf24; }
 .plan-item-form .plan-item-add-term { justify-self: start; padding: 8px 12px; }
 .plan-item-hint { font-size: 12px; color: #a3a3a3; }
 .plan-item-manage { display: flex; gap: 8px; }
@@ -428,10 +432,21 @@
 .plan-item-removing { display: grid; gap: 8px; font-size: 13px; }
 .plan-item-removing p { color: #fca5a5; font-size: 12px; }
 .plan-item-removing button { padding: 10px; border-radius: 8px; font-size: 14px; }
+.plan-item-alert { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; font-size: 14px;
+  background: #450a0a; border: 1px solid #b91c1c; color: #fecaca; }
+.plan-item-alert svg { flex: none; margin-top: 2px; color: #f87171; }
+.plan-item-suggestions li { display: flex; align-items: center; gap: 8px; }
+.plan-item-suggestions li > label { flex: 1; min-width: 0; }
+.plan-item-suggestions li[data-taken] label { color: #a3a3a3 !important; cursor: default; }
+.plan-item-taken { color: #fbbf24; }
+.plan-item-form .plan-item-show { padding: 4px 10px; border-radius: 999px; border: 1px solid #404040; font-size: 12px; color: #e5e5e5; }
+/* Subject and group side by side; a long subject name must not push the select over the group. */
+.plan-item-subject { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) !important; }
+.plan-item-subject:has(> label:only-child) { grid-template-columns: minmax(0, 1fr) !important; }
+.plan-item-subject label { min-width: 0; grid-column: auto !important; }
+.plan-item-subject select { width: 100%; min-width: 0; text-overflow: ellipsis; }
 @media (max-width: 640px) {
-  .plan-item-custom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
-  .plan-item-custom > input[type="date"] { grid-column: 2 / 4; }
-  .plan-item-custom > select { grid-column: 1; }
+  .plan-item-subject, .plan-item-subject:has(> label:only-child) { grid-template-columns: minmax(0, 1fr) !important; }
 }
 
 /* "Pokaż terminy" in the settings */

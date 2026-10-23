@@ -1,4 +1,4 @@
-import { canWriteGroup, classTerms, editItems, laterTerms, newItems, seriesOf, slotTerm, subjectsOf, termError, withRevisions,
+import { canWriteGroup, classTerms, editItems, existingFor, laterTerms, newItems, seriesOf, slotTerm, subjectsOf, termError, withRevisions,
   writableGroups } from './planItemEditing';
 
 const lab = (id, date, extra = {}) => ({ id, event_id: `ev-${id}`, day: 0, start: '07:30', end: '09:00', title: 'Modelowanie',
@@ -66,4 +66,16 @@ test('a series edit moves every chosen entry by the same days and undo writes ba
   // Text only: entries keep their terms.
   expect(editItems(series[0], series, { ...form, title: 'Kolokwium', details: 'Rozdz. 1' }, { timing: 'class', event_id: 'ev-1', date: '2026-10-19', start: '07:30', end: '09:00' },
     { planEvents: plan, scheduleId: 'EiAs3' }).changes.map(change => Object.keys(change))).toEqual([['id', 'revision', 'details'], ['id', 'revision', 'details'], ['id', 'revision', 'details']]);
+});
+
+test('duplicates are found the way the database keys them', () => {
+  const quiz = entry('q'), due = entry('d', { timing: 'due', event_id: null, kind: 'sprawozdanie', date: '2026-10-28', start_time: null, duration_min: null, due_time: '23:59:00' });
+  const form = { scope: 'group', kind: 'kolokwium', faculty: 'EiAs3', subject: 'Modelowanie', group: 'Lk1' };
+  expect(existingFor([quiz], { timing: 'class', event_id: 'ev-1' }, form)).toBe(quiz);
+  expect(existingFor([quiz], { timing: 'class', event_id: 'ev-1' }, { ...form, scope: 'personal' })).toBeNull();
+  expect(existingFor([quiz], { timing: 'class', event_id: 'ev-1' }, form, 'q')).toBeNull();
+  const report = { ...form, kind: 'sprawozdanie' };
+  expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '23:59' }, report)).toBe(due);
+  expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '' }, report)).toBeNull();
+  expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '23:59' }, { ...report, group: 'Lk2' })).toBeNull();
 });

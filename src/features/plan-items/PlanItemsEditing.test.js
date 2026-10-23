@@ -58,7 +58,7 @@ test('a free slot asks for the subject, offers a week later and only the groups 
   await waitFor(() => expect(itemActions.create).toHaveBeenCalled());
   const items = itemActions.create.mock.calls[0][0];
   expect(items.map(item => [item.subject, item.group, item.timing, item.date, item.start_time ?? item.due_time])).toEqual([
-    ['Fizyka', 'Lk1', 'slot', '2026-10-31', '09:00'], ['Fizyka', 'Lk1', 'slot', '2026-10-24', '09:00'], ['Fizyka', 'Lk1', 'due', '2026-11-07', null]]);
+    ['Fizyka', 'Lk1', 'slot', '2026-10-31', '09:00'], ['Fizyka', 'Lk1', 'slot', '2026-10-24', '09:00'], ['Fizyka', 'Lk1', 'due', '2026-11-14', null]]);
 });
 
 test('students without a role add private entries; a click on free time opens a 90-minute slot', () => {
@@ -100,4 +100,25 @@ test('an entry of a series is edited or removed with the following ones', async 
   fireEvent.click(screen.getByRole('radio', { name: 'Wszystkie' }));
   fireEvent.click(screen.getByRole('button', { name: 'Usuń (3)' }));
   await waitFor(() => expect(itemActions.remove).toHaveBeenCalledWith(series));
+});
+
+test('a class that already has such an entry is marked, also when hidden, and a refused duplicate is explained', async () => {
+  const hidden = entry('hidden', { my_state: { hidden: true, progress: 'todo' } });
+  const show = jest.fn().mockResolvedValue();
+  const create = jest.fn().mockRejectedValue(Object.assign(new Error('Taki wpis już istnieje.'), { code: 'DUPLICATE' }));
+  render(<WeekView events={placeItems([], monday, [plan[0]]).events} viewedWeekStart={monday}
+    itemActions={actions({ items: [hidden], show, create })}/>);
+  fireEvent.click(screen.getByRole('button', { name: /Modelowanie.*Pokaż szczegóły/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Dodaj kolokwium lub termin' }));
+  const next = screen.getByRole('list', { name: 'Najbliższe zajęcia grupy' });
+  const [taken, free] = within(next).getAllByRole('checkbox');
+  expect([taken.disabled, taken.checked, free.checked]).toEqual([true, false, false]);
+  expect(next).toHaveTextContent('już wpisane, ukryte u Ciebie');
+  fireEvent.click(within(next).getByRole('button', { name: 'Pokaż' }));
+  expect(show).toHaveBeenCalledWith('hidden');
+  // Another kind on the same class is free, and the class clicked is chosen again.
+  fireEvent.click(screen.getByRole('radio', { name: 'Wejściówka' }));
+  expect(within(next).getAllByRole('checkbox')[0]).toBeChecked();
+  fireEvent.click(screen.getByRole('button', { name: 'Dodaj' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ukryte u mnie');
 });

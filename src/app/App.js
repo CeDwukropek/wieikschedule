@@ -197,6 +197,7 @@ export default function App() {
   // Adding, editing and removing entries; each write can be undone from the toast. The server checks the roles.
   const itemActions=user&&itemsOn&&planItems.ready?{
     roles:planItems.roles,items:planItems.items,scheduleId:schedule.currentSchedule,planEvents,today:todayIso,
+    show:id=>planItems.setItemState(id,{hidden:false}),
     subjectsFor:faculty=>subjectsOf((tables[faculty]||(faculty===schedule.currentSchedule?effectiveTable:null))?.schedule),
     create:async entries=>{
       const saved=await planItems.save(entries);
