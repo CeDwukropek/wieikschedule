@@ -133,6 +133,12 @@ BEGIN
     'title', 'Sprawozdanie 4', 'series_id', reports->0->>'series_id')));
   IF (SELECT count(*) FROM public.plan_items WHERE series_id = (reports->0->>'series_id')::uuid) <> 4 THEN
     RAISE EXCEPTION 'Series was not extended'; END IF;
+  -- Unrelated entries saved together stay separate.
+  saved := public.save_plan_items(starosta, jsonb_build_array(
+    jsonb_build_object('scope', 'group', 'faculty', 'TestPs3', 'kind', 'kolokwium', 'timing', 'class', 'event_id', lecture, 'title', 'Kolokwium z wykładu'),
+    jsonb_build_object('scope', 'group', 'faculty', 'TestPs3', 'subject', 'Modelowanie', 'kind', 'projekt', 'timing', 'due', 'date', base + 30, 'title', 'Projekt')));
+  IF (SELECT count(*) FROM jsonb_array_elements(saved) WHERE value->>'series_id' IS NOT NULL) <> 0 THEN
+    RAISE EXCEPTION 'Unrelated entries became a series: %', saved; END IF;
   BEGIN
     PERFORM public.save_plan_items(student, jsonb_build_array(jsonb_build_object('scope', 'personal', 'faculty', 'TestPs3',
       'kind', 'inne', 'timing', 'due', 'date', base, 'title', 'Do cudzej serii', 'series_id', reports->0->>'series_id')));
