@@ -1,0 +1,9 @@
+.git
+node_modules
+build
+.env*
+.staging
+DB/Backups
+data/imports
+coverage
+__pycache__

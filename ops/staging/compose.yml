@@ -1,0 +1,93 @@
+name: wieikschedule-staging
+services:
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: schedule_staging
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD:?Run setup.py prepare}
+      STAGING_AUTHENTICATOR_PASSWORD: ${STAGING_AUTHENTICATOR_PASSWORD:?Run setup.py prepare}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+      - ./schema.sql:/staging-schema.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d schedule_staging"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    mem_limit: 1g
+  postgrest:
+    image: postgrest/postgrest:v14.18
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${STAGING_AUTHENTICATOR_PASSWORD}@postgres:5432/schedule_staging
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_SCHEMAS: public
+      PGRST_JWT_SECRET: ${STAGING_JWT_SECRET:?Run setup.py prepare}
+      PGRST_DB_MAX_ROWS: '1000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 256m
+  app:
+    image: wieikschedule-staging-app:local
+    build:
+      context: ../..
+      dockerfile: ops/staging/Dockerfile
+      args:
+        CLIENT_CONFIG_HASH: ${CLIENT_CONFIG_HASH:?Run setup.py prepare}
+      secrets:
+        - client_env
+    restart: unless-stopped
+    env_file:
+      - ../../.staging/server.env
+    environment:
+      PORT: '3100'
+      SCHEDULE_ENVIRONMENT: staging
+      SUPABASE_URL: http://127.0.0.1:3100/supabase
+    ports:
+      - '127.0.0.1:3100:3100'
+    depends_on:
+      - postgrest
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/staging/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 2g
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.43.5
+    restart: unless-stopped
+    environment:
+      N8N_ENCRYPTION_KEY: ${STAGING_N8N_ENCRYPTION_KEY:?Run setup.py prepare}
+      N8N_HOST: localhost
+      N8N_PORT: '5678'
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: ${STAGING_N8N_PUBLIC_URL:-http://localhost:5678}
+      WEBHOOK_URL: ${STAGING_N8N_PUBLIC_URL:-http://localhost:5678}/
+      N8N_PROXY_HOPS: '1'
+      GENERIC_TIMEZONE: Europe/Warsaw
+      TZ: Europe/Warsaw
+      N8N_DIAGNOSTICS_ENABLED: 'false'
+      N8N_PERSONALIZATION_ENABLED: 'false'
+      N8N_VERSION_NOTIFICATIONS_ENABLED: 'false'
+      N8N_TEMPLATES_ENABLED: 'false'
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
+      EXECUTIONS_DATA_MAX_AGE: '168'
+    ports:
+      - '127.0.0.1:5678:5678'
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../../integrations/schedule-import:/workflows/importer:ro
+      - ./workflows:/workflows/staging:ro
+      - ../../.staging/workflows:/workflows/generated:ro
+    depends_on:
+      - postgrest
+    mem_limit: 2g
+volumes:
+  postgres_data:
+  n8n_data:
+secrets:
+  client_env:
+    file: ../../.staging/client.env

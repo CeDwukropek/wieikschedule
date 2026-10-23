@@ -1,0 +1,130 @@
+{
+  "name": "WIEiK schedule — validated preview (no writes)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Manual preview",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "stac",
+      "name": "Fetch stac",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -100
+      ],
+      "parameters": {
+        "url": "https://plany.wieik.pk.edu.pl/lib/tpl/kiwiki/wk_plan_api.php?action=load&db=stac",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "block",
+      "name": "Fetch block",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "url": "https://plany.wieik.pk.edu.pl/lib/tpl/kiwiki/wk_plan_api.php?action=load&db=block",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "merge",
+      "name": "Combine snapshots",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "preview",
+      "name": "Validate and expand",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\"use strict\";\n\n// This module also runs in an n8n Code node. Keep it free of Node dependencies.\nconst SOURCE_SYSTEM = \"wieik-v1\";\nconst FIELDS = [\"faculty\", \"date\", \"start_time\", \"duration_min\", \"subject\",\n  \"instructor\", \"room\", \"group\", \"type\", \"status\"];\nconst TYPES = { W: \"Wykład\", L: \"Labolatorium\", Lab: \"Labolatorium\",\n  Lk: \"Labolatorium Komputerowe\", P: \"Projekt\", Lek: \"Lektorat\",\n  C: \"Ćwiczenia\", S: \"Seminarium\" };\nconst DAY_MS = 86400000;\nconst MAX_ROWS = 50000;\n\nfunction assert(condition, message) {\n  if (!condition) throw new Error(message);\n}\n\nfunction isoDate(value) {\n  assert(typeof value === \"string\" && /^\\d{4}-\\d{2}-\\d{2}$/.test(value), \"Invalid ISO date\");\n  const timestamp = Date.parse(`${value}T00:00:00Z`);\n  assert(Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value,\n    \"Invalid calendar date\");\n  return value;\n}\n\nfunction time(value) {\n  assert(typeof value === \"string\" && /^(?:[01]\\d|2[0-3]):[0-5]\\d(?::00)?$/.test(value),\n    \"Invalid start time (whole minutes required)\");\n  return value.length === 5 ? `${value}:00` : value;\n}\n\nfunction nullableText(value, field) {\n  assert(value === null || (typeof value === \"string\" && value.length <= 4096), `Invalid ${field}`);\n  return value;\n}\n\nfunction validateFields(row) {\n  isoDate(row.date);\n  time(row.start_time);\n  assert(Number.isInteger(row.duration_min) && row.duration_min > 0 && row.duration_min <= 1440,\n    \"Invalid duration\");\n  assert(typeof row.subject === \"string\" && row.subject.trim().length > 0 && row.subject.length <= 4096,\n    \"Invalid subject\");\n  for (const field of [\"faculty\", \"instructor\", \"room\", \"group\", \"type\", \"status\"])\n    nullableText(row[field], field);\n}\n\nfunction envelope(payload, db) {\n  assert(payload && payload.ok === true && payload.db === db && Array.isArray(payload.data),\n    `Invalid or unsuccessful ${db} snapshot`);\n  assert(typeof payload.revision === \"string\" && payload.revision.length > 0 &&\n    Number.isFinite(payload.mtime), `Missing ${db} snapshot metadata`);\n  assert(payload.data.length <= MAX_ROWS, `${db} snapshot too large`);\n  return payload.data;\n}\n\nfunction datesBetween(from, to, stepDays = 1) {\n  isoDate(from); isoDate(to);\n  const start = Date.parse(`${from}T00:00:00Z`);\n  const end = Date.parse(`${to}T00:00:00Z`);\n  assert(start <= end && end - start <= 732 * DAY_MS, \"Invalid or excessive date range\");\n  const dates = [];\n  for (let timestamp = start; timestamp <= end; timestamp += stepDays * DAY_MS)\n    dates.push(new Date(timestamp).toISOString().slice(0, 10));\n  return dates;\n}\n\nfunction candidateKey(parts) {\n  // Candidate identity, NOT a guarantee across moved dates or renamed groups.\n  return JSON.stringify(parts);\n}\n\nfunction transformSnapshots(schedule, blocks) {\n  const series = envelope(schedule, \"stac\");\n  const daysOff = envelope(blocks, \"block\");\n  assert(series.length > 0, \"Empty schedule requires investigation; no import generated\");\n  const freeDays = new Map();\n  for (const block of daysOff) {\n    assert(block && typeof block === \"object\", \"Invalid block\");\n    // The supplied importer only supports global blocks. Fail instead of losing a scoped block.\n    assert(block.scope === \"all\", \"Scoped blocks require an explicit implementation\");\n    const label = block.label || \"Dzień wolny\";\n    assert(typeof label === \"string\" && label.length <= 4096, \"Invalid block label\");\n    const dates = block.date ? [isoDate(block.date)] : datesBetween(block.from, block.to);\n    for (const date of dates) {\n      assert(!freeDays.has(date) || freeDays.get(date) === label, \"Conflicting day-off labels\");\n      freeDays.set(date, label);\n      assert(freeDays.size <= MAX_ROWS, \"Too many days off\");\n    }\n  }\n\n  const rows = [];\n  const warnings = [];\n  const seriesIds = new Set();\n  const keys = new Set();\n  const push = (row) => {\n    validateFields(row);\n    assert(!keys.has(row.source_key), \"Duplicate source occurrence\");\n    keys.add(row.source_key);\n    rows.push(row);\n    assert(rows.length <= MAX_ROWS, \"Expanded snapshot too large\");\n  };\n  for (const event of series) {\n    assert(event && typeof event.id === \"string\" && event.id.length > 0 && event.id.length <= 256,\n      \"Missing source series id\");\n    assert(!seriesIds.has(event.id), \"Duplicate source series id\");\n    seriesIds.add(event.id);\n    assert(Number.isInteger(event.intervalWeeks) && event.intervalWeeks > 0 && event.intervalWeeks <= 52,\n      \"Invalid recurrence interval\");\n    const dates = new Set(datesBetween(event.startDate, event.endDate, event.intervalWeeks * 7));\n    // The API uses [] for an empty override map, and objects for nonempty maps.\n    const overrides = Array.isArray(event.overrides) && event.overrides.length === 0 ? {} : event.overrides;\n    assert(overrides && typeof overrides === \"object\" && !Array.isArray(overrides), \"Invalid overrides\");\n    assert(Object.keys(overrides).length <= MAX_ROWS, \"Too many source overrides\");\n    assert(Array.isArray(event.excludedDates) && event.excludedDates.length <= MAX_ROWS, \"Invalid excludedDates\");\n    const excluded = new Set(event.excludedDates.map(isoDate));\n    for (const [date, patch] of Object.entries(overrides)) {\n      isoDate(date);\n      assert(patch && typeof patch === \"object\" && !Array.isArray(patch), \"Invalid source override\");\n      for (const flag of [\"_add\", \"cancelled\"])\n        if (Object.hasOwn(patch, flag)) assert(typeof patch[flag] === \"boolean\", `Invalid ${flag}`);\n      // Removed additions can remain in the API as _add:false,cancelled:true\n      // outside the current recurrence. Keep a tombstone instead of discarding it.\n      if (patch._add === true || patch.cancelled === true) dates.add(date);\n      else if (!dates.has(date)) {\n        // Editing a date then shortening a series can leave _add:false,\n        // cancelled:false metadata. It is not a new active occurrence.\n        // Any old active database row still requires explicit retirement.\n        warnings.push({ kind: \"orphan_override\", series_id: event.id, date });\n        assert(warnings.length <= MAX_ROWS, \"Too many orphan overrides\");\n      }\n    }\n    for (const date of [...dates].sort()) {\n      const patch = overrides[date] || {};\n      const field = (name) => Object.hasOwn(patch, name) ? patch[name] : event[name];\n      const groupValue = nullableText(field(\"group\"), \"group\");\n      // Preserve the existing per-group model, including single and NULL groups.\n      // Changing group membership will be reviewed by the reconciliation planner.\n      const groups = groupValue === null ? [null] :\n        [...new Set(groupValue.split(/[,/]/).map((value) => value.trim()).filter(Boolean))];\n      if (groups.length === 0) groups.push(\"\");\n      const cancelled = patch.cancelled === true ||\n        (excluded.has(date) && patch._add !== true) || freeDays.has(date);\n      for (const group of groups) {\n        const prefix = group === null ? null : group.replace(/\\d+$/, \"\").trim();\n        push({\n          source_system: SOURCE_SYSTEM,\n          source_key: candidateKey([\"stac\", event.id, date, group]),\n          faculty: field(\"faculty\"), date, start_time: time(field(\"startTime\")),\n          duration_min: field(\"durationMin\"), subject: field(\"eventType\"),\n          instructor: field(\"instructor\"), room: field(\"room\"), group,\n          type: prefix === null || prefix === \"\" ? null : TYPES[prefix] || prefix,\n          // Retain cancelled source records; existing readers already hide this status.\n          status: cancelled ? \"nieaktywne\" : \"aktywne\",\n        });\n      }\n    }\n  }\n  for (const [date, label] of freeDays) push({\n    source_system: SOURCE_SYSTEM, source_key: candidateKey([\"block\", date]),\n    faculty: \"all\", date, start_time: \"07:00:00\", duration_min: 900, subject: label,\n    instructor: null, room: null, group: null, type: null, status: \"wolne\",\n  });\n  rows.sort((a, b) => a.source_key.localeCompare(b.source_key, \"en\"));\n  return { protocol: 1, source_system: SOURCE_SYSTEM,\n    revisions: { stac: schedule.revision, block: blocks.revision }, warnings, rows };\n}\n\n\nconst payloads = $input.all().map(item => item.json);\nconst schedule = payloads.filter(p => p.db === 'stac');\nconst blocks = payloads.filter(p => p.db === 'block');\nassert(schedule.length === 1 && blocks.length === 1, 'Exactly two source snapshots required');\nreturn [{json: transformSnapshots(schedule[0], blocks[0])}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Manual preview": {
+      "main": [
+        [
+          {
+            "node": "Fetch stac",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch stac": {
+      "main": [
+        [
+          {
+            "node": "Combine snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch block": {
+      "main": [
+        [
+          {
+            "node": "Combine snapshots",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine snapshots": {
+      "main": [
+        [
+          {
+            "node": "Validate and expand",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

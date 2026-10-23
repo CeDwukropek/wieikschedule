@@ -1,0 +1,61 @@
+import { useState } from "react";
+
+const ITEMS = [
+  {
+    q: "Gdzie kupić ubezpieczenie studenckie?",
+    a: "Pod tym linkiem. Możliwość zakupu TYLKO DO 15.12.2025",
+    href: "https://samorzad.pk.edu.pl/ubezpieczenia/",
+  },
+  {
+    q: "Gdzie znajdę sale i budynek w którym mam zajęcia?",
+    href: "https://samorzad.pk.edu.pl/mapa",
+  },
+  {
+    q: "Gdzie znajdę syllabus WIEiK?",
+    href: "https://wieik.pk.edu.pl/ksztalcenie/programy-studiow/",
+  },
+];
+
+export default function FAQ() {
+  const [open, setOpen] = useState(null);
+
+  return (
+    <section className="mt-8 pt-6 border-t border-neutral-800 text-gray-200 mb-[6rem]">
+      <h2 className="text-lg font-semibold mb-3">FAQ</h2>
+
+      <div className="space-y-2">
+        {ITEMS.map((it, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={i} className="bg-neutral-900 rounded-md overflow-hidden">
+              <button
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
+                aria-expanded={isOpen}
+              >
+                <span className="font-medium">{it.q}</span>
+                <span className="text-sm text-gray-400">
+                  {isOpen ? "−" : "+"}
+                </span>
+              </button>
+
+              {isOpen ? (
+                <div className="px-4 pb-3 text-sm text-gray-300">
+                  {it.a ? <p className="mb-2">{it.a}</p> : null}
+                  <a
+                    href={it.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline break-words"
+                  >
+                    {it.href}
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

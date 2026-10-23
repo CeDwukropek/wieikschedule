@@ -1,0 +1,54 @@
+name: Schedule importer
+on:
+  pull_request:
+    paths:
+      - 'integrations/schedule-import/**'
+      - 'DB/migrations/20261014_wieik_import.sql'
+      - 'DB/migrations/20261015_unlinked_bootstrap.sql'
+      - '.github/workflows/schedule-import.yml'
+  push:
+    paths:
+      - 'integrations/schedule-import/**'
+      - 'DB/migrations/20261014_wieik_import.sql'
+      - 'DB/migrations/20261015_unlinked_bootstrap.sql'
+      - '.github/workflows/schedule-import.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_PASSWORD: importer-test-only
+          POSTGRES_DB: importer_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test integrations/schedule-import/*.test.cjs
+      - run: node integrations/schedule-import/build-preview.cjs --check
+      - name: Test migration, authorization and UUID retention
+        env:
+          PGPASSWORD: importer-test-only
+        run: >-
+          psql -h localhost -U postgres -d importer_test -v ON_ERROR_STOP=1
+          -f integrations/schedule-import/database-test.sql
+      - name: Apply JavaScript plan to the disposable database
+        env:
+          PGPASSWORD: importer-test-only
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: importer_test
+        run: |
+          set -o pipefail
+          psql -X -Atc 'SELECT public.fixture_snapshot()' |
+            node integrations/schedule-import/database-roundtrip.cjs |
+            psql -X -v ON_ERROR_STOP=1
