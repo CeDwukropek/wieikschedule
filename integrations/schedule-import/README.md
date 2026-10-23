@@ -229,10 +229,16 @@ do których odwołują się prywatne dane (zmiany, aktywne dopiski, tagi), i lic
 według [nightly.cjs](nightly.cjs). „Run now” uruchamia to samo ręcznie.
 
 - Bez przeglądu: zmiany przy tym samym kluczu (sala, godzina, prowadzący, odwołanie),
-  nowe klucze oraz zniknięte zajęcia bez prywatnych danych (stają się `nieaktywne`).
-- Blokada, bez zapisu: zniknięte zajęcia z prywatnymi danymi, wiersz spoza importera,
-  zniknięcie więcej niż `max(50, 10%)` aktywnych zajęć (niepełne źródło). Zablokowany
-  przebieg kończy się błędem z listą blokad; ostatni poprawny stan zostaje.
+  nowe klucze oraz zniknięte zajęcia (stają się `nieaktywne`, nigdy nie są usuwane).
+- Zniknięte zajęcia, do których ktoś ma prywatne zmiany, dopiski lub tagi, też stają się
+  `nieaktywne` — dane jednego użytkownika nie wstrzymują importu dla wszystkich. Prywatne
+  wiersze zostają przy tym samym UUID; po zapisie workflow wysyła mail informacyjny z listą
+  (wydział, data, godzina, przedmiot, grupa — bez danych użytkowników).
+- Blokada, bez zapisu: wiersz spoza importera albo zniknięcie więcej niż `max(50, 10%)`
+  aktywnych zajęć (niepełne źródło). Zablokowany przebieg kończy się błędem z listą blokad;
+  ostatni poprawny stan zostaje.
+- Typowe przeniesienie zajęć (odwołanie dnia + `_add` w serii) nie usuwa klucza: stary termin
+  zostaje jako `nieaktywne`, nowy dochodzi jako nowe zajęcia.
 - Niedostępne źródło (np. „Site Maintenance”, HTTP 500) zatrzymuje workflow na pobraniu.
 
 Zapis idzie wyłącznie przez `apply_wieik_import` węzłem Postgres (Supabase session
@@ -240,8 +246,10 @@ pooler, rola `postgres`), bez limitu 8 s API. Funkcja odrzuca plan, jeśli `even
 zmieniło się od eksportu. Każdy nieudany przebieg (blokada, niedostępne źródło, błąd
 bazy) uruchamia workflow „nightly import alert”, który wysyła e-mail przez SMTP.
 Import: [ops/release/n8n-import.sh](../../ops/release/n8n-import.sh) z `ALERT_EMAIL`
-(adres nie jest zapisywany w repozytorium). Po imporcie oba workflow są nieaktywne:
-wybierz credentiale i aktywuj oba — nieaktywny workflow alertu n8n 2.x pomija.
+(adres nie jest zapisywany w repozytorium). Pierwszy import zostawia oba workflow nieaktywne:
+wybierz credentiale i aktywuj oba — nieaktywny workflow alertu n8n 2.x pomija. Ponowny import
+zachowuje wybrane credentiale (nowe węzły dostają credential tego samego typu) i ponownie
+aktywuje to, co było aktywne, restartując kontener n8n.
 Próba na stagingu (n8n 2.43.5): bez zmian → `none`; rozjechana sala → `updated: 1`
 i nowa wersja planu; niedostępne źródło → brak zapisu i e-mail z krokiem, błędem
 i linkiem do wykonania.
