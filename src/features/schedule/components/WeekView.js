@@ -112,7 +112,7 @@ const WeekView = forwardRef(function WeekView(
         {/* Empty corner above time column */}
         <div
           className="z-10 border-r border-neutral-700 bg-neutral-900"
-          style={{ gridColumn: 1, gridRow: 1, gridRowEnd: firstSlotRow }}
+          style={{ gridColumn: 1, gridRow: `1 / ${firstSlotRow}` }}
         />
 
         {/* Time column labels - only on hourly rows */}
@@ -122,8 +122,7 @@ const WeekView = forwardRef(function WeekView(
             className="week-hour-label border-t border-neutral-700 bg-neutral-900"
             style={{
               gridColumn: 1,
-              gridRow: i * slotsPerHour + firstSlotRow,
-              gridRowEnd: (i + 1) * slotsPerHour + firstSlotRow,
+              gridRow: `${i * slotsPerHour + firstSlotRow} / ${(i + 1) * slotsPerHour + firstSlotRow}`,
             }}
           >
             <span className="mt-[0.25em]">{startHour + i}:00</span>
@@ -161,8 +160,9 @@ const WeekView = forwardRef(function WeekView(
               className="week-events-overlay"
               style={{
                 gridColumn: column + 2,
-                gridRow: firstSlotRow,
-                gridRowEnd: `span ${totalSlots}`,
+                // One shorthand: React updates only changed properties, and setting grid-row alone
+                // would reset a separately kept grid-row-end (the overlay collapsed to one slot).
+                gridRow: `${firstSlotRow} / span ${totalSlots}`,
               }}
             >
               {positionedEvents.map(

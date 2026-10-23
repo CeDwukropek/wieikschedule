@@ -63,3 +63,13 @@ test('a strip with many entries folds into "+N więcej"', () => {
   fireEvent.click(screen.getByRole('button', { name: '+2 więcej' }));
   expect(screen.getAllByRole('button', { name: /^Kolokwium: Termin/ })).toHaveLength(4);
 });
+
+test('the events layer keeps spanning the whole day when the strip row comes and goes', () => {
+  const due = entry('d', { timing: 'due', event_id: null, start_time: null, duration_min: null });
+  const { rerender, container } = render(view([due]));
+  const layer = () => container.querySelector('.week-events-overlay').getAttribute('style');
+  expect(layer()).toMatch(/grid-row: 4 \/ span 60/);
+  rerender(view([]));
+  expect(layer()).toMatch(/grid-row: 3 \/ span 60/);
+  expect(layer()).not.toMatch(/grid-row-end/);
+});

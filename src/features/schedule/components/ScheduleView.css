@@ -336,7 +336,9 @@
 
 /* Plan entries (kolokwia, deadlines, …): strip under the dates, marks on classes, blocks and details */
 .week-day-strip { min-width: 0; padding: 0 2px 4px; border-bottom: 1px solid #404040; }
-.day-strip { display: grid; gap: 2px; min-width: 0; }
+/* Grid items default to min-width:auto, which would let a long title spill into the next day. */
+.day-strip { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; min-width: 0; }
+.day-strip > li { min-width: 0; }
 .day-strip-item, .day-strip-more {
   display: flex; align-items: center; gap: 3px; width: 100%; min-width: 0; border-radius: 4px; padding: 2px 4px;
   font-size: 11px; line-height: 1.25; text-align: left;

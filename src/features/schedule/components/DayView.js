@@ -85,8 +85,7 @@ const DayView = forwardRef(function DayView(
             className="flex justify-end pr-2 text-xs text-gray-400 border-t border-neutral-700 bg-neutral-900 border-r"
             style={{
               gridColumn: 1,
-              gridRow: i * slotsPerHour + 1,
-              gridRowEnd: (i + 1) * slotsPerHour + 1,
+              gridRow: `${i * slotsPerHour + 1} / ${(i + 1) * slotsPerHour + 1}`,
             }}
           >
             <span className="mt-[0.25em]">{startHour + i}:00</span>
@@ -117,8 +116,7 @@ const DayView = forwardRef(function DayView(
           className="day-events-overlay"
           style={{
             gridColumn: 2,
-            gridRow: 1,
-            gridRowEnd: `span ${totalSlots}`,
+            gridRow: `1 / span ${totalSlots}`,
           }}
         >
           {positionedEvents.map(

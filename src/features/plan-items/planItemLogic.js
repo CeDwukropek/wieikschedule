@@ -80,6 +80,8 @@ export function placeItems(items, weekStart, events) {
   };
 }
 
+// A day off ("wolne") on a weekend is no reason to show Saturday and Sunday.
+export const isDayOff = ev => String(ev.status || "").trim().toLowerCase() === "wolne";
 // Mondays (ISO dates) of weeks with anything on Saturday or Sunday.
 export function weekendWeeks(events, items = []) {
   const weeks = new Set();
@@ -88,7 +90,7 @@ export function weekendWeeks(events, items = []) {
     const day = (value.getDay() + 6) % 7;
     if (day >= 5) weeks.add(toIsoDate(plus(value, -day)));
   };
-  for (const ev of events) for (const date of ev.dates || []) add(date);
+  for (const ev of events) if (!isDayOff(ev)) for (const date of ev.dates || []) add(date);
   for (const item of items) add(item.date);
   return weeks;
 }

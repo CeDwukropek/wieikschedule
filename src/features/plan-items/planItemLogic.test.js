@@ -40,7 +40,8 @@ test('entries sit on their class, as blocks at their own time or in the strip un
 
 test('weeks with weekend classes or entries are known in advance', () => {
   const saturday = { ...lab, day: 5, dates: ['2026-10-24', '2026-11-07'] };
-  expect([...weekendWeeks([lab, saturday], [entry('x', { date: '2026-11-15' })])].sort())
+  const holiday = { ...lab, day: 5, status: 'wolne', dates: ['2026-10-31'] };
+  expect([...weekendWeeks([lab, saturday, holiday], [entry('x', { date: '2026-11-15' })])].sort())
     .toEqual(['2026-10-19', '2026-11-02', '2026-11-09']);
 });
 

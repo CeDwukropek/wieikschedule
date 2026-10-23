@@ -23,7 +23,7 @@ import EventDetailsDialog from '../features/schedule/components/EventDetailsDial
 import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
 import {getWeekStart,toIsoDate} from '../utils/date';
 import {usePlanItems} from '../features/plan-items/usePlanItems';
-import {itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
+import {isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
 import PlanItemDialog from '../features/plan-items/PlanItemDialog';
 import UpcomingPanel from '../features/plan-items/UpcomingPanel';
 
@@ -150,7 +150,7 @@ export default function App() {
   );
   const weekPlaced=useMemo(()=>placeItems(items,navigation.viewedWeekStart,weekEvents),[items,navigation.viewedWeekStart,weekEvents]);
   const dayPlaced=useMemo(()=>placeItems(items,navigation.selectedDayWeekStart,dayEvents),[items,navigation.selectedDayWeekStart,dayEvents]);
-  const weekDays=useMemo(()=>showWeekend(navigation.viewedWeekStart)||weekPlaced.events.some(ev=>ev.day>=5)
+  const weekDays=useMemo(()=>showWeekend(navigation.viewedWeekStart)||weekPlaced.events.some(ev=>ev.day>=5&&!isDayOff(ev))
     ||Object.keys(weekPlaced.strip).some(day=>Number(day)>=5)?WHOLE_WEEK:WORKDAYS,[showWeekend,navigation.viewedWeekStart,weekPlaced]);
   const upcomingCount=useMemo(()=>{const {upcoming,overdue}=upcomingItems(items,today);return upcoming.length+overdue.length;},[items,today]);
 
