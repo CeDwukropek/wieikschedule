@@ -231,13 +231,18 @@ export default function App() {
         </div>
       </div>
       {user&&personalEnabled&&<section className="mb-4 text-sm">
-        {!personal.ready&&<p role="status">{personal.error||'Sprawdzanie prywatnych zmian…'} <button onClick={personal.refresh} className="underline">Odśwież</button></p>}
+        {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
+        {/* The university plan stays visible; only private changes, edits and ICS export wait for the API. */}
+        {!personal.ready&&personal.error&&<p role="alert">
+          Twoje prywatne zmiany są chwilowo niedostępne — widzisz plan uczelni bez nich. ({personal.error}){' '}
+          <button onClick={personal.refresh} className="underline">Spróbuj ponownie</button>
+        </p>}
         {personal.ready&&<button type="button" className="plan-panel-trigger" aria-haspopup="dialog" onClick={()=>setPlanOpen(true)}>
           Mój plan{personal.items.length>0&&<span className="plan-panel-count">{personal.items.length}</span>}
           {proposals.length>0&&<span className="plan-panel-count plan-panel-count-attention">{proposals.length} do zatwierdzenia</span>}
         </button>}
       </section>}
-      {personal.ready&&(view.viewMode === "week" ? (
+      {view.viewMode === "week" ? (
         <WeekView
           {...calendarProps}
           events={weekEvents}
@@ -251,7 +256,7 @@ export default function App() {
           weekStart={navigation.selectedDayWeekStart}
           selection={navigation.daySelection.selection}
         />
-      ))}
+      )}
       {planOpen&&planActions&&<MyPlanPanel items={personal.items} proposals={proposals} today={today} onClose={()=>setPlanOpen(false)}
         onApply={applyChange} onRemoveAdded={removeAddedEvent} onConfirmProposal={confirmProposal}
         onDismissProposal={personal.rejectProposal}
