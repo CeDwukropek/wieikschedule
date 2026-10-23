@@ -23,7 +23,7 @@ assert(schedule.length === 1 && blocks.length === 1 && database.length === 1, 'E
 const plan = createNightlyPlan(transformSnapshots(schedule[0], blocks[0]), database[0].events, database[0].referenced);
 const action = !plan.ready ? 'blocked' : plan.rpc.p_changes.length ? 'apply' : 'none';
 return [{ json: { action, nightly: plan.nightly, blockers: plan.blockers.slice(0, 50), blocker_count: plan.blockers.length,
-  warnings: plan.warnings, revisions: plan.revisions,
+  referenced_retired: plan.referenced_retired.slice(0, 50), warnings: plan.warnings, revisions: plan.revisions,
   p_expected: plan.rpc ? JSON.stringify(plan.rpc.p_expected) : '[]',
   p_changes: plan.rpc ? JSON.stringify(plan.rpc.p_changes) : '[]' } }];
 `;
@@ -43,6 +43,20 @@ if (plan.action === 'blocked') throw new Error('Nightly schedule import blocked 
   JSON.stringify(plan.blockers.slice(0, 5)));
 return [{ json: { action: plan.action, nightly: plan.nightly, result, warnings: plan.warnings.length } }];
 `;
+// After a successful write: classes that vanished although someone had private rows for them.
+const notice = `const plan = $('Plan nightly import').first().json;
+if (plan.action !== 'apply' || !plan.nightly.referenced_retired) return [];
+const lines = plan.referenced_retired.map(c => '- ' + c.faculty + ', ' + c.date + ' ' + String(c.start_time).slice(0, 5) +
+  ', ' + c.subject + (c.group ? ' (' + c.group + ')' : ''));
+const more = plan.nightly.referenced_retired - lines.length;
+return [{ json: { count: plan.nightly.referenced_retired, list: lines.join('\\n') + (more > 0 ? '\\n… i ' + more + ' więcej' : '') } }];
+`;
+const noticeText = `=Nocny import planu WIEiK zapisał zmiany. Z planu uczelni zniknęły zajęcia, do których ktoś miał prywatne zmiany, dopiski lub tagi (liczba: {{ $json.count }}). Oznaczono je jako nieaktywne; prywatne dane zostały w bazie.
+
+{{ $json.list }}
+
+Jeśli to zgadza się z planem uczelni, nic nie trzeba robić.`;
+const smtp = { smtp: { id: "", name: "wieikschedule alerts (SMTP)" } };
 const credentials = { postgres: { id: "", name: "wieikschedule Supabase (session pooler)" } };
 const start = ["Fetch stac", "Fetch block", "Export events"].map((node) => ({ node, type: "main", index: 0 }));
 // Fixed IDs let the import keep the error-workflow link. The recipient is substituted at import time
@@ -76,6 +90,11 @@ const workflow = {
         options: { queryReplacement: "={{ [$json.action, $json.p_expected, $json.p_changes] }}" } } },
     { id: "report", name: "Report", type: "n8n-nodes-base.code", typeVersion: 2,
       position: [1200, 0], parameters: { mode: "runOnceForAllItems", jsCode: report } },
+    { id: "notice", name: "Private rows retired?", type: "n8n-nodes-base.code", typeVersion: 2,
+      position: [1440, 0], parameters: { mode: "runOnceForAllItems", jsCode: notice } },
+    { id: "notice-mail", name: "Send notice", type: "n8n-nodes-base.emailSend", typeVersion: 2.1, position: [1680, 0],
+      credentials: smtp, parameters: { fromEmail: "alert-sender@example.invalid", toEmail: "alert-recipient@example.invalid",
+        subject: "wieikschedule: zniknęły zajęcia z prywatnymi danymi", emailFormat: "text", text: noticeText, options: {} } },
   ],
   connections: {
     "Every day at 23:00": { main: [start] },
@@ -86,6 +105,8 @@ const workflow = {
     "Combine inputs": { main: [[{ node: "Plan nightly import", type: "main", index: 0 }]] },
     "Plan nightly import": { main: [[{ node: "Apply reviewed plan", type: "main", index: 0 }]] },
     "Apply reviewed plan": { main: [[{ node: "Report", type: "main", index: 0 }]] },
+    "Report": { main: [[{ node: "Private rows retired?", type: "main", index: 0 }]] },
+    "Private rows retired?": { main: [[{ node: "Send notice", type: "main", index: 0 }]] },
   },
 };
 const alertText = `=Nocny import planu WIEiK nie został zapisany. Ostatni poprawny plan pozostał bez zmian.
@@ -103,7 +124,7 @@ const alert = {
   nodes: [
     { id: "failed", name: "Import failed", type: "n8n-nodes-base.errorTrigger", typeVersion: 1, position: [0, 0], parameters: {} },
     { id: "mail", name: "Send alert", type: "n8n-nodes-base.emailSend", typeVersion: 2.1, position: [240, 0],
-      credentials: { smtp: { id: "", name: "wieikschedule alerts (SMTP)" } },
+      credentials: smtp,
       parameters: { fromEmail: "alert-sender@example.invalid", toEmail: "alert-recipient@example.invalid",
         subject: "wieikschedule: nocny import planu wymaga uwagi", emailFormat: "text", text: alertText, options: {} } },
   ],

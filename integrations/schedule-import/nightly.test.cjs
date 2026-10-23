@@ -21,7 +21,7 @@ test("a changed room under the same key and a new class apply without review", (
   const added = { ...source, source_key: "series-b", group: "L2" };
   const plan = createNightlyPlan(snapshot([{ ...source, room: "B2" }, added]), [stored(source, ID)]);
   assert.equal(plan.ready, true);
-  assert.deepEqual(plan.nightly, { created: 1, retired: 0, updated: 1, active_before: 1 });
+  assert.deepEqual(plan.nightly, { created: 1, retired: 0, referenced_retired: 0, updated: 1, active_before: 1 });
   assert.equal(plan.rpc.p_changes.find((row) => row.id === ID).room, "B2");
   assert.equal(plan.rpc.p_changes.find((row) => row.id !== ID).source_key, "series-b");
 });
@@ -41,12 +41,18 @@ test("a reappearing class keeps its UUID", () => {
   assert.deepEqual(plan.rpc.p_changes.map((row) => [row.id, row.status]), [[ID, "aktywne"]]);
 });
 
-test("a vanished class with private rows blocks the whole import", () => {
-  const rows = [stored(source, ID), stored({ ...source, source_key: "series-b" }, ID2)];
-  const plan = createNightlyPlan(snapshot([source]), rows, [ID2]);
-  assert.equal(plan.ready, false);
-  assert.equal(plan.rpc, null);
-  assert.deepEqual(plan.blockers, [{ kind: "missing_referenced_occurrence", event_id: ID2, source_key: "series-b" }]);
+test("a vanished class with private rows is retired too and reported, without blocking others", () => {
+  const rows = [stored(source, ID), stored({ ...source, source_key: "series-b", group: "L2" }, ID2)];
+  const added = { ...source, source_key: "series-c", room: "C3" };
+  const plan = createNightlyPlan(snapshot([{ ...source, room: "B2" }, added]), rows, [ID2]);
+  assert.equal(plan.ready, true);
+  assert.deepEqual(plan.blockers, []);
+  assert.deepEqual(plan.rpc.p_changes.filter((row) => row.id !== ID && row.id !== ID2).map((row) => row.source_key), ["series-c"]);
+  assert.equal(plan.rpc.p_changes.find((row) => row.id === ID).room, "B2");
+  assert.equal(plan.rpc.p_changes.find((row) => row.id === ID2).status, "nieaktywne");
+  assert.deepEqual(plan.referenced_retired, [{ event_id: ID2, faculty: "TEST", date: "2026-10-05",
+    start_time: "09:00:00", subject: "Synthetic subject", group: "L2" }]);
+  assert.deepEqual(plan.nightly, { created: 1, retired: 1, referenced_retired: 1, updated: 1, active_before: 2 });
 });
 
 test("many classes vanishing at once is treated as an incomplete source", () => {
