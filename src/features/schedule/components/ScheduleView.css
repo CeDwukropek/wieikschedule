@@ -334,6 +334,12 @@
   pointer-events: auto;
 }
 
+/* Free time in the grid can be chosen for a new entry (click, drag, or long press on touch screens). */
+.week-events-overlay.is-creatable,
+.day-events-overlay.is-creatable { pointer-events: auto; cursor: cell; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.grid-new-slot { position: absolute; left: 1px; right: 1px; z-index: 5; pointer-events: none; overflow: hidden; border-radius: 6px;
+  border: 1px dashed #38bdf8; background: rgba(56, 189, 248, .22); color: #e0f2fe; font-size: 11px; padding: 2px 4px; }
+
 /* Plan entries (kolokwia, deadlines, …): strip under the dates, marks on classes, blocks and details */
 .week-day-strip { min-width: 0; padding: 0 2px 4px; border-bottom: 1px solid #404040; }
 /* Grid items default to min-width:auto, which would let a long title spill into the next day. */
@@ -384,3 +390,57 @@
 .upcoming-review { color: #fcd34d !important; }
 .plan-items-trigger { background: #3b0764; color: #f3e8ff; }
 .plan-items-trigger .plan-panel-count { background: #581c87; }
+.plan-items-add { margin-left: 8px; background: #1f1f1f; color: #f3e8ff; border: 1px solid #581c87; }
+
+/* Adding and editing entries */
+.event-details-add-entry { margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;
+  border-radius: 8px; font-size: 14px; background: #3b0764; color: #f3e8ff; }
+.event-details-add-entry:hover { background: #4c1d95; }
+.plan-item-form-title { font-size: 15px; font-weight: 600; color: #f5f5f5; }
+.plan-item-form fieldset { display: grid; gap: 6px; min-width: 0; }
+.plan-item-form legend { color: #a3a3a3; margin-bottom: 4px; }
+.plan-item-form button { padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; }
+.plan-item-form button:disabled { opacity: .5; cursor: not-allowed; }
+.plan-item-kinds { display: flex !important; flex-wrap: wrap; gap: 6px; }
+.plan-item-kinds legend { width: 100%; }
+.plan-item-kind { display: inline-flex !important; align-items: center; gap: 0 !important; padding: 5px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid #404040; color: #e5e5e5 !important; font-size: 13px; }
+.plan-item-kind input { position: absolute; opacity: 0; pointer-events: none; }
+.plan-item-kind:has(input:checked) { border-color: var(--kind); background: color-mix(in srgb, var(--kind) 22%, transparent); color: #fff !important; }
+.plan-item-kind:has(input:focus-visible) { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.plan-item-scope { display: flex !important; flex-wrap: wrap; gap: 6px 16px; }
+.plan-item-scope legend { width: 100%; }
+.plan-item-scope label, .plan-item-suggestions label { display: flex !important; align-items: center; gap: 8px !important; color: #e5e5e5 !important; cursor: pointer; }
+.plan-item-form input[type="radio"], .plan-item-form input[type="checkbox"],
+.plan-item-removing input[type="radio"] { accent-color: #a855f7; width: 16px; height: 16px; padding: 0; }
+.plan-item-scope-fixed { color: #d8b4fe; }
+.plan-item-suggestions { display: grid; gap: 4px; }
+.plan-item-suggestions li { padding: 6px 8px; border-radius: 8px; background: #1f1f1f; }
+.plan-item-custom { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.plan-item-custom select, .plan-item-custom input { min-width: 0; padding: 8px 6px !important; }
+.plan-item-form .plan-item-custom-remove { padding: 8px; background: #262626; color: #a3a3a3; }
+.plan-item-form .plan-item-add-term { justify-self: start; padding: 8px 12px; }
+.plan-item-hint { font-size: 12px; color: #a3a3a3; }
+.plan-item-manage { display: flex; gap: 8px; }
+.plan-item-manage button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid #404040;
+  font-size: 13px; color: #e5e5e5; }
+.plan-item-manage button:hover:not(:disabled) { background: #2a2a2a; }
+.plan-item-removing { display: grid; gap: 8px; font-size: 13px; }
+.plan-item-removing p { color: #fca5a5; font-size: 12px; }
+.plan-item-removing button { padding: 10px; border-radius: 8px; font-size: 14px; }
+@media (max-width: 640px) {
+  .plan-item-custom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .plan-item-custom > input[type="date"] { grid-column: 2 / 4; }
+  .plan-item-custom > select { grid-column: 1; }
+}
+
+/* "Pokaż terminy" in the settings */
+.entry-filter { display: grid; gap: 8px; }
+.entry-filter-scope { display: inline-flex; width: fit-content; border: 1px solid #404040; border-radius: 999px; overflow: hidden; }
+.entry-filter-scope button { padding: 6px 12px; font-size: 13px; color: #d4d4d4; }
+.entry-filter-scope button[aria-pressed="true"] { background: #3b0764; color: #fff; }
+.entry-filter-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.entry-filter-kinds button { padding: 4px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #404040; color: #737373; text-decoration: line-through; }
+.entry-filter-kinds button[aria-pressed="true"] { border-color: var(--kind); color: #f5f5f5; text-decoration: none;
+  background: color-mix(in srgb, var(--kind) 18%, transparent); }
+.entry-filter button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }

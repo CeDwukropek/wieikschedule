@@ -47,6 +47,10 @@ export function visibleItems(items, planEvents, { scheduleId, showAll = false, h
   });
 }
 
+// The "Pokaż terminy" setting: all, group or own entries, without the kinds switched off.
+export const filterItems = (items, { scope = "all", hiddenKinds = [] } = {}) =>
+  items.filter(item => (scope === "all" || item.scope === scope) && !hiddenKinds.includes(item.kind));
+
 const start = item => String(item.start_time || "").slice(0, 5);
 export function itemEnd(item) {
   return item.start_time ? addMinutes(start(item), item.duration_min) : null;
