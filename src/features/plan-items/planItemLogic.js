@@ -47,6 +47,10 @@ export function visibleItems(items, planEvents, { scheduleId, showAll = false, h
   });
 }
 
+// The "Pokaż terminy" setting: all, group or own entries, without the kinds switched off.
+export const filterItems = (items, { scope = "all", hiddenKinds = [] } = {}) =>
+  items.filter(item => (scope === "all" || item.scope === scope) && !hiddenKinds.includes(item.kind));
+
 const start = item => String(item.start_time || "").slice(0, 5);
 export function itemEnd(item) {
   return item.start_time ? addMinutes(start(item), item.duration_min) : null;
@@ -120,7 +124,8 @@ export function describeItemTime(item) {
 }
 export function describeAudience(item) {
   if (item.scope === "personal") return "Tylko Ty";
-  return item.group ? `Grupa ${item.group}` : "Wszystkie grupy";
+  // "W" is the lecture: the whole year, not a group of its own.
+  return item.group && item.group !== "W" ? `Grupa ${item.group}` : "Wszystkie grupy";
 }
 const REVIEW = {
   moved: "Uczelnia przeniosła te zajęcia. Termin przesunął się razem z nimi — potwierdź go u prowadzącego.",

@@ -1,4 +1,4 @@
-import { parseDaySelection } from "../../../utils/date";
+import { parseDaySelection, toIsoDate } from "../../../utils/date";
 import React, { useEffect, useMemo, useState, forwardRef } from "react";
 import EventCard from "./EventCard";
 import EventDetailsDialog from "./EventDetailsDialog";
@@ -7,6 +7,8 @@ import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
 import { tileKey } from "../logic/eventIdentity";
 import DayStrip from "../../plan-items/DayStrip";
+import { minutesLabel, useSlotSelection } from "../../plan-items/useSlotSelection";
+import { slotTerm } from "../../plan-items/planItemEditing";
 import "./ScheduleView.css";
 
 const DayView = forwardRef(function DayView(
@@ -19,6 +21,8 @@ const DayView = forwardRef(function DayView(
     strip = {},
     onOpenItem,
     onItemState,
+    itemActions,
+    onCreateAt,
   },
   ref,
 ) {
@@ -59,6 +63,8 @@ const DayView = forwardRef(function DayView(
     ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + selectedDayIndex) : null;
 
   const openDetails = ev => ev.planItem ? onOpenItem?.(ev.planItem) : setSelectedEvent(ev);
+  const { selection: newSlot, handlers } = useSlotSelection(onCreateAt && displayedDate && ((day, from, to) =>
+    onCreateAt(slotTerm(toIsoDate(displayedDate), from, to - from > 15 ? to : from))), { startHour, endHour });
   return (
     <div>
       {strip[selectedDayIndex]?.length > 0 && <div className="day-view-strip">
@@ -113,7 +119,8 @@ const DayView = forwardRef(function DayView(
 
         {/* absolute overlay with collision-aware event columns */}
         <div
-          className="day-events-overlay"
+          className={`day-events-overlay${onCreateAt && displayedDate ? " is-creatable" : ""}`}
+          {...handlers(selectedDayIndex)}
           style={{
             gridColumn: 2,
             gridRow: `1 / span ${totalSlots}`,
@@ -153,6 +160,9 @@ const DayView = forwardRef(function DayView(
               );
             },
           )}
+          {newSlot && <div className="grid-new-slot" aria-hidden="true" style={{
+            top: `${(newSlot.from - startHour * 60) / slotMinutes}rem`, height: `${(newSlot.to - newSlot.from) / slotMinutes}rem`,
+          }}>{minutesLabel(newSlot.from)}–{minutesLabel(newSlot.to)}</div>}
         </div>
 
         {isTodayDisplayed ? (
@@ -168,6 +178,7 @@ const DayView = forwardRef(function DayView(
         onClose={() => setSelectedEvent(null)}
         planActions={planActions}
         onItemState={onItemState}
+        itemActions={itemActions}
       />}
     </div>
   );

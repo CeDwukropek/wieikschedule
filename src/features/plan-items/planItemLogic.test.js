@@ -1,4 +1,4 @@
-import { countdown, describeItemTime, itemsWindow, placeItems, reviewNotice, upcomingItems, visibleItems, weekendWeeks } from './planItemLogic';
+import { countdown, describeItemTime, filterItems, itemsWindow, placeItems, reviewNotice, upcomingItems, visibleItems, weekendWeeks } from './planItemLogic';
 import { buildICS } from '../schedule/export/exportICS';
 
 const monday = new Date(2026, 9, 19);
@@ -73,4 +73,11 @@ test('times, reviews and the calendar file describe entries plainly', () => {
   expect(ics).toContain('DTSTART;VALUE=DATE:20261019\r\nDTEND;VALUE=DATE:20261020');
   expect(ics).toContain('DESCRIPTION:Modelowanie\\nGrupa Lk1\\nRozdziały 1\\, 2');
   expect(ics).toMatch(/UID:item-c@wieikschedule[^]*DTSTART:20261019T235900\r\nEND:VEVENT/);
+});
+
+test('the "Pokaż terminy" setting keeps the chosen audience and kinds', () => {
+  const items = [entry('quiz'), entry('mine', { scope: 'personal' }), entry('report', { kind: 'sprawozdanie' })];
+  expect(filterItems(items).map(item => item.id)).toEqual(['quiz', 'mine', 'report']);
+  expect(filterItems(items, { scope: 'group', hiddenKinds: ['sprawozdanie'] }).map(item => item.id)).toEqual(['quiz']);
+  expect(filterItems(items, { scope: 'personal' }).map(item => item.id)).toEqual(['mine']);
 });

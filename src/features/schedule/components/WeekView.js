@@ -1,4 +1,4 @@
-import { getWeekStart } from "../../../utils/date";
+import { getWeekStart, toIsoDate } from "../../../utils/date";
 import EventCard from "./EventCard";
 import React, { forwardRef, useEffect, useState } from "react";
 import EventDetailsDialog from "./EventDetailsDialog";
@@ -6,6 +6,8 @@ import { createTimeSlots } from "../logic/timeSlots";
 import { buildEventLayout } from "../logic/eventLayout";
 import { tileKey } from "../logic/eventIdentity";
 import DayStrip from "../../plan-items/DayStrip";
+import { minutesLabel, useSlotSelection } from "../../plan-items/useSlotSelection";
+import { slotTerm } from "../../plan-items/planItemEditing";
 import "./ScheduleView.css";
 
 const WORKDAYS = [0, 1, 2, 3, 4]; // Pon–Pt; Sob/Nd only when the week has something then
@@ -20,6 +22,8 @@ const WeekView = forwardRef(function WeekView(
     strip = {},
     onOpenItem,
     onItemState,
+    itemActions,
+    onCreateAt,
   },
   ref,
 ) {
@@ -48,6 +52,11 @@ const WeekView = forwardRef(function WeekView(
       ? new Date(viewedWeekStart)
       : getWeekStart(new Date());
 
+  // A free time chosen in a day column becomes a new entry there (signed-in users with entries on).
+  const { selection, handlers } = useSlotSelection(onCreateAt && ((day, from, to) => onCreateAt(slotTerm(
+    toIsoDate(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + day)), from, to - from > 15 ? to : from))),
+  { startHour, endHour });
+
   const getDayDate = (dayOffset) => {
     const date = new Date(monday);
     date.setDate(date.getDate() + dayOffset);
@@ -71,7 +80,7 @@ const WeekView = forwardRef(function WeekView(
 
   return (
     <div className="week-overview">
-      <p className="week-overview-hint">Cały tydzień <span>· Kliknij zajęcia, aby zobaczyć szczegóły</span></p>
+      <p className="week-overview-hint">Cały tydzień <span>· Kliknij zajęcia, aby zobaczyć szczegóły{onCreateAt ? "; kliknij lub przeciągnij po wolnym miejscu, aby dodać termin" : ""}</span></p>
       <div ref={ref} className="week-grid" style={{"--week-days": DAYS.length, gridTemplateRows: `auto auto ${hasStrip ? "auto " : ""}repeat(${totalSlots}, var(--week-slot-height))`}}
         aria-label={`Plan od poniedziałku do ${DAYS.length > 5 ? "niedzieli" : "piątku"}, od 7:00 do 22:00`}>
         {/* Header row - Day names */}
@@ -157,7 +166,8 @@ const WeekView = forwardRef(function WeekView(
           return (
             <div
               key={`overlay-${day}`}
-              className="week-events-overlay"
+              className={`week-events-overlay${onCreateAt ? " is-creatable" : ""}`}
+              {...handlers(day)}
               style={{
                 gridColumn: column + 2,
                 // One shorthand: React updates only changed properties, and setting grid-row alone
@@ -197,6 +207,10 @@ const WeekView = forwardRef(function WeekView(
                   );
                 },
               )}
+              {selection?.day === day && <div className="grid-new-slot" aria-hidden="true" style={{
+                top: `${(selection.from - startHour * 60) / totalMinutes * 100}%`,
+                height: `${(selection.to - selection.from) / totalMinutes * 100}%`,
+              }}>{minutesLabel(selection.from)}–{minutesLabel(selection.to)}</div>}
             </div>
           );
         })}
@@ -208,6 +222,7 @@ const WeekView = forwardRef(function WeekView(
         onClose={() => setSelectedEvent(null)}
         planActions={planActions}
         onItemState={onItemState}
+        itemActions={itemActions}
       />}
     </div>
   );

@@ -23,9 +23,11 @@ import EventDetailsDialog from '../features/schedule/components/EventDetailsDial
 import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
 import {getWeekStart,toIsoDate} from '../utils/date';
 import {usePlanItems} from '../features/plan-items/usePlanItems';
-import {isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
+import {filterItems,isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
 import PlanItemDialog from '../features/plan-items/PlanItemDialog';
 import UpcomingPanel from '../features/plan-items/UpcomingPanel';
+import {slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
+import {CalendarPlus} from 'lucide-react';
 
 const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
@@ -41,7 +43,9 @@ export default function App() {
   const [planOpen,setPlanOpen]=useState(false);
   const [shownItem,setShownItem]=useState(null);
   const [toast,setToast]=useState(null);
-  useEffect(()=>{setPlanOpen(false);setShownItem(null);setToast(null);},[user?.uid,schedule.currentSchedule]);
+  // A new entry at a free time chosen in the grid (or with the "Dodaj termin" button).
+  const [draft,setDraft]=useState(null);
+  useEffect(()=>{setPlanOpen(false);setShownItem(null);setToast(null);setDraft(null);},[user?.uid,schedule.currentSchedule]);
   const dismissToast=useCallback(()=>setToast(null),[]);
   const personal=usePersonalPlan(user,personalEnabled);
   const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows),[schedule.loadedTimetables,personal.rows]);
@@ -75,8 +79,10 @@ export default function App() {
   const planItems=usePlanItems({enabled:itemsOn,uid:user?.uid,faculties,window:itemsRange});
   // Every occurrence of the plan (lectures included, so an entry on a hidden lecture still shows).
   const planEvents=useMemo(()=>mergeEvents({...eventOptions,hideLectures:false,weekStart:null}),[eventOptions]);
-  const items=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll}),
+  const relevantItems=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll}),
     [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
+  const items=useMemo(()=>filterItems(relevantItems,{scope:view.entryScope,hiddenKinds:view.hiddenKinds}),
+    [relevantItems,view.entryScope,view.hiddenKinds]);
   const hiddenItems=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll,hidden:true}),
     [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
   const weekendSet=useMemo(()=>weekendWeeks(planEvents,items),[planEvents,items]);
@@ -162,6 +168,8 @@ export default function App() {
       hideLectures: view.hideLectures,
       showAll: view.showAll,
       alwaysShowWeekend: view.alwaysShowWeekend,
+      entryScope: view.entryScope,
+      hiddenKinds: view.hiddenKinds,
       weekOffset: navigation.weekOffset,
       currentSchedule: schedule.currentSchedule,
       scheduleGroupSets: schedule.scheduleGroupSets,
@@ -185,21 +193,47 @@ export default function App() {
         .map(other=>({title:other.title||other.subj,start:other.start,end:other.end,room:other.room}));
     },
   }:undefined;
+  const todayIso=toIsoDate(today);
+  // Adding, editing and removing entries; each write can be undone from the toast. The server checks the roles.
+  const itemActions=user&&itemsOn&&planItems.ready?{
+    roles:planItems.roles,items:planItems.items,scheduleId:schedule.currentSchedule,planEvents,today:todayIso,
+    show:id=>planItems.setItemState(id,{hidden:false}),
+    subjectsFor:faculty=>subjectsOf((tables[faculty]||(faculty===schedule.currentSchedule?effectiveTable:null))?.schedule),
+    create:async entries=>{
+      const saved=await planItems.save(entries);
+      setToast({message:`Dodano ${termsLabel(saved.length)}.`,undo:async()=>{await planItems.remove(saved.map(({id,revision})=>({id,revision})));}});
+    },
+    update:async(changes,undo)=>{
+      const saved=await planItems.save(changes);
+      setToast({message:changes.length>1?`Zmieniono ${termsLabel(changes.length)}.`:'Zapisano zmianę terminu.',
+        undo:async()=>{await planItems.save(withRevisions(undo,saved));}});
+    },
+    remove:async members=>{
+      const done=await planItems.remove(members.map(({id,revision})=>({id,revision})));
+      setToast({message:members.length>1?`Usunięto ${termsLabel(members.length)}.`:'Usunięto termin.',undo:async()=>{await planItems.remove(done,true);}});
+    },
+  }:undefined;
+  const newDraft=()=>{
+    const weekStart=toIsoDate(navigation.viewedWeekStart),inWeek=todayIso>=weekStart&&todayIso<=toIsoDate(new Date(navigation.viewedWeekStart.getFullYear(),navigation.viewedWeekStart.getMonth(),navigation.viewedWeekStart.getDate()+6));
+    const start=inWeek?Math.min(Math.max(new Date().getHours()+1,8),20)*60:8*60;
+    setDraft({term:slotTerm(inWeek?todayIso:weekStart,start,start),faculty:schedule.currentSchedule});
+  };
   const calendarProps = {
     subjects: schedule.subjects,
     planActions,
     ref: exportRef,
     onOpenItem: item=>setOpenItemId(item.id),
     onItemState,
+    itemActions,
+    onCreateAt: itemActions?term=>setDraft({term,faculty:schedule.currentSchedule}):undefined,
   };
-  const todayIso=toIsoDate(today);
   const shownEvent=shownItem&&dialogEventFromItem(shownItem);
 
   return (
     <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       <FloatingMenu
         panelState={{ open, setOpen }}
-        viewState={view}
+        viewState={{...view,entriesOn:itemsOn}}
         weekNavigation={navigation.weekNavigation}
         weekSelection={navigation.weekSelection}
         dayNavigation={navigation.dayNavigation}
@@ -270,6 +304,8 @@ export default function App() {
         {planItems.ready&&<button type="button" className="plan-panel-trigger plan-items-trigger" aria-haspopup="dialog" onClick={()=>setUpcomingOpen(true)}>
           Nadchodzące terminy{upcomingCount>0&&<span className="plan-panel-count">{upcomingCount}</span>}
         </button>}
+        {itemActions&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog" onClick={newDraft}>
+          <CalendarPlus size={15} aria-hidden="true"/>Dodaj termin</button>}
       </section>}
       {user&&personalEnabled&&<section className="mb-4 text-sm">
         {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
@@ -310,7 +346,8 @@ export default function App() {
       {upcomingOpen&&<UpcomingPanel items={items} hidden={hiddenItems} today={today} onClose={()=>setUpcomingOpen(false)}
         onShow={onItemState&&(id=>onItemState(id,{hidden:false}))}
         onOpen={item=>{setUpcomingOpen(false);setOpenItemId(item.id);}}/>}
-      {openItem&&<PlanItemDialog item={openItem} onClose={()=>setOpenItemId(null)} onState={onItemState}/>}
+      {openItem&&<PlanItemDialog key={openItem.id} item={openItem} onClose={()=>setOpenItemId(null)} onState={onItemState} actions={itemActions}/>}
+      {draft&&itemActions&&<PlanItemDialog draft={draft} onClose={()=>setDraft(null)} actions={itemActions}/>}
       <UndoToast toast={toast} onDismiss={dismissToast}/>
       <FAQ />
     </div>
