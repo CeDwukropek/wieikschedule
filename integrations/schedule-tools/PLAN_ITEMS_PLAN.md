@@ -1,6 +1,8 @@
 # Kolokwia, sprawozdania i inne terminy — projekt E6
 
-Status: projekt (E6.0) z decyzjami użytkownika z 23.10.2026. Nie zmienia jeszcze kodu ani bazy.
+Status: decyzje użytkownika z 23.10.2026. E6.1 (baza i role) gotowe na stagingu:
+[migracja](../../DB/migrations/20261025_plan_items_and_roles.sql), [test](plan-items-test.sql),
+[wydanie](../../ops/release/README.md#e61--wpisy-w-planie-i-role).
 Powiązane: [plan notatek](STUDY_NOTES_PLAN.md), [audyt i roadmapa](ROADMAP_2026-10-18.md),
 [kalendarz w Odysseusie](ODYSSEUS_CALENDAR_SYNC_PLAN.md).
 
@@ -78,12 +80,12 @@ plan_items           zakres (group | personal), właściciel (dla prywatnych), k
                      seria (id, numer), stan (aktywny | do sprawdzenia | odwołany) i jego powód,
                      autor (SET NULL), wersja, utworzenie / zmiana / usunięcie
 plan_item_history    wpis, wersja, kto, zmiana, kiedy
-plan_item_state      dla każdego użytkownika: ukryty, postęp (do zrobienia | przygotowany | oddany),
+plan_item_state      dla każdego użytkownika: ukryty, postęp (do zrobienia | gotowe | zrobione),
                      prywatna notatka, przypomnienia
 plan_roles           użytkownik, rola, kierunek, grupa, kto nadał, kiedy
                      (jeden starosta na kierunek; admin bez kierunku)
 plan_role_invites    skrót kodu, rola, zakres, kto utworzył, ważność, kto i kiedy użył
-plan_item_proposals  podgląd agenta z wieloma pozycjami, oczekiwany stan, wygasa, zużyty
+plan_item_proposals  podgląd agenta z wieloma pozycjami, oczekiwany stan, wygasa, zużyty (E6.7)
 ```
 
 Dostęp jak w pozostałych tabelach prywatnych: bez uprawnień `anon` i `authenticated`, zapis
@@ -180,9 +182,9 @@ użytkownik po próbie na kopii, jak przy E5.
 
 | Etap | Zakres |
 | --- | --- |
-| E6.1 Baza i role | Tabele z modelu, funkcje z kontrolą ról, testy SQL w CI, skrypt pierwszego admina. Nocny import przenosi i oznacza wpisy przy zmianie zajęć i opisuje to w raporcie (potem ponowny import workflow do n8n). Weekend w walidacji prywatnych zmian. |
+| E6.1 Baza i role | Tabele z modelu, funkcje z kontrolą ról, testy SQL w CI, skrypt pierwszego admina. Wpisy przenoszą się i czekają na sprawdzenie przy zmianie zajęć (wyzwalacz), nocny mail wymienia zniknięte zajęcia z wpisami (potem ponowny import workflow do n8n). |
 | E6.2 API | Wpisy i serie, podpowiedzi terminów, role i kody zaproszeń, osobisty stan. Wpisy w kalendarzu Odysseusa i w ICS. Endpointy w istniejących routerach albo jednym nowym (limit Vercela: dziś 3 z 12). |
-| E6.3 Widok | Pasek pod datami, weekend, znaczniki i bloki, lista „Nadchodzące”, kolory i filtr. |
+| E6.3 Widok | Pasek pod datami, weekend, znaczniki i bloki, lista „Nadchodzące”, kolory i filtr. Weekend w walidacji prywatnych zmian dopiero razem z kolumnami weekendu, żeby przeniesione zajęcia nie znikały z siatki. |
 | E6.4 Dodawanie ręczne | Z okna zajęć i z siatki, seria przez „+”, edycja i usuwanie serii, cofanie. |
 | E6.5 Role w interfejsie | Panel starosty: kody zaproszeń, starostowie grup, wpisy do sprawdzenia, historia zmian. |
 | E6.6 Zmiany planu | Komunikaty przy przeniesieniu zajęć z kolokwium, odrobienie u innej grupy, serie prywatnych zmian zajęć. |

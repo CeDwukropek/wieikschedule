@@ -96,7 +96,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  (SELECT coalesce(jsonb_agg(to_jsonb(e) ORDER BY e.id), '[]'::jsonb) FROM public.events e) AS events,\n  (SELECT coalesce(jsonb_agg(DISTINCT r.event_id), '[]'::jsonb) FROM (\n     SELECT event_id FROM public.schedule_overrides\n     UNION SELECT event_id FROM public.user_added_events WHERE status = 'active'\n     UNION SELECT event_id FROM public.user_event_tags) AS r) AS referenced",
+          "query": "SELECT\n  (SELECT coalesce(jsonb_agg(to_jsonb(e) ORDER BY e.id), '[]'::jsonb) FROM public.events e) AS events,\n  (SELECT coalesce(jsonb_agg(DISTINCT r.event_id), '[]'::jsonb) FROM (\n     SELECT event_id FROM public.schedule_overrides\n     UNION SELECT event_id FROM public.user_added_events WHERE status = 'active'\n     UNION SELECT event_id FROM public.user_event_tags\n     UNION SELECT event_id FROM public.plan_items WHERE event_id IS NOT NULL) AS r) AS referenced",
           "options": {}
         }
       },
@@ -197,9 +197,9 @@
         "parameters": {
           "fromEmail": "alert-sender@example.invalid",
           "toEmail": "alert-recipient@example.invalid",
-          "subject": "wieikschedule: zniknęły zajęcia z prywatnymi danymi",
+          "subject": "wieikschedule: zniknęły zajęcia z danymi użytkowników",
           "emailFormat": "text",
-          "text": "=Nocny import planu WIEiK zapisał zmiany. Z planu uczelni zniknęły zajęcia, do których ktoś miał prywatne zmiany, dopiski lub tagi (liczba: {{ $json.count }}). Oznaczono je jako nieaktywne; prywatne dane zostały w bazie.\n\n{{ $json.list }}\n\nJeśli to zgadza się z planem uczelni, nic nie trzeba robić.",
+          "text": "=Nocny import planu WIEiK zapisał zmiany. Z planu uczelni zniknęły zajęcia, do których ktoś miał prywatne zmiany, dopiski, tagi albo wpisy, np. kolokwia (liczba: {{ $json.count }}). Oznaczono je jako nieaktywne; dane użytkowników zostały w bazie, a wpisy przypięte do tych zajęć czekają na sprawdzenie.\n\n{{ $json.list }}\n\nJeśli to zgadza się z planem uczelni, nic nie trzeba robić.",
           "options": {}
         }
       }

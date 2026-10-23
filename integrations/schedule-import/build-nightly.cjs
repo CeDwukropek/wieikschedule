@@ -32,7 +32,8 @@ const exportQuery = `SELECT
   (SELECT coalesce(jsonb_agg(DISTINCT r.event_id), '[]'::jsonb) FROM (
      SELECT event_id FROM public.schedule_overrides
      UNION SELECT event_id FROM public.user_added_events WHERE status = 'active'
-     UNION SELECT event_id FROM public.user_event_tags) AS r) AS referenced`;
+     UNION SELECT event_id FROM public.user_event_tags
+     UNION SELECT event_id FROM public.plan_items WHERE event_id IS NOT NULL) AS r) AS referenced`;
 // apply_wieik_import rejects the plan if events changed after the export, so a concurrent writer cannot be overwritten.
 const applyQuery = `SELECT CASE WHEN $1::text = 'apply' THEN public.apply_wieik_import($2::jsonb, $3::jsonb)
   ELSE jsonb_build_object('skipped', $1::text) END AS result`;
@@ -43,7 +44,7 @@ if (plan.action === 'blocked') throw new Error('Nightly schedule import blocked 
   JSON.stringify(plan.blockers.slice(0, 5)));
 return [{ json: { action: plan.action, nightly: plan.nightly, result, warnings: plan.warnings.length } }];
 `;
-// After a successful write: classes that vanished although someone had private rows for them.
+// After a successful write: classes that vanished although users had rows or entries for them.
 const notice = `const plan = $('Plan nightly import').first().json;
 if (plan.action !== 'apply' || !plan.nightly.referenced_retired) return [];
 const lines = plan.referenced_retired.map(c => '- ' + c.faculty + ', ' + c.date + ' ' + String(c.start_time).slice(0, 5) +
@@ -51,7 +52,7 @@ const lines = plan.referenced_retired.map(c => '- ' + c.faculty + ', ' + c.date 
 const more = plan.nightly.referenced_retired - lines.length;
 return [{ json: { count: plan.nightly.referenced_retired, list: lines.join('\\n') + (more > 0 ? '\\n… i ' + more + ' więcej' : '') } }];
 `;
-const noticeText = `=Nocny import planu WIEiK zapisał zmiany. Z planu uczelni zniknęły zajęcia, do których ktoś miał prywatne zmiany, dopiski lub tagi (liczba: {{ $json.count }}). Oznaczono je jako nieaktywne; prywatne dane zostały w bazie.
+const noticeText = `=Nocny import planu WIEiK zapisał zmiany. Z planu uczelni zniknęły zajęcia, do których ktoś miał prywatne zmiany, dopiski, tagi albo wpisy, np. kolokwia (liczba: {{ $json.count }}). Oznaczono je jako nieaktywne; dane użytkowników zostały w bazie, a wpisy przypięte do tych zajęć czekają na sprawdzenie.
 
 {{ $json.list }}
 
@@ -94,7 +95,7 @@ const workflow = {
       position: [1440, 0], parameters: { mode: "runOnceForAllItems", jsCode: notice } },
     { id: "notice-mail", name: "Send notice", type: "n8n-nodes-base.emailSend", typeVersion: 2.1, position: [1680, 0],
       credentials: smtp, parameters: { fromEmail: "alert-sender@example.invalid", toEmail: "alert-recipient@example.invalid",
-        subject: "wieikschedule: zniknęły zajęcia z prywatnymi danymi", emailFormat: "text", text: noticeText, options: {} } },
+        subject: "wieikschedule: zniknęły zajęcia z danymi użytkowników", emailFormat: "text", text: noticeText, options: {} } },
   ],
   connections: {
     "Every day at 23:00": { main: [start] },

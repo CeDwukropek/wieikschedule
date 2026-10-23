@@ -136,7 +136,8 @@ def seed(args):
                              (function('use_calendar_link(text)'), '20261021_calendar_links.sql'),
                              ("SELECT to_regclass('public.schedule_proposals_session_idx') IS NOT NULL", '20261022_calendar_writes.sql'),
                              ("SELECT to_regclass('public.timetable_versions') IS NOT NULL", '20261023_plan_versions_and_hygiene.sql'),
-                             ("SELECT to_regclass('public.user_added_events_event_idx') IS NOT NULL", '20261024_release_hardening.sql')]:
+                             ("SELECT to_regclass('public.user_added_events_event_idx') IS NOT NULL", '20261024_release_hardening.sql'),
+                             ("SELECT to_regclass('public.plan_items') IS NOT NULL", '20261025_plan_items_and_roles.sql')]:
         initialized = pg(check) == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)
