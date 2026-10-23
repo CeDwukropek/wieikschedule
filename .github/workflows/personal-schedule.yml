@@ -42,10 +42,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f DB/migrations/20261014_wieik_import.sql
           psql -X -v ON_ERROR_STOP=1 -f DB/migrations/20261015_unlinked_bootstrap.sql
           psql -X -v ON_ERROR_STOP=1 -f DB/migrations/20261015_personal_overrides.sql
-          for migration in 20261021_calendar_links 20261022_calendar_writes 20261023_plan_versions_and_hygiene 20261024_release_hardening; do
+          for migration in 20261021_calendar_links 20261022_calendar_writes 20261023_plan_versions_and_hygiene 20261024_release_hardening 20261025_plan_items_and_roles; do
             psql -X -v ON_ERROR_STOP=1 -f DB/migrations/$migration.sql
           done
           psql -X -v ON_ERROR_STOP=1 -c "INSERT INTO public.events(faculty,date,start_time,subject,status,source_system,source_key) VALUES('TEST','2026-10-12','09:00','Synthetic','aktywne','wieik','synthetic-key');"
           psql -X -v ON_ERROR_STOP=1 -f integrations/schedule-tools/database-test.sql
           psql -X -v ON_ERROR_STOP=1 -f integrations/schedule-tools/calendar-links-test.sql
           psql -X -v ON_ERROR_STOP=1 -f integrations/schedule-tools/plan-versions-test.sql
+          psql -X -v ON_ERROR_STOP=1 -f integrations/schedule-tools/plan-items-test.sql

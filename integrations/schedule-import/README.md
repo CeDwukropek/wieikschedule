@@ -225,7 +225,8 @@ Nie łącz podglądu ze starym node’em Supabase Create.
 
 `n8n-nightly.json` (generowany przez `build-nightly.cjs`, kontrola `--check`) codziennie
 o 23:00 czasu warszawskiego pobiera `stac` i `block`, eksportuje `events` oraz UUID,
-do których odwołują się prywatne dane (zmiany, aktywne dopiski, tagi), i liczy plan
+do których odwołują się dane użytkowników (zmiany, aktywne dopiski, tagi, wpisy takie jak
+kolokwia), i liczy plan
 według [nightly.cjs](nightly.cjs). „Run now” uruchamia to samo ręcznie.
 
 - Bez przeglądu: zmiany przy tym samym kluczu (sala, godzina, prowadzący, odwołanie),
@@ -237,6 +238,10 @@ według [nightly.cjs](nightly.cjs). „Run now” uruchamia to samo ręcznie.
 - Blokada, bez zapisu: wiersz spoza importera albo zniknięcie więcej niż `max(50, 10%)`
   aktywnych zajęć (niepełne źródło). Zablokowany przebieg kończy się błędem z listą blokad;
   ostatni poprawny stan zostaje.
+- Wpisy przypięte do zajęć (kolokwia itp., [projekt E6](../schedule-tools/PLAN_ITEMS_PLAN.md))
+  przenoszą się razem z nimi przy zmianie godziny lub daty pod tym samym kluczem i czekają na
+  sprawdzenie; przy odwołaniu też czekają na sprawdzenie. Robi to wyzwalacz w bazie, więc import
+  nigdy nie musi o nich wiedzieć ani się na nich zatrzymywać.
 - Typowe przeniesienie zajęć (odwołanie dnia + `_add` w serii) nie usuwa klucza: stary termin
   zostaje jako `nieaktywne`, nowy dochodzi jako nowe zajęcia.
 - Niedostępne źródło (np. „Site Maintenance”, HTTP 500) zatrzymuje workflow na pobraniu.

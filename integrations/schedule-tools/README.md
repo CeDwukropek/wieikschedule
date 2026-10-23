@@ -14,6 +14,9 @@ Plan rozwoju notatek, terminów i wymagań zaliczenia:
 [STUDY_NOTES_PLAN.md](STUDY_NOTES_PLAN.md). To projekt następnego etapu;
 prywatny vault nie jest jeszcze podłączony do agenta planu.
 
+Kolokwia, sprawozdania i inne terminy grupowe oraz prywatne, role starostów:
+[PLAN_ITEMS_PLAN.md](PLAN_ITEMS_PLAN.md) (projekt E6).
+
 Uzgodniony priorytet agenta, wybór modeli, różnica między odrobieniem a
 przełożeniem i wymagany codzienny importer: [plan wdrożenia](IMPLEMENTATION_PLAN.md).
 

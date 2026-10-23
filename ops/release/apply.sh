@@ -3,7 +3,8 @@
 # /repo (read-only) and the reviewed fresh-load changes at /plan/changes.json:
 #   docker run --rm --env-file <file with DB_URL> -v "$PWD":/repo:ro -v <plan dir>:/plan:ro \
 #     postgres:17-bookworm sh /repo/ops/release/apply.sh <step>
-# Steps: check | identity | reload | private | verify | all. Every step stops at the first error.
+# Steps: check | identity | reload | private | verify | all (E5), plan-items | grant-admin (E6.1).
+# Every step stops at the first error. grant-admin needs ADMIN_FIREBASE_UID (Firebase console → Authentication).
 set -eu
 : "${DB_URL:?DB_URL is required}"
 export PGOPTIONS="-c statement_timeout=0 -c lock_timeout=30s"
@@ -53,6 +54,24 @@ SELECT 'events_fk ' || conrelid::regclass || '=' || confdeltype::text FROM pg_co
   WHERE contype = 'f' AND confrelid = 'public.events'::regclass ORDER BY 1;
 SQL
 }
+plan_items() {
+  run -f "$M/20261025_plan_items_and_roles.sql"
+}
+# The account must exist, i.e. its owner has signed in to the app once.
+grant_admin() {
+  : "${ADMIN_FIREBASE_UID:?ADMIN_FIREBASE_UID is required}"
+  run -At -v uid="$ADMIN_FIREBASE_UID" <<'SQL'
+SELECT 'uid_set=' || (set_config('wieik.admin_uid', :'uid', false) IS NOT NULL);
+DO $$
+DECLARE target uuid;
+BEGIN
+  SELECT id INTO target FROM public.users WHERE firebase_uid = current_setting('wieik.admin_uid');
+  IF target IS NULL THEN RAISE EXCEPTION 'No account with this Firebase UID; sign in to the app first'; END IF;
+  INSERT INTO public.plan_roles (user_id, role) VALUES (target, 'admin') ON CONFLICT DO NOTHING;
+END $$;
+SELECT 'admins=' || count(*) FROM public.plan_roles WHERE role = 'admin';
+SQL
+}
 
 case "${1:-}" in
   check) check ;;
@@ -61,5 +80,7 @@ case "${1:-}" in
   private) private ;;
   verify) verify ;;
   all) check; identity; reload; private; verify ;;
-  *) echo "usage: apply.sh check|identity|reload|private|verify|all" >&2; exit 64 ;;
+  plan-items) plan_items ;;
+  grant-admin) grant_admin ;;
+  *) echo "usage: apply.sh check|identity|reload|private|verify|all|plan-items|grant-admin" >&2; exit 64 ;;
 esac

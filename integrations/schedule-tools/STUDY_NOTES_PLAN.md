@@ -6,6 +6,11 @@ Zbiorczy stan projektu, brakujące funkcje i kolejność prac:
 Status: projekt do kolejnego etapu. Ta zmiana wdraża filtry i karty planu;
 nie montuje notatek w agencie planu, nie indeksuje ich i nie zmienia vaulta.
 
+**Zmiana z 23.10.2026:** terminy (kolokwia, sprawozdania, wejściówki) i osobisty postęp
+przechowujemy w Supabase, zgodnie z [projektem E6](PLAN_ITEMS_PLAN.md). Obsidian zostaje
+miejscem notatek, materiałów i wymagań. Fragmenty poniżej o zapisie terminów i statusów
+w `Zadania.md` czekają na uzgodnienie struktury notatek z użytkownikiem.
+
 ## Co istnieje
 
 Główny Odysseus ma montowanie `/srv/syncthing/notes` → `/app/obsidian` (rw).
@@ -274,8 +279,9 @@ Proponowany, ograniczony zestaw:
 Narzędzia należą do usługi notatek na koncie Odysseusa. Ograniczona pętla agenta
 planu może później dostać ten jawny zestaw, nadal bez pełnego agenta, powłoki
 i pozostałych narzędzi Odysseusa. Narzędzia planu i jego podpisany kontekst
-pozostają niezależne. Supabase dalej odpowiada za terminy zajęć i prywatne zmiany;
-notatki za zadania, materiały i wymagania. Deadlinów nie wpisujemy do public.events.
+pozostają niezależne. Supabase odpowiada za terminy zajęć, prywatne zmiany oraz
+kolokwia i terminy oddania ([projekt E6](PLAN_ITEMS_PLAN.md)); notatki za materiały
+i wymagania. Deadlinów nie wpisujemy do public.events.
 
 n8n obecnie nie zyska dostępu do plików wyłącznie dlatego, że widzi je Odysseus.
 Workflow będzie potrzebował własnego ograniczonego montowania lub API notatek.

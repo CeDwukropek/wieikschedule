@@ -5,12 +5,15 @@
 BEGIN;
 LOCK TABLE public.events, public.user_added_events, public.user_event_tags IN SHARE ROW EXCLUSIVE MODE;
 DO $$
-DECLARE has_overrides boolean := false;
+DECLARE has_overrides boolean := false; has_entries boolean := false;
 BEGIN
   IF to_regclass('public.schedule_overrides') IS NOT NULL THEN
     EXECUTE 'SELECT EXISTS (SELECT 1 FROM public.schedule_overrides)' INTO has_overrides;
   END IF;
-  IF has_overrides OR EXISTS (SELECT 1 FROM public.user_added_events) OR EXISTS (SELECT 1 FROM public.user_event_tags) THEN
+  IF to_regclass('public.plan_items') IS NOT NULL THEN
+    EXECUTE 'SELECT EXISTS (SELECT 1 FROM public.plan_items)' INTO has_entries;
+  END IF;
+  IF has_overrides OR has_entries OR EXISTS (SELECT 1 FROM public.user_added_events) OR EXISTS (SELECT 1 FROM public.user_event_tags) THEN
     RAISE EXCEPTION 'Fresh load refused: personal event data exists';
   END IF;
 END $$;

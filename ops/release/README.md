@@ -38,3 +38,30 @@ uprawnienia, `rls_auto_enable`, CASCADE): wszystkie kroki w 2,5 s, 7027 wierszy 
 
 Wycofanie przed deployem aplikacji: odtworzyć kopię z kroku 1. Po deployu nie usuwać
 danych użytkowników; wyłączyć flagi `REACT_APP_PERSONAL_SCHEDULE` i `REACT_APP_CALENDAR_SYNC`.
+
+# E6.1 — wpisy w planie i role
+
+Migracja `20261025_plan_items_and_roles` tylko dodaje obiekty (tabele wpisów, historii, stanu
+i ról, funkcje zapisu, wyzwalacze), bez zmian w istniejących danych. Aplikacja jeszcze z nich
+nie korzysta, więc deploy nie jest potrzebny.
+
+1. **Kopia:** `pg_dump --schema=public -Fc`.
+2. `plan-items` — migracja.
+3. `ADMIN_FIREBASE_UID=<UID> … apply.sh grant-admin` — pierwszy admin. UID jest w konsoli
+   Firebase → Authentication → Users; konto musi być raz zalogowane w aplikacji. Krok można
+   powtórzyć. Pozostałe role nadaje się kodami zaproszeń z aplikacji (E6.2/E6.5).
+4. `verify` — `anon` nadal czyta tylko `events`/`faculties`/`timetable_versions`, FK
+   `plan_items` do `events` = RESTRICT.
+5. **Dopiero po migracji** ponownie zaimportować nocny workflow
+   (`ALERT_EMAIL=<adres> ops/release/n8n-import.sh <kontener n8n>`): jego zapytanie czyta
+   `plan_items`, więc przed migracją każdy przebieg kończyłby się alertem.
+
+Próba 23.10.2026 na kopii produkcji z 22.10 z otoczeniem Supabase (jak wyżej): pełne E5,
+potem E6.1 w 80 ms, `grant-admin` dwukrotnie (bez duplikatu) i z nieznanym UID (odmowa),
+`plan-items-test` zaliczony, `verify` bez zmian w dostępie `anon`, RLS na wszystkich tabelach.
+
+Wycofanie: [rollback-plan-items.sql](rollback-plan-items.sql) usuwa wyłącznie obiekty E6.1
+i odmawia, dopóki istnieje jakikolwiek wpis albo rola inna niż admin (dane użytkowników nigdy
+nie są kasowane po cichu). Najpierw nocny workflow z poprzedniej wersji repozytorium, potem
+skrypt. Sprawdzone na tej samej kopii: odmowa przy danych, schemat identyczny jak przed migracją,
+ponowne nałożenie migracji działa.
