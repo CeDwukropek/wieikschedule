@@ -44,6 +44,11 @@ export default function FloatingMenu({
     setShowAll,
     alwaysShowWeekend,
     setAlwaysShowWeekend,
+    entriesOn,
+    entryScope,
+    setEntryScope,
+    hiddenKinds,
+    setHiddenKinds,
   } = viewState || {};
   const {
     studentGroups,
@@ -504,6 +509,12 @@ export default function FloatingMenu({
           onToggleShowAll: () => setShowAll((prev) => !prev),
           alwaysShowWeekend,
           onToggleAlwaysShowWeekend: () => setAlwaysShowWeekend((prev) => !prev),
+          entryFilter: entriesOn ? {
+            scope: entryScope,
+            hiddenKinds,
+            onScope: setEntryScope,
+            onToggleKind: (kind) => setHiddenKinds((prev) => prev.includes(kind) ? prev.filter((value) => value !== kind) : [...prev, kind]),
+          } : undefined,
         }}
         filterState={{
           schedule,

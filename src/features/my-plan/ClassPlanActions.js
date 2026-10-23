@@ -46,12 +46,15 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
       <p>Zmiany dotyczą tylko tego wystąpienia i tylko Twojego planu.</p>
       <div className="plan-action-grid">
         <button type="button" className="event-details-edit" disabled={busy} onClick={() => setMode('move')}><MoveRight size={16}/>Przenieś</button>
-        <button type="button" className="plan-action" disabled={busy} onClick={() => setMode('room')}><DoorOpen size={16}/>Zmień salę</button>
         {isAdded
           ? <button type="button" className="event-details-remove" disabled={busy} onClick={() => run(() => planActions.removeAdded(ev.added_event_id))}><Trash2 size={16}/>Usuń z mojego planu</button>
           : <button type="button" className="event-details-remove" disabled={busy} onClick={() => run(() => planActions.apply({ event_id: ev.event_id, operation: 'upsert', action: 'cancel', patch: {} }))}><Ban size={16}/>Odwołaj u mnie</button>}
         {override && <button type="button" className="plan-action" disabled={busy} onClick={() => run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }))}><RotateCcw size={16}/>Przywróć plan uczelni</button>}
       </div>
+      <details className="plan-more">
+        <summary>Więcej</summary>
+        <button type="button" className="plan-action" disabled={busy} onClick={() => setMode('room')}><DoorOpen size={16}/>Zmień salę</button>
+      </details>
     </>}
     {mode === 'move' && <form className="plan-form" onSubmit={event => { event.preventDefault(); if (!moveError && Object.keys(changes).length) save(changes); }}>
       <div className="plan-form-row">
