@@ -1,10 +1,27 @@
-import { useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Eye, X } from 'lucide-react';
 import { KindChip } from './PlanItemSummary';
 import { countdown, describeAudience, describeItemTime, upcomingItems } from './planItemLogic';
 
-// Kolokwia, deadlines and other entries of the next two weeks, and deadlines missed recently.
-export default function UpcomingPanel({ items, today, onClose, onOpen }) {
+// An entry the person hid, with the button that shows it again.
+function HiddenRow({ item, onShow }) {
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const show = async () => {
+    setBusy(true); setError('');
+    try { await onShow(item.id); } catch (failure) { setError(failure.message || 'Nie udało się zapisać.'); setBusy(false); }
+  };
+  return <li className="plan-panel-row hidden-row">
+    <span className="plan-item-meta"><KindChip item={item}/><span>{describeAudience(item)}</span></span>
+    <strong>{item.title}</strong>
+    <span>{describeItemTime(item)}{item.subject ? ` · ${item.subject}` : ''}</span>
+    <button type="button" className="hidden-row-show" disabled={busy} onClick={show}
+      aria-label={`Pokaż znowu: ${item.title}`}><Eye size={14} aria-hidden="true"/>Pokaż</button>
+    {error && <p role="alert" className="event-details-error">{error}</p>}
+  </li>;
+}
+
+// Kolokwia, deadlines and other entries of the next two weeks, deadlines missed recently and entries the person hid.
+export default function UpcomingPanel({ items, hidden = [], today, onClose, onOpen, onShow }) {
   const dialog = useRef(null);
   const titleId = useId();
   useEffect(() => {
@@ -36,6 +53,10 @@ export default function UpcomingPanel({ items, today, onClose, onOpen }) {
       {overdue.length > 0 && <section className="plan-panel-section"><h3>Zaległe ({overdue.length})</h3>{list(overdue)}</section>}
       {upcoming.length > 0 && <section className="plan-panel-section"><h3>Wkrótce ({upcoming.length})</h3>{list(upcoming)}</section>}
       {!upcoming.length && !overdue.length && <p className="plan-panel-empty">W najbliższych dwóch tygodniach nie ma kolokwiów ani terminów.</p>}
+      {onShow && hidden.length > 0 && <details className="plan-panel-section">
+        <summary>Ukryte u mnie ({hidden.length})</summary>
+        <ul>{[...hidden].sort((a, b) => a.date.localeCompare(b.date)).map(item => <HiddenRow key={item.id} item={item} onShow={onShow}/>)}</ul>
+      </details>}
     </section>
   </dialog>;
 }

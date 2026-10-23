@@ -21,6 +21,8 @@ test('a group entry shows only to people whose plan has that class, subject or g
   expect(shown).toEqual(['class', 'lecture', 'every-group', 'external', 'mine']);
   expect(visibleItems(items, [lab], { scheduleId: 'EiAs3', showAll: true }).map(item => item.id))
     .toEqual(['class', 'other-group', 'lecture', 'every-group', 'foreign-subject', 'mine']);
+  const hiddenElsewhere = entry('hidden-other-group', { group: 'Lk2', timing: 'due', event_id: null, my_state: { hidden: true } });
+  expect(visibleItems([...items, hiddenElsewhere], [lab], { scheduleId: 'EiAs3', hidden: true }).map(item => item.id)).toEqual(['hidden']);
 });
 
 test('entries sit on their class, as blocks at their own time or in the strip under the dates', () => {

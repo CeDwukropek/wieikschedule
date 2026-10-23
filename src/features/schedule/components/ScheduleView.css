@@ -373,6 +373,12 @@
 .event-details-entries h3 { font-size: 13px; font-weight: 600; color: #a3a3a3; }
 .upcoming-row { width: 100%; text-align: left; font-size: 13px; }
 .upcoming-row strong { font-size: 14px; overflow-wrap: anywhere; }
+.hidden-row { font-size: 13px; color: #a3a3a3; }
+.hidden-row strong { font-size: 14px; color: #e5e5e5; overflow-wrap: anywhere; }
+.hidden-row-show { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid #404040; color: #e5e5e5; font-size: 13px; }
+.hidden-row-show:hover:not(:disabled) { background: #2a2a2a; }
+.hidden-row-show:disabled { opacity: .6; }
 .upcoming-row span { color: #d4d4d4; }
 .upcoming-row[data-done] { opacity: .6; }
 .upcoming-review { color: #fcd34d !important; }

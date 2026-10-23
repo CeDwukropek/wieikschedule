@@ -26,7 +26,8 @@ export function itemsWindow(today) {
 const norm = value => String(value || "").trim().toLowerCase();
 // Group entries visible in the plan the person sees: the class itself is in their plan, or the subject is
 // with that group (any group for entries concerning every group). Own entries are always visible.
-export function visibleItems(items, planEvents, { scheduleId, showAll = false } = {}) {
+// With hidden, the same choice among the entries the person hid (to show them again).
+export function visibleItems(items, planEvents, { scheduleId, showAll = false, hidden = false } = {}) {
   const ids = new Set(), subjects = new Set(), pairs = new Set();
   for (const ev of planEvents) {
     const faculty = ev._sourceScheduleId || scheduleId, subject = norm(ev.title);
@@ -36,7 +37,7 @@ export function visibleItems(items, planEvents, { scheduleId, showAll = false } 
     for (const group of ev.groups || []) pairs.add(`${faculty}|${subject}|${norm(group)}`);
   }
   return items.filter(item => {
-    if (item.my_state?.hidden) return false;
+    if (Boolean(item.my_state?.hidden) !== hidden) return false;
     if (item.scope === "personal") return true;
     if (showAll && item.faculty === scheduleId) return true;
     const subject = `${item.faculty}|${norm(item.subject)}`;

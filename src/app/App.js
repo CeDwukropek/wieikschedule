@@ -77,6 +77,8 @@ export default function App() {
   const planEvents=useMemo(()=>mergeEvents({...eventOptions,hideLectures:false,weekStart:null}),[eventOptions]);
   const items=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll}),
     [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
+  const hiddenItems=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll,hidden:true}),
+    [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
   const weekendSet=useMemo(()=>weekendWeeks(planEvents,items),[planEvents,items]);
   const showWeekend=useCallback(weekStart=>view.alwaysShowWeekend||weekendSet.has(toIsoDate(weekStart)),[view.alwaysShowWeekend,weekendSet]);
   const [openItemId,setOpenItemId]=useState(null);
@@ -305,7 +307,8 @@ export default function App() {
         onShow={item=>{setPlanOpen(false);setShownItem(item);}}/>}
       {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={schedule.subjects} date={parseDate((shownItem.current||shownItem.original).date)}
         onClose={()=>setShownItem(null)} planActions={planActions}/>}
-      {upcomingOpen&&<UpcomingPanel items={items} today={today} onClose={()=>setUpcomingOpen(false)}
+      {upcomingOpen&&<UpcomingPanel items={items} hidden={hiddenItems} today={today} onClose={()=>setUpcomingOpen(false)}
+        onShow={onItemState&&(id=>onItemState(id,{hidden:false}))}
         onOpen={item=>{setUpcomingOpen(false);setOpenItemId(item.id);}}/>}
       {openItem&&<PlanItemDialog item={openItem} onClose={()=>setOpenItemId(null)} onState={onItemState}/>}
       <UndoToast toast={toast} onDismiss={dismissToast}/>

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import WeekView from '../schedule/components/WeekView';
+import UpcomingPanel from './UpcomingPanel';
 import { placeItems } from './planItemLogic';
 
 const monday = new Date(2026, 9, 19);
@@ -72,4 +73,16 @@ test('the events layer keeps spanning the whole day when the strip row comes and
   rerender(view([]));
   expect(layer()).toMatch(/grid-row: 3 \/ span 60/);
   expect(layer()).not.toMatch(/grid-row-end/);
+});
+
+test('entries hidden by the person can be shown again from the upcoming panel', async () => {
+  const onShow = jest.fn().mockResolvedValue();
+  const hidden = entry('hidden', { my_state: { hidden: true, progress: 'todo' }, title: 'Wejściówka 2' });
+  const { rerender } = render(<UpcomingPanel items={[]} hidden={[hidden]} today={monday} onClose={() => {}} onOpen={() => {}} onShow={onShow}/>);
+  fireEvent.click(screen.getByText('Ukryte u mnie (1)'));
+  fireEvent.click(screen.getByRole('button', { name: 'Pokaż znowu: Wejściówka 2' }));
+  await waitFor(() => expect(onShow).toHaveBeenCalledWith('hidden'));
+  // Guests hide nothing, so they get no such section.
+  rerender(<UpcomingPanel items={[]} hidden={[hidden]} today={monday} onClose={() => {}} onOpen={() => {}}/>);
+  expect(screen.queryByText(/Ukryte u mnie/)).not.toBeInTheDocument();
 });
