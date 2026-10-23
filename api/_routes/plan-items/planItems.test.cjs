@@ -123,6 +123,28 @@ test('managed roles never identify their holders',async()=>{
   assert.equal(student.calls.length,1);
 });
 
+test('history tells who changed an entry by role only and carries what undo needs',async()=>{
+  const snap=(revision,extra={})=>({...entry('i1',{revision,title:'Kolokwium'}),owner_id:null,...extra});
+  const db=chainDb({
+    plan_roles:query=>has(query,'eq','user_id','g')?{data:[{id:'r',role:'group_starosta',faculty:'EiAs3',group:'L1'}],error:null}
+      :{data:[{user_id:'secret-a',role:'starosta',faculty:'EiAs3',group:null},{user_id:'secret-b',role:'group_starosta',faculty:'EiAs3',group:'L1'}],error:null},
+    plan_item_history:query=>has(query,'eq','item->>faculty','EiAs3')
+      ?(assert.ok(has(query,'in','item->>group',['L1'])),{data:[
+        {id:4,item_id:'i1',revision:3,operation:'review',actor_id:null,item:snap(3,{state:'review'}),created_at:'t4'},
+        {id:3,item_id:'i1',revision:2,operation:'update',actor_id:'secret-b',item:snap(2,{title:'Kolokwium 1'}),created_at:'t3'},
+        {id:2,item_id:'i1',revision:1,operation:'create',actor_id:'secret-a',item:snap(1),created_at:'t2'},
+        {id:1,item_id:'i1',revision:0,operation:'create',actor_id:'g',item:snap(0),created_at:'t1'}],error:null})
+      :{data:[{item_id:'i1',revision:1,item:snap(1)},{item_id:'i1',revision:2,item:snap(2,{title:'Kolokwium 1'})}],error:null},
+    plan_items:()=>({data:[{id:'i1',revision:3,deleted_at:null}],error:null})});
+  const {changes}=await items.listHistory({db,userId:'g'},{faculty:'EiAs3'});
+  assert.deepEqual(changes.map(change=>change.actor),['zmiana planu uczelni','starosta grupy L1','starosta','Ty']);
+  assert.deepEqual([changes[1].item.title,changes[1].previous.title,changes[2].previous],['Kolokwium 1','Kolokwium',null]);
+  assert.deepEqual(changes[0].current,{revision:3,deleted:false});
+  assert.ok(!/secret|owner_id|actor_id/.test(JSON.stringify(changes)));
+  const student=chainDb({plan_roles:()=>({data:[],error:null})});
+  await assert.rejects(items.listHistory({db:student,userId:'s'},{faculty:'EiAs3'}),{code:'FORBIDDEN'});
+});
+
 test('the calendar mirror gets the plan groups entries, own entries and entries for every group of a planned subject',()=>{
   const selection={faculty:'EiAs3',groups:{L:'L1'}};
   const subjects=new Set(['EiAs3\nMUD']);

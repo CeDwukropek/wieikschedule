@@ -12,6 +12,7 @@ import GoogleSignInButton from "../auth/GoogleSignInButton";
 import AiSettings from './AiSettings';
 import CalendarSyncSettings from './CalendarSyncSettings';
 import EntryFilter from '../plan-items/EntryFilter';
+import RedeemInvite from '../plan-items/RedeemInvite';
 
 const TAB_KEY = "wieikschedule.settingsTab";
 const readTab = () => { try { return localStorage.getItem(TAB_KEY) === "ai" ? "ai" : "plan"; } catch { return "plan"; } };
@@ -98,6 +99,7 @@ export default function SettingsPanel({
     alwaysShowWeekend,
     onToggleAlwaysShowWeekend,
     entryFilter,
+    onRedeemInvite,
   } = viewState || {};
   const {
     schedule,
@@ -281,6 +283,7 @@ export default function SettingsPanel({
             {entryFilter && <section className="space-y-2 border-t border-neutral-800 pt-4">
               <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
               <EntryFilter {...entryFilter} />
+              {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
             </section>}
             {/* Export buttons */}
             <section className="space-y-2 border-t border-neutral-800 pt-4">
