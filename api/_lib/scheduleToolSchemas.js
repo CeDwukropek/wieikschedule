@@ -10,5 +10,16 @@ const tools=[
   {name:'schedule.find_event',description:'Find effective events by subject; never guess a UUID.',properties:{...range,query:{type:'string'}},required:['faculty','date_from','date_to','query']},
   {name:'schedule.create_override',description:'Prepare a private modify/cancel preview. Does NOT save a change; user must confirm in the app. Replaces the complete existing patch.',properties:{event_id:{type:'string'},action:{type:'string',enum:['modify','cancel']},patch:{type:'object',additionalProperties:false,properties:{date:{type:'string'},start_time:{type:'string',description:'HH:mm:00'},duration_min:{type:'integer',minimum:1,maximum:900},room:{type:['string','null']},instructor:{type:['string','null']}}},reason:{type:['string','null'],maxLength:1000}},required:['event_id','action','patch']},
   {name:'schedule.delete_override',description:'Prepare restoration of the source event; user must confirm in the app.',properties:{event_id:{type:'string'}},required:['event_id']},
+  {name:'plan_items.prepare_entries',description:'ENTRIES MODE ONLY. Prepare a PREVIEW of kolokwia, report deadlines and other entries for one subject; nothing is saved, the user confirms in the app. Split the user\'s message (e.g. a pasted message from the instructor) into terms; convert relative dates using today from the context. A term on a class day needs only the date (the class is found in the university plan). Give time only if the user stated it; NEVER guess a time — terms without a class that day are marked for the user to fill in. Reports/projects are hand-in deadlines: set hand_in, due_time only if stated. All terms of one call share kind, subject, title and details; call again for another subject or kind.',
+    properties:{kind:{type:'string',enum:['kolokwium','wejsciowka','sprawozdanie','egzamin','poprawa','projekt','inne']},
+      subject:subject.query,class_kind:subject.kind,
+      scope:{type:'string',enum:['group','personal'],description:'group = for the whole group (needs a starosta role; otherwise the preview falls back to personal). Default group.'},
+      title:{type:'string',maxLength:200,description:'Short title, e.g. Kolokwium 1. Omit to use the kind.'},
+      details:{type:'string',maxLength:4000,description:'Material or requirements, only as stated by the user.'},
+      terms:{type:'array',minItems:1,maxItems:20,items:{type:'object',additionalProperties:false,required:['date'],properties:{
+        date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string',description:'HH:MM, only if stated'},
+        duration_min:{type:'integer',minimum:5,maximum:900},hand_in:{type:'boolean',description:'A deadline (hand in by this day) rather than a sitting.'},
+        due_time:{type:'string',description:'HH:MM hand-in hour, only if stated'}}}}},
+    required:['kind','subject','terms']},
 ].map(t=>({name:t.name,description:t.description,inputSchema:{type:'object',properties:t.properties,required:t.required,additionalProperties:false}}));
 module.exports={tools};

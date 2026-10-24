@@ -9,6 +9,9 @@ export async function sendScheduleAgentMessage({message,scheduleName,sessionId,s
   const uid=auth?.currentUser?.uid;
   const capabilities=await nativeCapabilities(settings.local_endpoint,uid,localToken(uid),signal);
   if(!capabilities.endpoints?.length)throw new Error('Odysseus nie ma dopuszczonego połączenia z modelem dla planu.');
+  // Modes added later (e.g. "entries") need a matching Odysseus; an older one would refuse the context.
+  if(Array.isArray(capabilities.intents)&&!capabilities.intents.includes(intent))
+    throw new Error('Ten Odysseus nie obsługuje jeszcze tego trybu rozmowy. Zaktualizuj Odysseusa albo wybierz inny tryb.');
   if(!settings.local_model)throw new Error('W ustawieniach AI połącz Odysseusa i wybierz jego model.');
   const endpoint=capabilities.endpoints.find(row=>row.id===settings.local_endpoint_id);
   if(!endpoint||!endpoint.models.includes(settings.local_model))throw new Error('Zapisany model lub połączenie jest niedostępne. W ustawieniach AI odśwież połączenie z Odysseusem i wybierz model.');

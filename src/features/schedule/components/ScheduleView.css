@@ -501,3 +501,5 @@
 .plan-makeup-done { color: #86efac; font-size: 13px; }
 .plan-item-duplicate { display: grid; gap: 6px; padding: 10px 12px; border-radius: 8px; background: #172554; color: #dbeafe; font-size: 13px; }
 .plan-item-duplicate button { justify-self: start; padding: 5px 10px; border-radius: 999px; border: 1px solid #3b82f6; color: #dbeafe; font-size: 13px; }
+/* Drafts: entries of an agent's preview before they are confirmed. */
+[data-draft] { opacity: .7; outline: 1.5px dashed var(--kind, #a855f7); outline-offset: -1.5px; background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255,255,255,.06) 6px 12px); }

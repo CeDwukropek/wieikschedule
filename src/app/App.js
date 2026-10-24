@@ -89,7 +89,16 @@ export default function App() {
     [relevantItems,view.entryScope,view.hiddenKinds]);
   const hiddenItems=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll,hidden:true}),
     [planItems.items,planEvents,schedule.currentSchedule,view.showAll]);
-  const weekendSet=useMemo(()=>weekendWeeks(planEvents,items),[planEvents,items]);
+  // Rows chosen in an agent's preview, drawn as drafts until they are saved.
+  const [agentDrafts,setAgentDrafts]=useState({});
+  const setDrafts=useCallback((id,drafts)=>setAgentDrafts(previous=>{
+    if(!drafts.length&&!previous[id])return previous;
+    const next={...previous};
+    if(drafts.length)next[id]=drafts;else delete next[id];
+    return next;
+  }),[]);
+  const placedItems=useMemo(()=>{const drafts=Object.values(agentDrafts).flat();return drafts.length?[...items,...drafts]:items;},[items,agentDrafts]);
+  const weekendSet=useMemo(()=>weekendWeeks(planEvents,placedItems),[planEvents,placedItems]);
   const showWeekend=useCallback(weekStart=>view.alwaysShowWeekend||weekendSet.has(toIsoDate(weekStart)),[view.alwaysShowWeekend,weekendSet]);
   const [openItemId,setOpenItemId]=useState(null);
   const [upcomingOpen,setUpcomingOpen]=useState(false);
@@ -178,8 +187,8 @@ export default function App() {
     ],
     [eventOptions, navigation.selectedDayWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
   );
-  const weekPlaced=useMemo(()=>placeItems(items,navigation.viewedWeekStart,weekEvents),[items,navigation.viewedWeekStart,weekEvents]);
-  const dayPlaced=useMemo(()=>placeItems(items,navigation.selectedDayWeekStart,dayEvents),[items,navigation.selectedDayWeekStart,dayEvents]);
+  const weekPlaced=useMemo(()=>placeItems(placedItems,navigation.viewedWeekStart,weekEvents),[placedItems,navigation.viewedWeekStart,weekEvents]);
+  const dayPlaced=useMemo(()=>placeItems(placedItems,navigation.selectedDayWeekStart,dayEvents),[placedItems,navigation.selectedDayWeekStart,dayEvents]);
   const weekDays=useMemo(()=>showWeekend(navigation.viewedWeekStart)||weekPlaced.events.some(ev=>ev.day>=5&&!isDayOff(ev))
     ||Object.keys(weekPlaced.strip).some(day=>Number(day)>=5)?WHOLE_WEEK:WORKDAYS,[showWeekend,navigation.viewedWeekStart,weekPlaced]);
   const reviewCount=useMemo(()=>reviewItems(planItems.items).length,[planItems.items]);
@@ -258,7 +267,8 @@ export default function App() {
     subjects: schedule.subjects,
     planActions,
     ref: exportRef,
-    onOpenItem: item=>setOpenItemId(item.id),
+    // Drafts from an agent's preview are not saved yet, so they have no details to open.
+    onOpenItem: item=>{if(!item.draft)setOpenItemId(item.id);},
     onItemState,
     itemActions,
     onCreateAt: itemActions?term=>setDraft({term,faculty:schedule.currentSchedule}):undefined,
@@ -321,6 +331,14 @@ export default function App() {
           onOptimisticAddFailed: myPlan.rollbackAdd,
           // Agent previews are stored server-side; reload so they survive a page refresh.
           onProposal: personal.refresh,
+          // Kolokwia and deadlines from the agent: saved only from its preview, exactly as prepared.
+          entriesEnabled: Boolean(user&&itemsOn),
+          onDrafts: setDrafts,
+          onConfirmEntries: async body=>{
+            const data=await planItemsRequest('confirm-agent',{method:'POST',body});
+            planItems.refresh();
+            return data;
+          },
         }}
       />
       <div className="inline-flex gap-2">

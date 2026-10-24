@@ -49,7 +49,7 @@ function EntryMarks({ entries, compact }) {
   if (!entries?.length) return null;
   return <span className="week-event-entries">
     {entries.map(item => <span key={item.id} className="week-event-entry" style={{ "--kind": kindOf(item).color }}
-      title={`${kindOf(item).label}: ${item.title}`}>{item.state === "review" ? "⚠ " : ""}{compact ? kindOf(item).short : `${kindOf(item).label}: ${item.title}`}</span>)}
+      data-draft={item.draft || undefined} title={`${item.draft ? "Szkic — " : ""}${kindOf(item).label}: ${item.title}`}>{item.state === "review" ? "⚠ " : ""}{compact ? kindOf(item).short : `${kindOf(item).label}: ${item.title}`}</span>)}
   </span>;
 }
 const entriesLabel = ev => ev.entries?.length ? `, ${ev.entries.map(item => `${kindOf(item).label}: ${item.title}`).join(", ")}` : "";
@@ -90,9 +90,10 @@ export default function EventCard({
       style={{ "--kind": kindOf(ev.planItem).color }}
       data-entry
       data-review={ev.planItem.state === "review" || undefined}
+      data-draft={ev.planItem.draft || undefined}
       onClick={() => onOpenDetails?.(ev)}
       aria-haspopup="dialog"
-      aria-label={`${kindOf(ev.planItem).label}: ${ev.title}, ${ev.start}–${ev.end}${ev.planItem.subject ? `, ${ev.planItem.subject}` : ""}${ev.planItem.state === "review" ? ", do sprawdzenia" : ""}. Pokaż szczegóły`}
+      aria-label={`${ev.planItem.draft ? "Szkic z podglądu agenta — " : ""}${kindOf(ev.planItem).label}: ${ev.title}, ${ev.start}–${ev.end}${ev.planItem.subject ? `, ${ev.planItem.subject}` : ""}${ev.planItem.state === "review" ? ", do sprawdzenia" : ""}. Pokaż szczegóły`}
     >
       <span className="week-event-content">
         <span className="week-event-time">

@@ -21,6 +21,9 @@ import DateSelectionPanel from "./DateSelectionPanel";
 import ChatPanel from "../../features/chat/ChatPanel";
 import { ReactComponent as RoundedCorner } from "./RoundedCorner.svg";
 
+const CHAT_HEIGHT_KEY = "wieik:chat-height";
+const MIN_CHAT_HEIGHT = 200;
+
 export default function FloatingMenu({
   panelState,
   viewState,
@@ -114,6 +117,9 @@ export default function FloatingMenu({
     onOptimisticAddConfirmed,
     onOptimisticAddFailed,
     onProposal,
+    entriesEnabled = false,
+    onConfirmEntries,
+    onDrafts,
   } = chatState || {};
 
   const [isChatMode, setIsChatMode] = useState(false);
@@ -126,6 +132,32 @@ export default function FloatingMenu({
   const backButtonRef = useRef(null);
   const composerId = useId();
   const refreshPendingRef = useRef(false);
+
+  // Chat size: "Powiększ" (about 70% of the screen, the whole screen on phones) or a height dragged by hand,
+  // remembered in this browser.
+  const [chatLarge, setChatLarge] = useState(false);
+  const [chatHeight, setChatHeight] = useState(() => {
+    try { const value = Number(localStorage.getItem(CHAT_HEIGHT_KEY)); return value >= MIN_CHAT_HEIGHT ? value : null; } catch { return null; }
+  });
+  const startChatResize = (event) => {
+    const popup = event.currentTarget.closest(".dock-history-popup");
+    if (!popup || event.button > 0) return;
+    event.preventDefault();
+    const startY = event.clientY, startHeight = popup.getBoundingClientRect().height;
+    let height = startHeight;
+    const move = (moveEvent) => {
+      height = Math.round(Math.min(Math.max(startHeight + startY - moveEvent.clientY, MIN_CHAT_HEIGHT), window.innerHeight - 150));
+      setChatLarge(false);
+      setChatHeight(height);
+    };
+    const end = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      try { localStorage.setItem(CHAT_HEIGHT_KEY, String(height)); } catch { /* the height is kept for this visit only */ }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+  };
 
   const dayActiveRef = useRef(null);
   const weekActiveRef = useRef(null);
@@ -155,6 +187,12 @@ export default function FloatingMenu({
     onOptimisticAddFailed,
     onProposal,
   });
+
+  // A preview with several entries is easier to check in a larger chat.
+  const lastPreview = messages[messages.length - 1]?.payload?.proposals?.find((proposal) => proposal.type === "plan_items");
+  useEffect(() => {
+    if (lastPreview?.items?.length > 1) setChatLarge(true);
+  }, [lastPreview?.id, lastPreview?.items?.length]);
 
   const isWeek = viewMode === "week";
   const label = isWeek ? viewedWeekRange : currentDayLabel;
@@ -302,8 +340,9 @@ export default function FloatingMenu({
     <div>
       <div
         ref={dockRef}
-        className={`schedule-dock ${chatActive ? "is-chat" : ""} ${historyExpanded ? "is-expanded" : ""} ${!isAiChatEnabled ? "without-ai" : ""}`}
-        style={{ "--keyboard-offset": `${keyboardOffset}px`, zIndex: isSettingsOpen ? 30 : 200 }}
+        className={`schedule-dock ${chatActive ? "is-chat" : ""} ${historyExpanded ? "is-expanded" : ""} ${!isAiChatEnabled ? "without-ai" : ""} ${chatLarge && chatActive ? "is-large" : ""}`}
+        style={{ "--keyboard-offset": `${keyboardOffset}px`, zIndex: isSettingsOpen ? 30 : 200,
+          ...(chatHeight && !chatLarge ? { "--dock-history-height": `min(${chatHeight}px, max(0px, calc(100dvh - var(--keyboard-offset, 0px) - 150px)))` } : {}) }}
         inert={isSettingsOpen ? true : undefined}
       >
         <div className="dock-notice" role="status" aria-live="polite">
@@ -459,6 +498,12 @@ export default function FloatingMenu({
                 slotErrors={slotErrors}
                 intent={intent}
                 onIntentChange={setIntent}
+                entriesEnabled={entriesEnabled}
+                onConfirmEntries={onConfirmEntries}
+                onDrafts={onDrafts}
+                large={chatLarge}
+                onToggleLarge={() => setChatLarge((previous) => !previous)}
+                onResizeStart={startChatResize}
               />
             </div>
           )}

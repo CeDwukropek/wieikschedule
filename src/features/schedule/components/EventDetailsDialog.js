@@ -73,9 +73,9 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           <h3 className="plan-item-form-title">{entryForm.type === 'edit' ? `Edycja: ${entryForm.item.title}` : 'Nowy termin'}</h3>
           <PlanItemForm source={entryForm} actions={itemActions} onDone={() => setEntryForm(null)} onCancel={() => setEntryForm(null)}/>
         </section> : <>
-          {ev.entries?.length > 0 && <section className="event-details-entries" aria-label="Terminy na tych zajęciach">
+          {ev.entries?.some(item => !item.draft) && <section className="event-details-entries" aria-label="Terminy na tych zajęciach">
             <h3>Na tych zajęciach</h3>
-            {ev.entries.map(item => <PlanItemSummary key={item.id} item={item} onState={onItemState} actions={itemActions}
+            {ev.entries.filter(item => !item.draft).map(item => <PlanItemSummary key={item.id} item={item} onState={onItemState} actions={itemActions}
               onEdit={entry => setEntryForm({ type: 'edit', item: entry })}/>)}
           </section>}
           {itemActions && ev.event_id && !ev.ghost && <button type="button" className="event-details-add-entry"

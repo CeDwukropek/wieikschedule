@@ -106,7 +106,8 @@ export function useChatbot({
         intent,
       });
       if(controller.signal.aborted||uidRef.current!==owner)return;
-      reply.proposals?.forEach(proposal=>onProposal?.(proposal));
+      // Private-change previews live in "Mój plan"; entry previews stay in this conversation.
+      reply.proposals?.filter(proposal=>proposal.type!=='plan_items').forEach(proposal=>onProposal?.(proposal));
 
       setMessages((prev) =>
         prev.map((msg) =>
