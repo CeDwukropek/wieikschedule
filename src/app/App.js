@@ -19,6 +19,7 @@ import UndoToast from '../features/my-plan/UndoToast';
 import {addEventToMyPlan} from '../features/my-plan/myPlanApi';
 import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effectiveSchedule';
 import MyPlanPanel from '../features/my-plan/MyPlanPanel';
+import {seriesMembers} from '../features/my-plan/seriesChanges';
 import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
 import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
 import {getWeekStart,toIsoDate} from '../utils/date';
@@ -28,7 +29,7 @@ import PlanItemDialog from '../features/plan-items/PlanItemDialog';
 import UpcomingPanel from '../features/plan-items/UpcomingPanel';
 import StarostaPanel from '../features/plan-items/StarostaPanel';
 import {planItemsRequest} from '../features/plan-items/planItemsApi';
-import {slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
+import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {CalendarPlus,ShieldCheck} from 'lucide-react';
 
@@ -119,6 +120,23 @@ export default function App() {
     const message=change.operation==='delete'?'Przywrócono plan uczelni.':change.action==='cancel'?'Odwołano zajęcia w Twoim planie.':'Zapisano zmianę w Twoim planie.';
     setToast({message,undo:async()=>{await personal.apply(undo);myPlan.refresh();}});
   };
+  const applyBatchChange=async(changes,message)=>{
+    const undo=await personal.applyBatch(changes);
+    myPlan.refresh();
+    setToast({message,undo:async()=>{await personal.applyBatch(undo);myPlan.refresh();}});
+  };
+  // Makeup at another group: the class joins the plan (as added classes do) with a private entry on it.
+  const makeUp=async(entry,candidate)=>{
+    const {added_event:added,already_added:existed}=await addEventToMyPlan({eventId:candidate.event_id,scheduleName:candidate.faculty});
+    let saved;
+    try{saved=await planItems.save([makeupItem(entry,candidate)]);}
+    catch(failure){if(!existed&&added?.id)await myPlan.removeEvent(added.id).catch(()=>{});myPlan.refresh();throw failure;}
+    myPlan.refresh();personal.refresh();
+    setToast({message:`Wpisano odrobienie z grupą ${candidate.group}. Zapytaj prowadzącego o zgodę.`,undo:async()=>{
+      await planItems.remove(saved.map(({id,revision})=>({id,revision})));
+      if(!existed&&added?.id){await myPlan.removeEvent(added.id);personal.refresh();}
+    }});
+  };
   const confirmProposal=async proposal=>{
     await personal.confirmProposal(proposal);
     myPlan.refresh();
@@ -188,6 +206,11 @@ export default function App() {
   const planActions=user&&personalEnabled&&personal.ready?{
     overrideFor:id=>personal.rows.find(row=>row.event_id===id),
     apply:applyChange,
+    applyBatch:applyBatchChange,
+    makeUp:itemsOn&&planItems.ready?makeUp:undefined,
+    // The university occurrences of the class's series in its own plan (not makeup classes of other plans).
+    seriesFor:ev=>seriesMembers(schedule.loadedTimetables[ev._sourceScheduleId||schedule.currentSchedule]?.rawRows||[],ev.event_id,
+      id=>personal.rows.find(row=>row.event_id===id)),
     removeAdded:removeAddedEvent,
     startTimes,
     bounds:{min:effectiveTable.minDate,max:effectiveTable.maxDate},

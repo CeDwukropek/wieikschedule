@@ -182,3 +182,29 @@ export function slotTerm(date, startMinutes, endMinutes) {
   const end = Math.min(22 * 60, endMinutes > start ? endMinutes : start + 90);
   return { key: `slot:${date}:${time(start)}`, timing: "slot", date, start: time(start), end: time(end) };
 }
+
+const MAKEUP = " — odrobienie";
+// Makeup for a missed kolokwium (or another entry on a class): the same kind and subject at another group's class
+// within 14 days of the original term. Being on the list never means the instructor agreed.
+export function makeupCandidates(items, entry) {
+  const from = entry.anchor?.date || entry.date, until = addDays(from, 14);
+  return items.filter(item => item.id !== entry.id && item.scope === "group" && item.timing === "class" && item.faculty === entry.faculty
+      && norm(item.subject) === norm(entry.subject) && item.kind === entry.kind && (item.group || "") !== (entry.group || "")
+      && item.date >= from && item.date <= until)
+    .sort((a, b) => when(a).localeCompare(when(b)));
+}
+export function makeupItem(entry, candidate) {
+  return { scope: "personal", faculty: candidate.faculty, kind: candidate.kind, timing: "class", event_id: candidate.event_id,
+    title: `${entry.title.slice(0, 200 - MAKEUP.length)}${MAKEUP}`,
+    details: `Odrobienie z grupą ${candidate.group || "innego terminu"}. Wymaga zgody prowadzącego.` };
+}
+
+export const isMakeup = item => item.scope === "personal" && String(item.title || "").endsWith(MAKEUP);
+// A private entry the group now has as well (a starosta wrote the same class and kind, or the same subject, kind
+// and day): the private one can go. A makeup sits on another group's entry on purpose, so it is left alone.
+export function groupDuplicateOf(items, item) {
+  if (item.scope !== "personal" || isMakeup(item)) return null;
+  return items.find(other => other.scope === "group" && other.kind === item.kind && (item.timing === "class"
+    ? other.timing === "class" && String(other.event_id) === String(item.event_id)
+    : other.faculty === item.faculty && item.subject && norm(other.subject) === norm(item.subject) && other.date === item.date)) || null;
+}

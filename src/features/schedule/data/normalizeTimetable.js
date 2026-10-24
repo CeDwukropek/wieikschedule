@@ -203,6 +203,16 @@ function buildGroups(normalizedEvents) {
     }));
 }
 
+// The university series of a class (one series per group), from its source key ["stac", series, date, group].
+export function seriesOf(sourceKey) {
+  try {
+    const parts = JSON.parse(sourceKey);
+    return Array.isArray(parts) && parts[0] === "stac" && parts[1] != null ? `${parts[1]}|${parts[3] ?? ""}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeTimetable(scheduleId, rows) {
   // Adapt database rows to the calendar model at the data boundary.
   const rawEvents = Array.isArray(rows) ? rows : [];
@@ -301,6 +311,7 @@ export function normalizeTimetable(scheduleId, rows) {
         end,
         room,
         personal_override: Boolean(item.personal_override),
+        series: seriesOf(item?.source_key),
         _dates: new Set(eventDateIso ? [eventDateIso] : []),
       });
     } else {

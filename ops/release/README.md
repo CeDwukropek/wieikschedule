@@ -97,3 +97,27 @@ weekend w siatce i w przenoszeniu zajęć działa bez flagi.
 
 Wycofanie: flaga `false` i nowy deploy chowa wpisy. Weekend zostaje; 20261027 wycofuje się, nakładając
 `validate_schedule_patch` z 20261015, a 20261028 — `save_plan_items` z 20261026.
+
+# E6.6 — serie prywatnych zmian (20261029)
+
+Prywatna zmiana „te i następne” albo „wszystkie w serii” zapisuje osobną zmianę każdego wystąpienia,
+w jednej transakcji: wszystkie albo żadna. Nowa funkcja `apply_schedule_changes` wywołuje dla każdego
+wystąpienia te same `propose_schedule_change` i `confirm_schedule_change` co pojedyncza zmiana, więc
+obowiązują te same sprawdzenia. Do 40 zajęć naraz.
+
+```sh
+cd /home/cedwukropek/wieikschedule-release && ENV=~/.config/wieikschedule/ops.env
+docker run --rm --user "$(id -u):$(id -g)" --env-file "$ENV" \
+  -v /home/cedwukropek/wieikschedule-staging/.staging/backups/production:/out postgres:17-bookworm \
+  sh -c 'pg_dump "$SUPABASE_DB_URL" --schema=public -Fc -f /out/prod-before-20261029-$(date -u +%Y%m%dT%H%M%SZ).dump'
+docker run --rm --env-file "$ENV" -v "$PWD":/repo:ro postgres:17-bookworm \
+  sh -c 'DB_URL="$SUPABASE_DB_URL" sh /repo/ops/release/apply.sh migration 20261029_schedule_change_batches'
+```
+
+Migrację nakłada się **przed** deployem aplikacji z E6.6. Bez niej pojedyncze zmiany działają dalej,
+a zapis serii kończy się błędem.
+
+Przeglądarka pobiera teraz `source_key` zajęć: z niego bierze identyfikator serii uczelni. Plany
+zapisane w przeglądarce w starszym formacie są pobierane na nowo.
+
+Wycofanie: `DROP FUNCTION public.apply_schedule_changes(uuid,jsonb,text);`. Zapisane zmiany zostają.

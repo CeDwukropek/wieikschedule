@@ -26,6 +26,12 @@ export function usePersonalPlan(user,enabled) {
     refresh();
     return data.undo;
   },[refresh]);
+  // Several occurrences at once (a series), all or nothing; the undo restores each of them.
+  const applyBatch=useCallback(async changes=>{
+    const data=await personalRequest('apply-batch',{changes,request_id:requestId()});
+    refresh();
+    return data.undo;
+  },[refresh]);
   const confirmProposal=useCallback(async proposal=>{
     await personalRequest('confirm',{proposal_id:proposal.id,provider:proposal.provider,session_id:proposal.session_id});
     refresh();
@@ -38,5 +44,5 @@ export function usePersonalPlan(user,enabled) {
   const current=uid&&state.uid===uid?state.data:null;
   return {rows:current?.overrides||EMPTY,items:current?.items||EMPTY,proposals:current?.proposals||EMPTY,
     ready:!uid||(state.uid===uid&&Boolean(state.data)),error:uid&&state.uid===uid?state.error:'',
-    refresh,apply,confirmProposal,rejectProposal};
+    refresh,apply,applyBatch,confirmProposal,rejectProposal};
 }

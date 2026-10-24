@@ -1,6 +1,17 @@
 export const TIMETABLE_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 const OPTIONS_KEY = "wieik:timetable-options:v2";
-const TIMETABLE_PREFIX = "wieik:timetable:v3:";
+// v4: rows carry source_key (the university series of each class).
+const TIMETABLE_PREFIX = "wieik:timetable:v4:";
+
+// Plans saved in an older format are never read again; drop them so they do not fill the storage quota.
+try {
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (/^wieik:timetable:v\d+:/.test(key) && !key.startsWith(TIMETABLE_PREFIX)) localStorage.removeItem(key);
+  }
+} catch {
+  // Storage may be unavailable (private mode); the cache then lives only in memory.
+}
 
 const timetables = new Map();
 let optionsEntry = null;
