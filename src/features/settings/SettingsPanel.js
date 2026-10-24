@@ -13,6 +13,7 @@ import AiSettings from './AiSettings';
 import CalendarSyncSettings from './CalendarSyncSettings';
 import EntryFilter from '../plan-items/EntryFilter';
 import RedeemInvite from '../plan-items/RedeemInvite';
+import ReminderSettings from '../plan-items/ReminderSettings';
 
 const TAB_KEY = "wieikschedule.settingsTab";
 const readTab = () => { try { return localStorage.getItem(TAB_KEY) === "ai" ? "ai" : "plan"; } catch { return "plan"; } };
@@ -100,6 +101,7 @@ export default function SettingsPanel({
     onToggleAlwaysShowWeekend,
     entryFilter,
     onRedeemInvite,
+    entryReminders,
   } = viewState || {};
   const {
     schedule,
@@ -107,7 +109,7 @@ export default function SettingsPanel({
     groupConfigs,
     onGroupChange,
   } = filterState || {};
-  const { exportRef, viewedWeekRange, selection, combinedOptions, addedEvents=[], personalReady=true, planItems=[] } =
+  const { exportRef, viewedWeekRange, selection, combinedOptions, addedEvents=[], personalReady=true, planItems=[], reminders=null } =
     exportState || {};
   const scheduleOptions = (
     timetableOptions.length > 0
@@ -131,7 +133,7 @@ export default function SettingsPanel({
   const handleExportICS = () => exportICS(selectExportEvents({
     schedule, scheduleId: currentSchedule, groups: studentGroups, hideLectures, showAll,
     externalSelections, timetables: loadedTimetables, addedEvents,
-  }), planItems);
+  }), planItems, reminders || {});
 
   return (
     <>
@@ -283,6 +285,7 @@ export default function SettingsPanel({
             {entryFilter && <section className="space-y-2 border-t border-neutral-800 pt-4">
               <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
               <EntryFilter {...entryFilter} />
+              {entryReminders && <ReminderSettings {...entryReminders} />}
               {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
             </section>}
             {/* Export buttons */}

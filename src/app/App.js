@@ -30,6 +30,7 @@ import UpcomingPanel from '../features/plan-items/UpcomingPanel';
 import StarostaPanel from '../features/plan-items/StarostaPanel';
 import {planItemsRequest} from '../features/plan-items/planItemsApi';
 import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
+import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {CalendarPlus,ShieldCheck} from 'lucide-react';
 
@@ -81,6 +82,7 @@ export default function App() {
   const faculties=useMemo(()=>[...new Set([schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)].filter(Boolean))],
     [schedule.currentSchedule,schedule.activeExternalSelections]);
   const planItems=usePlanItems({enabled:itemsOn,uid:user?.uid,faculties,window:itemsRange});
+  const planReminders=usePlanReminders({enabled:itemsOn,uid:user?.uid});
   // Every occurrence of the plan (lectures included, so an entry on a hidden lecture still shows).
   const planEvents=useMemo(()=>mergeEvents({...eventOptions,hideLectures:false,weekStart:null}),[eventOptions]);
   const relevantItems=useMemo(()=>visibleItems(planItems.items,planEvents,{scheduleId:schedule.currentSchedule,showAll:view.showAll}),
@@ -279,7 +281,8 @@ export default function App() {
     <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       <FloatingMenu
         panelState={{ open, setOpen }}
-        viewState={{...view,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined}}
+        viewState={{...view,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
+          entryReminders:planReminders.reminders?{reminders:planReminders.reminders,custom:planReminders.custom,onSave:planReminders.save}:undefined}}
         weekNavigation={navigation.weekNavigation}
         weekSelection={navigation.weekSelection}
         dayNavigation={navigation.dayNavigation}
@@ -316,7 +319,7 @@ export default function App() {
           onRemoveExternalSelection: schedule.handleRemoveExternalSelection,
           onScheduleChange: schedule.handleScheduleChange,
         }}
-        exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items }}
+        exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items, reminders:planReminders.reminders }}
         chatState={{
           enabled: process.env.REACT_APP_ENABLE_AI_CHAT !== "false",
           scheduleName: schedule.currentSchedule,

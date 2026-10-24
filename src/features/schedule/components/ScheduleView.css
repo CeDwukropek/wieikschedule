@@ -503,3 +503,17 @@
 .plan-item-duplicate button { justify-self: start; padding: 5px 10px; border-radius: 999px; border: 1px solid #3b82f6; color: #dbeafe; font-size: 13px; }
 /* Drafts: entries of an agent's preview before they are confirmed. */
 [data-draft] { opacity: .7; outline: 1.5px dashed var(--kind, #a855f7); outline-offset: -1.5px; background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255,255,255,.06) 6px 12px); }
+/* Reminder settings */
+.reminder-settings { display: grid; gap: 8px; margin-top: 12px; font-size: 13px; }
+.reminder-settings-title { color: #e5e5e5; font-weight: 600; }
+.reminder-settings-title span { color: #a3a3a3; font-weight: 400; font-size: 12px; }
+.reminder-settings ul { display: grid; gap: 8px; }
+.reminder-settings li { display: grid; gap: 4px; }
+.reminder-kind { justify-self: start; font-size: 12px; font-weight: 600; color: #fff; border-left: 3px solid var(--kind); padding-left: 6px; }
+.reminder-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.reminder-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #262626; color: #e5e5e5; font-size: 12px; }
+.reminder-chip button { display: inline-flex; padding: 3px; border-radius: 999px; color: #a3a3a3; }
+.reminder-chip button:hover:not(:disabled) { background: #404040; color: #fff; }
+.reminder-none { color: #737373; font-size: 12px; }
+.reminder-list select { background: #1f1f1f; color: #e5e5e5; border: 1px dashed #525252; border-radius: 999px; padding: 3px 8px; font-size: 12px; color-scheme: dark; }
+.reminder-reset { justify-self: start; font-size: 12px; color: #7dd3fc; text-decoration: underline; }
