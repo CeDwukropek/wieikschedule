@@ -121,3 +121,12 @@ Przeglądarka pobiera teraz `source_key` zajęć: z niego bierze identyfikator s
 zapisane w przeglądarce w starszym formacie są pobierane na nowo.
 
 Wycofanie: `DROP FUNCTION public.apply_schedule_changes(uuid,jsonb,text);`. Zapisane zmiany zostają.
+# E6.7 — agent dodaje kolokwia i terminy
+
+Bez migracji. Podgląd agenta jest podpisany tym samym `SCHEDULE_TOOL_SECRET`, którego używają narzędzia planu
+(jest już w Vercelu). Kolejność:
+
+1. Deploy aplikacji (merge do `main`). Tryb „Dodać kolokwium lub termin” pokazuje się każdemu zalogowanemu, ale
+   Odysseus bez tego trybu odpowiada komunikatem „nie obsługuje jeszcze tego trybu”, a pozostałe tryby działają.
+2. Odysseus: gałąź `feat/plan-items-agent` (od `release/main-instance`) w forku, potem obraz głównej instancji
+   tak jak przy E4 (kopia `app.db`, oznaczenie starego obrazu, `up -d --no-build --no-deps odysseus`).

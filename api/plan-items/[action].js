@@ -1,5 +1,6 @@
 const {route}=require('../_lib/router');
 module.exports=route({
+  'confirm-agent':require('../_routes/plan-items/confirm-agent'),
   'history':require('../_routes/plan-items/history'),
   'invite':require('../_routes/plan-items/invite'),
   'list':require('../_routes/plan-items/list'),

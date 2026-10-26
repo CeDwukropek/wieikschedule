@@ -21,3 +21,32 @@
 .dock-status-dot.is-busy { background: #fbbf24; }
 .dock-status-dot.is-error { background: #fb7185; }
 
+
+/* Dragging the top edge changes the chat height (remembered in this browser). */
+.dock-chat-panel { position: relative; }
+.dock-chat-resize { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 64px; height: 12px; cursor: ns-resize; touch-action: none; z-index: 2; }
+.dock-chat-resize::after { content: ""; position: absolute; left: 16px; right: 16px; top: 4px; height: 4px; border-radius: 2px; background: #525252; }
+.dock-chat-resize:hover::after { background: #a3a3a3; }
+
+/* An agent's preview of kolokwia and deadlines */
+.plan-preview { margin-top: 8px; display: grid; gap: 8px; }
+.plan-preview-title { font-size: 12px; color: #a3a3a3; }
+.plan-preview ul { display: grid; gap: 6px; }
+.plan-preview li { padding: 8px; border-radius: 10px; background: #1c1c1c; border: 1px solid #333; display: grid; gap: 6px; }
+.plan-preview li[data-disabled] { opacity: .65; }
+.plan-preview li > label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.plan-preview input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: #a855f7; flex: none; }
+.plan-preview-text { display: grid; gap: 2px; min-width: 0; font-size: 12px; color: #d4d4d4; }
+.plan-preview-text strong { font-size: 13px; color: #fff; overflow-wrap: anywhere; }
+.plan-preview-time { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #fbbf24; padding-left: 24px; }
+.plan-preview-time input { background: #262626; color: #f5f5f5; border: 1px solid #b45309; border-radius: 6px; padding: 4px 6px; color-scheme: dark; }
+.plan-preview-warning { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; color: #fcd34d; padding-left: 24px; }
+.plan-preview-warning svg { flex: none; margin-top: 1px; }
+.plan-preview-details { font-size: 12px; color: #a3a3a3; overflow-wrap: anywhere; }
+/* The confirm button stays in view while the rows scroll. */
+.plan-preview-footer { position: sticky; bottom: 0; display: grid; gap: 6px; padding-top: 6px; background: linear-gradient(transparent, #0a0a0a 30%); }
+.plan-preview-footer button { padding: 8px 12px; border-radius: 10px; background: #6b21a8; color: #fff; font-weight: 600; font-size: 13px; }
+.plan-preview-footer button:disabled { opacity: .5; cursor: not-allowed; }
+.plan-preview-footer p { font-size: 12px; color: #fca5a5; }
+.plan-preview-done { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #86efac; }
+.plan-preview-error { font-size: 12px; color: #fca5a5; }

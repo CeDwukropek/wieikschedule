@@ -327,3 +327,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* "Powiększ czat": about 70% of the screen and wider on a computer, the whole screen above the dock on phones. */
+.schedule-dock.is-large {
+  --dock-history-height: min(70dvh, max(0px, calc(100dvh - var(--keyboard-offset, 0px) - 150px)));
+  width: min(calc(100% - 32px), 640px);
+}
+@media (max-width: 640px) {
+  .schedule-dock.is-large { --dock-history-height: max(0px, calc(100dvh - var(--keyboard-offset, 0px) - 130px)); }
+}

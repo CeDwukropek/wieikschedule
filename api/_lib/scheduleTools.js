@@ -4,12 +4,14 @@ const schedule=require('./schedule');
 const { getSupabaseAdminClient }=require('./supabaseAdmin');
 const {validateSelection}=require('./scheduleSelection');
 const {SEMANTIC_TOOLS,queryPlan}=require('./scheduleQueries');
-function secret() { const value=process.env.SCHEDULE_TOOL_SECRET; if(!value||value.length<32)schedule.fail(503,'TOOLS_UNAVAILABLE','Narzędzia agenta nie są skonfigurowane.');return value; }
-function sign(value) {return crypto.createHmac('sha256',secret()).update(value).digest('base64url');}
+const {prepareEntries}=require('./planItemAgent');
+const {sign}=require('./toolSecret');
+// "entries": adding kolokwia, deadlines and other entries (E6.7).
+const INTENTS=['query','makeup','reschedule','cancel','restore','entries'];
 function issueContext(userId,provider,sessionId,now=Date.now(),intent='query',selection) {
   if(!['n8n','odysseus'].includes(provider))schedule.fail(422,'INVALID_PROVIDER','Nieprawidłowy agent.');
   schedule.text(sessionId,128,true);
-  if(!['query','makeup','reschedule','cancel','restore'].includes(intent))schedule.fail(422,'INVALID_INTENT','Wybierz rodzaj pomocy w czacie.');
+  if(!INTENTS.includes(intent))schedule.fail(422,'INVALID_INTENT','Wybierz rodzaj pomocy w czacie.');
   const payload=Buffer.from(JSON.stringify({purpose:'schedule-tools-v1',sub:userId,provider,session_id:sessionId,
     intent,...(selection?{selection:validateSelection(selection)}:{}),exp:Math.floor(now/1000)+300,nonce:crypto.randomUUID()})).toString('base64url');
   return 'wks1.'+payload+'.'+sign('wks1.'+payload);
@@ -21,7 +23,7 @@ function readContext(token,now=Date.now()) {
   if(expected.length!==actual.length||!crypto.timingSafeEqual(expected,actual))schedule.fail(401,'UNAUTHORIZED','Nieprawidłowy kontekst narzędzi.');
   let claims;try{claims=JSON.parse(Buffer.from(parts[1],'base64url').toString());}catch{schedule.fail(401,'UNAUTHORIZED','Nieprawidłowy kontekst narzędzi.');}
   if(claims.purpose!=='schedule-tools-v1'||!Number.isInteger(claims.exp)||claims.exp<=now/1000||claims.exp>now/1000+301||!['n8n','odysseus'].includes(claims.provider))schedule.fail(401,'UNAUTHORIZED','Kontekst narzędzi wygasł.');
-  if(!['query','makeup','reschedule','cancel','restore'].includes(claims.intent))schedule.fail(401,'UNAUTHORIZED','Nieprawidłowa intencja kontekstu.');
+  if(!INTENTS.includes(claims.intent))schedule.fail(401,'UNAUTHORIZED','Nieprawidłowa intencja kontekstu.');
   schedule.uuid(claims.sub);schedule.text(claims.session_id,128,true);
   if(claims.selection)claims.selection=validateSelection(claims.selection);
   return claims;
@@ -32,6 +34,11 @@ async function dispatch(claims,name,args) {
     if(!claims.selection)schedule.fail(422,'SELECTION_REQUIRED','Odśwież aplikację i wybierz plan oraz grupy przed rozmową.');
     if(name==='schedule.find_makeup_options'&&claims.intent!=='makeup')schedule.fail(403,'INTENT_REQUIRED','Wybierz tryb odrabiania zajęć.');
     return queryPlan(context(),claims.selection,name,args);
+  }
+  if(name==='plan_items.prepare_entries'){
+    if(claims.intent!=='entries')schedule.fail(403,'INTENT_REQUIRED','Wybierz tryb „Dodać kolokwium lub termin”.');
+    if(!claims.selection)schedule.fail(422,'SELECTION_REQUIRED','Odśwież aplikację i wybierz plan oraz grupy przed rozmową.');
+    return prepareEntries(context(),claims.selection,args);
   }
   if(claims.selection&&['schedule.get_events','schedule.find_event'].includes(name)&&args?.faculty!==claims.selection.faculty)
     schedule.fail(403,'SELECTION_MISMATCH','Wybierz ten plan w aplikacji przed wyszukiwaniem.');
@@ -55,6 +62,7 @@ function availableTools(claims){
     (tool.name!=='schedule.find_makeup_options'||claims.intent==='makeup'):
     ['schedule.get_events','schedule.find_event'].includes(tool.name)?!claims.selection:
     tool.name==='schedule.create_override'?['reschedule','cancel'].includes(claims.intent):
-    tool.name==='schedule.delete_override'&&claims.intent==='restore');
+    tool.name==='schedule.delete_override'?claims.intent==='restore':
+    tool.name==='plan_items.prepare_entries'&&claims.intent==='entries'&&Boolean(claims.selection));
 }
 module.exports={issueContext,readContext,dispatch,availableTools};

@@ -227,5 +227,5 @@ async function entriesFingerprint(ctx,selection){
   const states=await pages(ctx.db.from('plan_item_state').select('item_id,hidden,progress,updated_at').eq('user_id',ctx.userId).order('item_id'));
   return [group,personal,states];
 }
-module.exports={KINDS,itemError,validateItem,canEdit,listItems,saveItems,removeItems,setState,inviteHash,listRoles,
+module.exports={KINDS,itemError,validateItem,canEdit,myRoles,listItems,saveItems,removeItems,setState,inviteHash,listRoles,
   listHistory,createInvite,redeemInvite,revokeRole,entryBelongs,feedEntries,entriesFingerprint};

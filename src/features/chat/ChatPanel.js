@@ -1,8 +1,9 @@
 import "./ChatPanel.css";
 import { useEffect, useRef } from "react";
-import { Bot, Trash2 } from "lucide-react";
+import { Bot, Maximize2, Minimize2, Trash2 } from "lucide-react";
 import SlotChoicesMessage from "./SlotChoicesMessage";
 import SchedulePlanMessage from "./SchedulePlanMessage";
+import PlanItemsPreview from "./PlanItemsPreview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -86,6 +87,12 @@ export default function ChatPanel({
   addedEventIds,
   slotErrors,
   intent='query',onIntentChange,
+  entriesEnabled=false,
+  onConfirmEntries,
+  onDrafts,
+  large=false,
+  onToggleLarge,
+  onResizeStart,
 }) {
   const messagesContainerRef = useRef(null);
   const shouldStickToBottomRef = useRef(true);
@@ -165,6 +172,8 @@ export default function ChatPanel({
 
   return (
     <section id="dock-chat-history" aria-label="Rozmowa z AI" className="dock-chat-panel">
+      {onResizeStart && <div className="dock-chat-resize" role="separator" aria-orientation="horizontal"
+        aria-label="Zmień wysokość czatu (przeciągnij)" onPointerDown={onResizeStart}/>}
       <div className="dock-chat-header">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-white">Chat AI</p>
@@ -185,6 +194,16 @@ export default function ChatPanel({
                   : "Gotowy"}
           </span>
 
+          {onToggleLarge && <button
+            type="button"
+            onClick={onToggleLarge}
+            className="h-8 w-8 rounded-full bg-neutral-800 text-neutral-200 flex items-center justify-center"
+            aria-label={large ? "Zmniejsz czat" : "Powiększ czat"}
+            aria-pressed={large}
+            title={large ? "Zmniejsz czat" : "Powiększ czat"}
+          >
+            {large ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>}
           <button
             type="button"
             onClick={clearConversation}
@@ -216,6 +235,7 @@ export default function ChatPanel({
           <option value="query">Sprawdzić plan</option><option value="makeup">Znaleźć termin odrobienia</option>
           <option value="reschedule">Przełożyć moje zajęcia</option><option value="cancel">Odwołać tylko dla mnie</option>
           <option value="restore">Przywrócić plan uczelni</option>
+          {entriesEnabled&&<option value="entries">Dodać kolokwium lub termin</option>}
         </select>
       </label>}
 
@@ -267,6 +287,8 @@ export default function ChatPanel({
                 ) : (
                   <MessageContent message={message} isLoading={isLoading} />
                 )}
+                {onConfirmEntries && message.payload?.proposals?.filter(proposal => proposal.type === "plan_items")
+                  .map(proposal => <PlanItemsPreview key={proposal.id} proposal={proposal} onConfirm={onConfirmEntries} onDrafts={onDrafts} />)}
               </div>
             );
           })
