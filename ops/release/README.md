@@ -130,3 +130,23 @@ Bez migracji. Podgląd agenta jest podpisany tym samym `SCHEDULE_TOOL_SECRET`, k
    Odysseus bez tego trybu odpowiada komunikatem „nie obsługuje jeszcze tego trybu”, a pozostałe tryby działają.
 2. Odysseus: gałąź `feat/plan-items-agent` (od `release/main-instance`) w forku, potem obraz głównej instancji
    tak jak przy E4 (kopia `app.db`, oznaczenie starego obrazu, `up -d --no-build --no-deps odysseus`).
+
+# E6.8 — przypomnienia (20261030)
+
+Nowa tabela `plan_item_preferences` (własne przypomnienia według rodzaju wpisu). Bez wiersza obowiązują
+domyślne. Migrację nakłada się **przed** deployem aplikacji z E6.8:
+
+```sh
+cd /home/cedwukropek/wieikschedule-release && ENV=~/.config/wieikschedule/ops.env
+docker run --rm --user "$(id -u):$(id -g)" --env-file "$ENV" \
+  -v /home/cedwukropek/wieikschedule-staging/.staging/backups/production:/out postgres:17-bookworm \
+  sh -c 'pg_dump "$SUPABASE_DB_URL" --schema=public -Fc -f /out/prod-before-20261030-$(date -u +%Y%m%dT%H%M%SZ).dump'
+docker run --rm --env-file "$ENV" -v "$PWD":/repo:ro postgres:17-bookworm \
+  sh -c 'DB_URL="$SUPABASE_DB_URL" sh /repo/ops/release/apply.sh migration 20261030_plan_item_reminders'
+```
+
+Feed kalendarza ma format 3 (wpisy z chwilami przypomnień), więc każdy sparowany Odysseus pobierze plan
+raz w całości. Wpisy i przypomnienia pokaże Odysseus z gałęzi `feat/plan-items-agent` (E6.7 + E6.8);
+starszy Odysseus pomija `entries` i działa jak dotąd.
+
+Wycofanie: `DROP TABLE public.plan_item_preferences;` (po deployu bez E6.8).

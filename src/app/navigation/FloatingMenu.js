@@ -53,6 +53,7 @@ export default function FloatingMenu({
     hiddenKinds,
     setHiddenKinds,
     onRedeemInvite,
+    entryReminders,
   } = viewState || {};
   const {
     studentGroups,
@@ -562,6 +563,7 @@ export default function FloatingMenu({
             onToggleKind: (kind) => setHiddenKinds((prev) => prev.includes(kind) ? prev.filter((value) => value !== kind) : [...prev, kind]),
           } : undefined,
           onRedeemInvite,
+          entryReminders,
         }}
         filterState={{
           schedule,

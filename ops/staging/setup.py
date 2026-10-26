@@ -144,7 +144,8 @@ def seed(args):
                               '20261027_weekend_changes.sql'),
                              ("SELECT prosrc LIKE '%same kind of thing%' FROM pg_proc WHERE oid = to_regprocedure('public.save_plan_items(uuid,jsonb)')",
                               '20261028_series_of_one_kind.sql'),
-                             (function('apply_schedule_changes(uuid,jsonb,text)'), '20261029_schedule_change_batches.sql')]:
+                             (function('apply_schedule_changes(uuid,jsonb,text)'), '20261029_schedule_change_batches.sql'),
+                             ("SELECT to_regclass('public.plan_item_preferences') IS NOT NULL", '20261030_plan_item_reminders.sql')]:
         initialized = pg(check) == 't'
         if not initialized:
             pg(file=ROOT / 'DB/migrations' / migration)

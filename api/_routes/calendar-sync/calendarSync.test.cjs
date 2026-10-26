@@ -209,8 +209,9 @@ test('a link lists and declines only the previews it created',async()=>{
 });
 test('feed fingerprint changes only with plan versions, private rows, selection or range',async()=>{
   const state={versions:[{faculty:'EiAs3',version:4},{faculty:'all',version:1}],overrides:[{event_id:EVENT,action:'modify',revision:1}],added:[],
-    group:[],own:[],states:[]};
+    group:[],own:[],states:[],preferences:null};
   const db=chainDb({timetable_versions:()=>({data:state.versions,error:null}),
+    plan_item_preferences:()=>({data:state.preferences,error:null}),
     schedule_overrides:()=>({data:state.overrides,error:null}),user_added_events:()=>({data:state.added,error:null}),
     plan_items:query=>({data:query.ops.some(op=>op[0]==='eq'&&op[1]==='scope')?state.group:state.own,error:null}),
     plan_item_state:()=>({data:state.states,error:null})});
@@ -232,6 +233,8 @@ test('feed fingerprint changes only with plan versions, private rows, selection 
     ()=>{state.group=[{id:'g1',revision:2}];},
     ()=>{state.own=[{id:'p1',revision:1}];},
     ()=>{state.states=[{item_id:'g1',hidden:false,progress:'done',updated_at:'t'}];},
+    // Own reminder settings change the reminder instants of every entry.
+    ()=>{state.preferences={reminders:{},updated_at:'t2'};},
   ];
   let previous=first;
   for(const change of changes){change();const next=await print();assert.notEqual(next,previous);previous=next;}

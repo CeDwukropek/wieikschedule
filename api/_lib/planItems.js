@@ -3,6 +3,7 @@ const schedule=require('./schedule');
 const {pages}=require('./scheduleQueries');
 const {belongsToPlan}=require('./scheduleSearch');
 const {newCode,rawCode,sha256}=require('./codes');
+const reminders=require('./planReminders');
 const {fail,keys,text,uuid}=schedule;
 // Never includes owner, author or editor: group entries are public, like the plan itself.
 const FIELDS='id,scope,faculty,subject,class_type,group,kind,timing,event_id,anchor,date,start_time,duration_min,due_time,title,details,series_id,state,review_reason,revision,updated_at';
@@ -213,11 +214,15 @@ function entryBelongs(item,selection,subjects){
   return belongsToPlan({faculty:item.faculty,subject:item.subject,group:item.group,type:item.class_type,status:'aktywne'},selection);
 }
 function planFaculties(selection){return [...new Set([selection.faculty,...(selection.external||[]).map(item=>item.faculty)])].sort();}
+// Each entry carries its reminder instants (the owner's settings by kind); a finished one has none.
 async function feedEntries(ctx,selection,window,events){
   const subjects=new Set(events.map(row=>row.faculty+'\n'+row.subject));
-  const {items}=await listItems(ctx,{faculties:planFaculties(selection).join(','),from:window.date_from,to:window.date_to});
+  const [{items},own]=await Promise.all([listItems(ctx,{faculties:planFaculties(selection).join(','),from:window.date_from,to:window.date_to}),
+    reminders.readPreferences(ctx)]);
+  const settings=reminders.effectiveReminders(own?.reminders);
   return items.filter(item=>entryBelongs(item,selection,subjects)&&!item.my_state?.hidden)
-    .map(({my_state:state,can_edit:_,...item})=>({...item,progress:state?.progress||'todo'}));
+    .map(({my_state:state,can_edit:_,...item})=>({...item,progress:state?.progress||'todo',
+      reminders:state?.progress==='done'?[]:reminders.reminderTimes(item,settings[item.kind])}));
 }
 async function entriesFingerprint(ctx,selection){
   const faculties=planFaculties(selection);
@@ -225,7 +230,8 @@ async function entriesFingerprint(ctx,selection){
     pages(ctx.db.from('plan_items').select('id,revision').eq('scope','group').in('faculty',faculties).is('deleted_at',null).order('id')),
     pages(ctx.db.from('plan_items').select('id,revision').eq('owner_id',ctx.userId).is('deleted_at',null).order('id'))]);
   const states=await pages(ctx.db.from('plan_item_state').select('item_id,hidden,progress,updated_at').eq('user_id',ctx.userId).order('item_id'));
-  return [group,personal,states];
+  const own=await reminders.readPreferences(ctx);
+  return [group,personal,states,own?.updated_at||null];
 }
 module.exports={KINDS,itemError,validateItem,canEdit,myRoles,listItems,saveItems,removeItems,setState,inviteHash,listRoles,
   listHistory,createInvite,redeemInvite,revokeRole,entryBelongs,feedEntries,entriesFingerprint};

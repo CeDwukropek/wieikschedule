@@ -67,11 +67,12 @@ async function buildFeed(ctx,selection,window,load=loadPlan,entriesOf=feedEntrie
   const rows=data.events.filter(row=>row.date>=window.date_from&&row.date<=window.date_to&&belongsToPlan(row,selection));
   const events=rows.map(occurrence),entries=await entriesOf(ctx,selection,window,rows);
   return {events,entries,version:sha256(JSON.stringify([selection,window,events.map(item=>item.event_id+item.version),
-    entries.map(item=>item.id+':'+item.revision+':'+item.progress)])).slice(0,32)};
+    entries.map(item=>item.id+':'+item.revision+':'+item.progress+':'+(item.reminders||[]).join(','))])).slice(0,32)};
 }
 // Stands in for the feed contents: plan versions plus the owner's private rows. A mirror that is
 // up to date gets 304 without the whole plan being read from the database. Bump on format changes.
-const FEED_FORMAT=2;
+// 3: entries carry reminder instants.
+const FEED_FORMAT=3;
 async function feedFingerprint(ctx,selection,window){
   const faculties=[...new Set([selection.faculty,'all',...(selection.external||[]).map(item=>item.faculty)])].sort();
   const [versions,overrides,additions,entries]=await Promise.all([

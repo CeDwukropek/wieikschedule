@@ -1,5 +1,6 @@
 // exportICS.js
 import { describeAudience, itemEnd, kindOf } from "../../plan-items/planItemLogic";
+import { reminderTimes } from "../../plan-items/reminders";
 
 // Zwraca "YYYYMMDDTHHMMSS" (bez "Z") — tzw. "floating time" w lokalnej strefie,
 // dzięki czemu kalendarze nie przesuwają godzin o strefy/DST.
@@ -32,8 +33,10 @@ function makeUid(e, dateStr) {
 
 const compactDate = date => date.replace(/-/g, "");
 const nextDay = date => { const value = new Date(`${date}T12:00:00`); value.setDate(value.getDate() + 1); return compactDate(value.toISOString().slice(0, 10)); };
-// Kolokwia, deadlines and other entries; a deadline without an hour is an all-day event.
-function itemEvent(item) {
+const utcStamp = iso => iso.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+// Kolokwia, deadlines and other entries; a deadline without an hour is an all-day event. Reminders become alarms
+// at absolute UTC times (RFC 5545), none for an entry marked as done.
+function itemEvent(item, reminders = {}) {
   const time = value => String(value).slice(0, 5).replace(":", "") + "00";
   const when = item.timing === "due"
     ? item.due_time
@@ -41,12 +44,15 @@ function itemEvent(item) {
       : [`DTSTART;VALUE=DATE:${compactDate(item.date)}`, `DTEND;VALUE=DATE:${nextDay(item.date)}`]
     : [`DTSTART:${compactDate(item.date)}T${time(item.start_time)}`, `DTEND:${compactDate(item.date)}T${time(itemEnd(item))}`];
   const description = [item.subject, describeAudience(item), item.details].filter(Boolean).join("\n");
-  return ["BEGIN:VEVENT", `UID:item-${item.id}@wieikschedule`, `SUMMARY:${icsEscape(`${kindOf(item).label}: ${item.title}`)}`,
-    `DESCRIPTION:${icsEscape(description)}`, ...when, "END:VEVENT"].join("\r\n") + "\r\n";
+  const summary = icsEscape(`${kindOf(item).label}: ${item.title}`);
+  const alarms = item.my_state?.progress === "done" ? [] : reminderTimes(item, reminders[item.kind]).flatMap(at =>
+    ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${summary}`, `TRIGGER;VALUE=DATE-TIME:${utcStamp(at)}`, "END:VALARM"]);
+  return ["BEGIN:VEVENT", `UID:item-${item.id}@wieikschedule`, `SUMMARY:${summary}`,
+    `DESCRIPTION:${icsEscape(description)}`, ...when, ...alarms, "END:VEVENT"].join("\r\n") + "\r\n";
 }
 
 // --- Główny eksport -----------------------------------------------------------
-export function buildICS(events, items = []) {
+export function buildICS(events, items = [], reminders = {}) {
 
   // Nagłówek kalendarza
   let ics =
@@ -107,15 +113,15 @@ export function buildICS(events, items = []) {
     });
   });
 
-  items.forEach((item) => { ics += itemEvent(item); });
+  items.forEach((item) => { ics += itemEvent(item, reminders); });
 
   ics += "END:VCALENDAR";
   return ics;
 }
 
-export function exportICS(events, items = []) {
+export function exportICS(events, items = [], reminders = {}) {
   if (!events?.length && !items.length) { alert("Brak wydarzeń do eksportu."); return; }
-  const ics=buildICS(events, items);
+  const ics=buildICS(events, items, reminders);
 
   // Zapis pliku
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
