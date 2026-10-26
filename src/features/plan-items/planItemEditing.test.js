@@ -1,4 +1,4 @@
-import { canWriteGroup, classTerms, editItems, existingFor, laterTerms, newItems, seriesOf, slotTerm, subjectsOf, termError, withRevisions,
+import { canWriteGroup, classTerms, editItems, existingFor, groupDuplicateOf, makeupItem, laterTerms, newItems, seriesOf, slotTerm, subjectsOf, termError, withRevisions,
   writableGroups } from './planItemEditing';
 
 const lab = (id, date, extra = {}) => ({ id, event_id: `ev-${id}`, day: 0, start: '07:30', end: '09:00', title: 'Modelowanie',
@@ -78,4 +78,15 @@ test('duplicates are found the way the database keys them', () => {
   expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '23:59' }, report)).toBe(due);
   expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '' }, report)).toBeNull();
   expect(existingFor([due], { timing: 'due', date: '2026-10-28', due_time: '23:59' }, { ...report, group: 'Lk2' })).toBeNull();
+});
+
+test('a private entry duplicated by the group is recognised, a makeup at another group is not', () => {
+  const own = entry('own', { scope: 'personal', group: null }), group = entry('group');
+  expect(groupDuplicateOf([own, group], own)).toBe(group);
+  expect(groupDuplicateOf([own, entry('other', { event_id: 'ev-9', group: 'Lk2' })], own)).toBeNull();
+  const report = entry('r', { scope: 'personal', kind: 'sprawozdanie', timing: 'due', event_id: null, date: '2026-10-28' });
+  expect(groupDuplicateOf([report, entry('g2', { kind: 'sprawozdanie', timing: 'due', event_id: null, date: '2026-10-28' })], report)).not.toBeNull();
+  expect(groupDuplicateOf([group], group)).toBeNull();
+  const makeup = { ...entry('m', { scope: 'personal' }), ...makeupItem(group, entry('lk2', { group: 'Lk2' })) };
+  expect([makeup.title, groupDuplicateOf([makeup, entry('lk2', { group: 'Lk2' })], makeup)]).toEqual(['Kolokwium — odrobienie', null]);
 });

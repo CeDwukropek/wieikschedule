@@ -105,7 +105,7 @@ async function refreshTimetable(scheduleId) {
       const rows = [];
       for (let from = 0; ; from += PAGE_SIZE) {
         const { data, error } = await supabase.from("events")
-          .select("id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status")
+          .select("id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status,source_key")
           .in("faculty", [scheduleId, "all"])
           .or("status.is.null,status.eq.aktywne,status.eq.wolne")
           .order("date", { ascending: true }).order("start_time", { ascending: true }).order("id", { ascending: true })

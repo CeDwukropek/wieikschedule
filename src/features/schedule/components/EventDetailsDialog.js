@@ -6,6 +6,7 @@ import { eventSubject } from './EventCard';
 import ClassPlanActions from '../../my-plan/ClassPlanActions';
 import PlanItemSummary from '../../plan-items/PlanItemSummary';
 import PlanItemForm from '../../plan-items/PlanItemForm';
+import MakeupOptions from '../../plan-items/MakeupOptions';
 import { timeToMinutes } from '../../../utils/time';
 
 const isoDate = value => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
@@ -16,6 +17,10 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
   const [busy, setBusy] = useState(false);
   // Adding a kolokwium or deadline on this class, or editing one of its entries, replaces the actions below.
   const [entryForm, setEntryForm] = useState(null);
+  // Group entries on this class (also when the person moved or cancelled it, or hid the entry).
+  const classEntries = (itemActions?.items || []).filter(item => item.scope === 'group' && item.timing === 'class'
+    && ev.event_id && String(item.event_id) === String(ev.event_id));
+  const changedHere = Boolean(ev.ghost || planActions?.overrideFor?.(ev.event_id));
   const subject = eventSubject(ev, subjects);
   const teachers = splitTeacherDisplay(ev.teacher);
   // The occurrence as shown, i.e. the university plan with the person's changes applied.
@@ -76,7 +81,10 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           {itemActions && ev.event_id && !ev.ghost && <button type="button" className="event-details-add-entry"
             onClick={() => setEntryForm({ type: 'class', ev, date: isoDate(date) })}>
             <CalendarPlus size={16}/>Dodaj kolokwium lub termin</button>}
-          {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}/>}
+          {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}
+            entries={classEntries}/>}
+          {planActions?.makeUp && classEntries.length > 0 && changedHere && <MakeupOptions entries={classEntries} items={itemActions.items}
+            onMakeUp={planActions.makeUp}/>}
         </>}
       </section>
     </dialog>, document.body,

@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { AlertTriangle, EyeOff, Pencil, Trash2 } from 'lucide-react';
 import { PROGRESS, describeAudience, describeItemTime, kindOf, reviewNotice } from './planItemLogic';
-import { SERIES_CHOICES, seriesOf } from './planItemEditing';
+import { groupDuplicateOf, SERIES_CHOICES, seriesOf } from './planItemEditing';
 
 export function KindChip({ item }) {
   const kind = kindOf(item);
@@ -22,6 +22,7 @@ export default function PlanItemSummary({ item, onState, heading = true, actions
   const editable = Boolean(actions && onEdit && item.can_edit);
   const seriesSize = editable && item.series_id ? actions.items.filter(other => other.series_id === item.series_id).length : 1;
   const chosen = editable ? seriesOf(actions.items, item, which) : [];
+  const duplicate = editable ? groupDuplicateOf(actions.items, item) : null;
   const notice = reviewNotice(item), progress = item.my_state?.progress || 'todo';
   return <div className="plan-item-summary">
     <div className="plan-item-meta"><KindChip item={item}/><span>{describeAudience(item)}</span></div>
@@ -34,6 +35,10 @@ export default function PlanItemSummary({ item, onState, heading = true, actions
         disabled={busy} onClick={() => progress !== value && run({ progress: value })}>{label}</button>)}
       <button type="button" className="plan-item-hide" disabled={busy} onClick={() => run({ hidden: true })}>
         <EyeOff size={14} aria-hidden="true"/>Ukryj u mnie</button>
+    </div>}
+    {duplicate && !removing && <div className="plan-item-duplicate" role="note">
+      <span>Grupa ma już ten termin: „{duplicate.title}”. Twój prywatny wpis nie jest potrzebny.</span>
+      <button type="button" disabled={busy} onClick={() => attempt(() => actions.remove([item]))}>Usuń mój wpis</button>
     </div>}
     {editable && !removing && <div className="plan-item-manage">
       <button type="button" disabled={busy} onClick={() => onEdit(item)}><Pencil size={14} aria-hidden="true"/>Edytuj</button>

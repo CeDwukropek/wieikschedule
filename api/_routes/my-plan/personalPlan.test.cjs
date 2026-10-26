@@ -45,6 +45,27 @@ test('a retried edit is not applied twice and keeps its undo',async()=>{
   await assert.rejects(schedule.apply({db,userId:'u'},{...edit,request_id:'x'}),{code:'INVALID_REQUEST'});
   await assert.rejects(schedule.apply({db,userId:'u'},{...edit,provider:'odysseus'}),{code:'INVALID_ARGUMENTS'});
 });
+test('a series is changed in one database call and undone the same way; retries are not applied twice',async()=>{
+  const SECOND='00000000-0000-0000-0000-0000000000bb';
+  const earlier={action:'modify',patch:{room:'B1'},reason:null};
+  const db=chainDb({schedule_change_proposals:()=>({data:[],error:null}),
+    rpc:(name,args)=>({data:args.p_changes.map(change=>({event_id:change.event_id,result:{event_id:change.event_id},
+      expected_override:change.event_id===SECOND?earlier:null})),error:null})});
+  const changes=[{event_id:EVENT,operation:'upsert',action:'cancel',patch:{}},{event_id:SECOND,operation:'upsert',action:'cancel',patch:{}}];
+  const result=await schedule.applyBatch({db,userId:'u'},{changes,request_id:'req-12345678'});
+  const rpc=db.calls.filter(call=>call[0]==='rpc');
+  assert.deepEqual(rpc.map(call=>[call[1],call[2].p_session_id,call[2].p_changes.length]),[['apply_schedule_changes','manual:req-12345678',2]]);
+  assert.deepEqual(result.undo,[{event_id:EVENT,operation:'delete'},{event_id:SECOND,operation:'upsert',action:'modify',patch:{room:'B1'},reason:null}]);
+  // The same request again finds its consumed previews and returns the same undo.
+  const replay=chainDb({schedule_change_proposals:query=>(assert.ok(query.ops.some(op=>op[0]==='like'&&op[2]==='manual:req-12345678:%')),
+    {data:[{event_id:EVENT,result:{},expected_override:null}],error:null})});
+  const again=await schedule.applyBatch({db:replay,userId:'u'},{changes,request_id:'req-12345678'});
+  assert.deepEqual([again.replayed,again.undo],[true,[{event_id:EVENT,operation:'delete'}]]);
+  assert.equal(replay.calls.filter(call=>call[0]==='rpc').length,0);
+  for(const bad of [[],[changes[0],changes[0]],Array.from({length:41},()=>changes[0])])
+    await assert.rejects(schedule.applyBatch({db,userId:'u'},{changes:bad,request_id:'req-12345678'}),{code:'INVALID_CHANGES'});
+  await assert.rejects(schedule.applyBatch({db,userId:'u'},{changes:[{...changes[0],action:'move'}],request_id:'req-12345678'}),{code:'INVALID_ACTION'});
+});
 test('my plan lists changes, cancellations, makeup classes and open agent previews with before and after',async()=>{
   const moved={...source,id:'00000000-0000-0000-0000-0000000000bb'};
   const makeup={...source,id:'00000000-0000-0000-0000-0000000000cc',date:'2026-10-21',group:'L3'};

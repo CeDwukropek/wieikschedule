@@ -104,6 +104,25 @@ async function apply(ctx,args) {
   const result=await confirm(ctx,{proposal_id:proposal.id,provider:'manual',session_id:sessionId});
   return {result,before:proposal.before,after:proposal.after,undo:undoOf(proposal.event_id,stored.expected_override)};
 }
+// Several own edits at once (a series: "ten i następne", "wszystkie"), written together or not at all, each with
+// the same checks as one edit. Idempotent per request id; the undo restores every occurrence as it was.
+const MAX_BATCH=40;
+async function applyBatch(ctx,args) {
+  keys(args,['changes','request_id']);
+  if(typeof args.request_id!=='string'||!/^[A-Za-z0-9_-]{8,64}$/.test(args.request_id)) fail(422,'INVALID_REQUEST','Nieprawidłowy identyfikator żądania.');
+  if(!Array.isArray(args.changes)||!args.changes.length||args.changes.length>MAX_BATCH) fail(422,'INVALID_CHANGES',`Zmień od 1 do ${MAX_BATCH} zajęć naraz.`);
+  const changes=args.changes.map(validateChange);
+  if(new Set(changes.map(change=>change.event_id)).size!==changes.length) fail(422,'INVALID_CHANGES','Te same zajęcia pojawiają się dwa razy.');
+  const sessionId='manual:'+args.request_id;
+  const {data:done,error}=await ctx.db.from('schedule_change_proposals').select('event_id,result,expected_override')
+    .eq('user_id',ctx.userId).eq('provider','manual').like('session_id',sessionId+':%').not('consumed_at','is',null);
+  databaseError(error);
+  const outcome=rows=>({results:rows.map(row=>row.result),undo:rows.map(row=>undoOf(row.event_id,row.expected_override))});
+  if(done.length) return {...outcome(done),replayed:true};
+  const {data,error:applyError}=await ctx.db.rpc('apply_schedule_changes',{p_user_id:ctx.userId,p_changes:changes,p_session_id:sessionId});
+  databaseError(applyError);
+  return outcome(data);
+}
 async function getEvents(ctx,args,find=false) {
   keys(args,find?['faculty','date_from','date_to','query','limit','offset']:['faculty','date_from','date_to','limit','offset']);
   text(args.faculty,256,true);
@@ -142,4 +161,4 @@ async function getEvents(ctx,args,find=false) {
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time)||a.id.localeCompare(b.id));
   return {events:events.slice(offset,offset+limit),next_offset:events.length>offset+limit?offset+limit:null};
 }
-module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,apply,reject,undoOf,getEvents,validateChange};
+module.exports={fail,keys,uuid,text,databaseError,context,listOverrides,propose,confirm,apply,applyBatch,reject,undoOf,getEvents,validateChange};
