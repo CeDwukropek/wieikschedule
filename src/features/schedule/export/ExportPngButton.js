@@ -38,13 +38,21 @@ export function ExportPngButton({
         if (disabled || !exportRef?.current) return;
         // (opcjonalnie) poczekaj na fonty, żeby tekst się nie „przesunął”
         if (document.fonts?.ready) await document.fonts.ready;
-        const dataUrl = await toPng(exportRef.current, {
-          pixelRatio: 2, // wyraźniejszy eksport
-          backgroundColor: "#000", // wymuszamy czarne, pełne tło (bez przezroczystości)
-          cacheBust: true,
-          // Faded cancelled/moved-from tiles are hints on screen, not part of the exported plan.
-          filter: node => !node.dataset?.ghost,
-        });
+        // Today's marks and faded past classes are hints on screen, not part of the exported plan.
+        const node = exportRef.current;
+        node.classList.add("is-exporting");
+        let dataUrl;
+        try {
+          dataUrl = await toPng(node, {
+            pixelRatio: 2, // wyraźniejszy eksport
+            backgroundColor: "#000", // wymuszamy czarne, pełne tło (bez przezroczystości)
+            cacheBust: true,
+            // Faded cancelled/moved-from tiles and the current-time line are left out.
+            filter: node => !node.dataset?.ghost && !node.dataset?.now,
+          });
+        } finally {
+          node.classList.remove("is-exporting");
+        }
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = getExportFilename();

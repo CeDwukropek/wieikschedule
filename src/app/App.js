@@ -33,6 +33,7 @@ import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../featur
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {CalendarPlus,ShieldCheck} from 'lucide-react';
+import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
 
 const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
@@ -204,6 +205,8 @@ export default function App() {
       alwaysShowWeekend: view.alwaysShowWeekend,
       entryScope: view.entryScope,
       hiddenKinds: view.hiddenKinds,
+      subjectColors: view.subjectColors,
+      dimPast: view.dimPast,
       weekOffset: navigation.weekOffset,
       currentSchedule: schedule.currentSchedule,
       scheduleGroupSets: schedule.scheduleGroupSets,
@@ -265,8 +268,11 @@ export default function App() {
     const start=inWeek?Math.min(Math.max(new Date().getHours()+1,8),20)*60:8*60;
     setDraft({term:slotTerm(inWeek?todayIso:weekStart,start,start),faculty:schedule.currentSchedule});
   };
+  const subjects=useMemo(()=>withSubjectColors(schedule.subjects,view.subjectColors),[schedule.subjects,view.subjectColors]);
+  const planSubjectNames=useMemo(()=>subjectNames(schedule.subjects,effectiveTable.schedule),[schedule.subjects,effectiveTable.schedule]);
   const calendarProps = {
-    subjects: schedule.subjects,
+    subjects,
+    dimPast: view.dimPast,
     planActions,
     ref: exportRef,
     // Drafts from an agent's preview are not saved yet, so they have no details to open.
@@ -281,7 +287,7 @@ export default function App() {
     <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
       <FloatingMenu
         panelState={{ open, setOpen }}
-        viewState={{...view,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
+        viewState={{...view,subjectNames:planSubjectNames,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
           entryReminders:planReminders.reminders?{reminders:planReminders.reminders,custom:planReminders.custom,onSave:planReminders.save}:undefined}}
         weekNavigation={navigation.weekNavigation}
         weekSelection={navigation.weekSelection}
@@ -401,7 +407,7 @@ export default function App() {
         onApply={applyChange} onRemoveAdded={removeAddedEvent} onConfirmProposal={confirmProposal}
         onDismissProposal={personal.rejectProposal}
         onShow={item=>{setPlanOpen(false);setShownItem(item);}}/>}
-      {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={schedule.subjects} date={parseDate((shownItem.current||shownItem.original).date)}
+      {shownEvent&&planActions&&<EventDetailsDialog ev={shownEvent} subjects={subjects} date={parseDate((shownItem.current||shownItem.original).date)}
         onClose={()=>setShownItem(null)} planActions={planActions}/>}
       {upcomingOpen&&<UpcomingPanel items={items} hidden={hiddenItems} today={today} onClose={()=>setUpcomingOpen(false)}
         onShow={onItemState&&(id=>onItemState(id,{hidden:false}))}

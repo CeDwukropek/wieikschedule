@@ -9,6 +9,8 @@ import { tileKey } from "../logic/eventIdentity";
 import DayStrip from "../../plan-items/DayStrip";
 import { minutesLabel, useSlotSelection } from "../../plan-items/useSlotSelection";
 import { slotTerm } from "../../plan-items/planItemEditing";
+import { useNow } from "../hooks/useNow";
+import { hasEnded, nowFraction } from "../logic/timeMarks";
 import "./ScheduleView.css";
 
 const DayView = forwardRef(function DayView(
@@ -23,6 +25,7 @@ const DayView = forwardRef(function DayView(
     onItemState,
     itemActions,
     onCreateAt,
+    dimPast = false,
   },
   ref,
 ) {
@@ -61,6 +64,11 @@ const DayView = forwardRef(function DayView(
   const setSelectedEvent = ev => setSelectedKey(ev ? tileKey(ev) : null);
   const displayedDate = weekStart
     ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + selectedDayIndex) : null;
+  const now = useNow();
+  const displayedIso = displayedDate ? toIsoDate(displayedDate) : "";
+  // The displayed date decides (the page may stay open past midnight); the selection only without one.
+  const isToday = displayedIso ? displayedIso === toIsoDate(now) : isTodayDisplayed;
+  const nowAt = isToday ? nowFraction(now, startHour, endHour) : null;
 
   const openDetails = ev => ev.planItem ? onOpenItem?.(ev.planItem) : setSelectedEvent(ev);
   const { selection: newSlot, handlers } = useSlotSelection(onCreateAt && displayedDate && ((day, from, to) =>
@@ -81,7 +89,7 @@ const DayView = forwardRef(function DayView(
       <div
         ref={ref}
         className={`day-grid relative bg-neutral-900 text-gray-200 rounded-lg border border-neutral-700 overflow-hidden ${
-          isTodayDisplayed ? "ring-1 ring-yellow-400/30" : ""
+          isToday ? "is-today" : ""
         }`}
       >
         {/* time column */}
@@ -140,6 +148,7 @@ const DayView = forwardRef(function DayView(
                 <div
                   key={uniqueKey}
                   className="day-event-item"
+                  data-past={(dimPast && hasEnded(displayedIso, ev.end, now)) || undefined}
                   style={{
                     top: `${topSlots}rem`,
                     height: `${heightSlots}rem`,
@@ -160,13 +169,14 @@ const DayView = forwardRef(function DayView(
               );
             },
           )}
+          {nowAt !== null && <div className="grid-now-line" data-now aria-hidden="true" style={{ top: `${nowAt * 100}%` }} />}
           {newSlot && <div className="grid-new-slot" aria-hidden="true" style={{
             top: `${(newSlot.from - startHour * 60) / slotMinutes}rem`, height: `${(newSlot.to - newSlot.from) / slotMinutes}rem`,
           }}>{minutesLabel(newSlot.from)}–{minutesLabel(newSlot.to)}</div>}
         </div>
 
-        {isTodayDisplayed ? (
-          <div className="pointer-events-none absolute right-3 top-3 z-30 text-xs bg-yellow-400 text-black px-2 py-0.5 rounded">
+        {isToday ? (
+          <div className="day-today-badge pointer-events-none absolute right-3 top-3 z-30 text-xs px-2 py-0.5 rounded">
             Dzisiaj
           </div>
         ) : null}

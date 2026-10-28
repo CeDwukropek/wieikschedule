@@ -7,6 +7,8 @@ export function useViewSettings(savedSettings) {
   const [alwaysShowWeekend, setAlwaysShowWeekend] = useState(savedSettings?.alwaysShowWeekend ?? false);
   const [entryScope, setEntryScope] = useState(savedSettings?.entryScope ?? "all");
   const [hiddenKinds, setHiddenKinds] = useState(savedSettings?.hiddenKinds ?? []);
+  const [subjectColors, setSubjectColors] = useState(savedSettings?.subjectColors ?? {});
+  const [dimPast, setDimPast] = useState(savedSettings?.dimPast ?? false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -16,9 +18,11 @@ export function useViewSettings(savedSettings) {
     setAlwaysShowWeekend(savedSettings?.alwaysShowWeekend ?? false);
     setEntryScope(savedSettings?.entryScope ?? "all");
     setHiddenKinds(savedSettings?.hiddenKinds ?? []);
+    setSubjectColors(savedSettings?.subjectColors ?? {});
+    setDimPast(savedSettings?.dimPast ?? false);
     setReady(true);
   }, [savedSettings]);
 
   return { viewMode, setViewMode, hideLectures, setHideLectures, showAll, setShowAll, alwaysShowWeekend, setAlwaysShowWeekend,
-    entryScope, setEntryScope, hiddenKinds, setHiddenKinds, ready };
+    entryScope, setEntryScope, hiddenKinds, setHiddenKinds, subjectColors, setSubjectColors, dimPast, setDimPast, ready };
 }
