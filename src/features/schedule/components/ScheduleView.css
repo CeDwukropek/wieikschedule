@@ -166,7 +166,7 @@
 .week-event-card[data-ghost="moved-from"] .week-event-room { color: #fcd34d; display: block; }
 .day-event-ghost { opacity: .55; outline: 1px dashed #a3a3a3; outline-offset: -1px; }
 .event-details-badges .event-details-ghost { background: #404040; color: #fde68a; }
-.week-event-color { width: 4px; flex: 0 0 4px; }
+.week-event-color { width: 3px; flex: 0 0 3px; }
 .week-event-content {
   min-width: 0;
   flex: 1;
@@ -279,7 +279,7 @@
   .week-day-name { font-size: 11px; }
   .week-day-date { font-size: 10px; }
   .week-hour-label { font-size: 8px; padding-right: 3px; }
-  .week-event-color { width: 3px; flex-basis: 3px; }
+  .week-event-color { width: 2px; flex-basis: 2px; }
   .week-event-content { padding: 3px 2px; gap: 2px; }
   .week-event-time { font-size: 9px; justify-content: space-between; gap: 2px; }
   .week-event-end, .week-event-room { display: none; }

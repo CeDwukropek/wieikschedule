@@ -10,22 +10,21 @@ function movedToLabel(ev) {
 }
 const GHOST_LABELS = { cancelled: "Odwołane u mnie", "moved-from": "Przeniesione" };
 
-// A quarter of the subject's colour under the tile, so subjects are told apart at a glance.
 const EVENT_TINT_BY_BG_CLASS = {
-  "bg-indigo-900": "rgba(79, 70, 229, 0.26)",
-  "bg-sky-500": "rgba(14, 165, 233, 0.26)",
-  "bg-purple-800": "rgba(107, 33, 168, 0.26)",
-  "bg-emerald-700": "rgba(4, 120, 87, 0.26)",
-  "bg-purple-600": "rgba(147, 51, 234, 0.26)",
-  "bg-pink-600": "rgba(219, 39, 119, 0.26)",
-  "bg-green-600": "rgba(22, 163, 74, 0.26)",
-  "bg-red-800": "rgba(153, 27, 27, 0.32)",
-  "bg-orange-600": "rgba(234, 88, 12, 0.26)",
-  "bg-cyan-600": "rgba(8, 145, 178, 0.26)",
-  "bg-amber-600": "rgba(217, 119, 6, 0.26)",
-  "bg-teal-600": "rgba(13, 148, 136, 0.26)",
-  "bg-fuchsia-700": "rgba(162, 28, 175, 0.26)",
-  "bg-gray-600": "rgba(75, 85, 99, 0.26)",
+  "bg-indigo-900": "rgba(49, 46, 129, 0.1)",
+  "bg-sky-500": "rgba(14, 165, 233, 0.1)",
+  "bg-purple-800": "rgba(107, 33, 168, 0.1)",
+  "bg-emerald-700": "rgba(4, 120, 87, 0.1)",
+  "bg-purple-600": "rgba(147, 51, 234, 0.1)",
+  "bg-pink-600": "rgba(219, 39, 119, 0.1)",
+  "bg-green-600": "rgba(22, 163, 74, 0.1)",
+  "bg-red-800": "rgba(153, 27, 27, 0.2)",
+  "bg-orange-600": "rgba(234, 88, 12, 0.1)",
+  "bg-cyan-600": "rgba(8, 145, 178, 0.1)",
+  "bg-amber-600": "rgba(217, 119, 6, 0.1)",
+  "bg-teal-600": "rgba(13, 148, 136, 0.1)",
+  "bg-fuchsia-700": "rgba(162, 28, 175, 0.1)",
+  "bg-gray-600": "rgba(75, 85, 99, 0.1)",
 };
 
 export function eventSubject(ev, subjects = {}) {
@@ -73,7 +72,7 @@ export default function EventCard({
   const customColor = colorBg.startsWith("#") ? colorBg : null;
   const colorClass = customColor ? "" : colorBg;
   const colorText = customColor ? "" : colorBg.replace(/^bg-/, "text-");
-  const eventTint = customColor ? `${customColor}42` : EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.26)";
+  const eventTint = customColor ? `${customColor}1a` : EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
   const isExternal = Boolean(ev?._isExternal && ev?._sourceScheduleId);
   const isAdded = ev?.origin === "added";
 
