@@ -142,3 +142,8 @@ describe('today and past classes', () => {
     expect(container.querySelector('.grid-now-line')).toBeNull();
   });
 });
+
+test('a subject with its own colour is drawn with it', () => {
+  const { container } = render(<WeekView events={[event]} viewedWeekStart={monday} subjects={{ MUD: { name: event.title, color: '#123456' } }}/>);
+  expect(container.querySelector('.week-event-color').style.backgroundColor).toBe('rgb(18, 52, 86)');
+});

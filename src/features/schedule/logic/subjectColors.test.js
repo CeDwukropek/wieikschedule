@@ -9,6 +9,12 @@ test("a chosen colour applies to the whole subject and is also found by its name
   expect(coloured.Matematyka).toEqual({ name: "Matematyka", color: "bg-green-600" });
 });
 
+test("a person's own colour is kept as a hex; anything else is ignored", () => {
+  const coloured = withSubjectColors(subjects, { Matematyka: "#1A2B3C", Fizyka: "#12345" });
+  expect(coloured.MAT.color).toBe("#1a2b3c");
+  expect(coloured.FIZ.color).toBe("bg-sky-500");
+});
+
 test("without chosen colours the subjects stay as they were", () => {
   expect(withSubjectColors(subjects, {})).toBe(subjects);
   expect(withSubjectColors(subjects, undefined)).toBe(subjects);

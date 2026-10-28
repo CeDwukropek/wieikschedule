@@ -15,7 +15,9 @@ export const SUBJECT_PALETTE = [
   { id: "pink", label: "Różowy", className: "bg-pink-600" },
 ];
 const CLASS_BY_ID = Object.fromEntries(SUBJECT_PALETTE.map(({ id, className }) => [id, className]));
-export const colorClassOf = id => CLASS_BY_ID[id] || null;
+// A chosen colour is a palette id or a person's own colour ("#rrggbb"); the result is a Tailwind class or the hex.
+export const isCustomColor = value => /^#[0-9a-f]{6}$/i.test(String(value || ""));
+export const colorClassOf = value => CLASS_BY_ID[value] || (isCustomColor(value) ? value.toLowerCase() : null);
 
 // Subjects with the chosen colours (keyed by subject name). Subjects of other plans are found by their
 // title (see eventSubject), so a chosen colour is also added under the name itself.

@@ -68,8 +68,11 @@ export default function EventCard({
 
   const teacherLines = splitTeacherDisplay(ev?.teacher);
   const colorBg = subj.color || "bg-gray-600";
-  const colorText = colorBg.replace(/^bg-/, "text-");
-  const eventTint = EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
+  // A person's own colour is a hex (see subjectColors) and is applied inline instead of with a class.
+  const customColor = colorBg.startsWith("#") ? colorBg : null;
+  const colorClass = customColor ? "" : colorBg;
+  const colorText = customColor ? "" : colorBg.replace(/^bg-/, "text-");
+  const eventTint = customColor ? `${customColor}1a` : EVENT_TINT_BY_BG_CLASS[colorBg] || "rgba(75, 85, 99, 0.1)";
   const isExternal = Boolean(ev?._isExternal && ev?._sourceScheduleId);
   const isAdded = ev?.origin === "added";
 
@@ -117,7 +120,7 @@ export default function EventCard({
       data-modified={(!ev.ghost && ev.personal_override) || undefined}
       data-ghost={ev.ghost || undefined}
     >
-      <span className={`week-event-color ${colorBg}`} aria-hidden="true" />
+      <span className={`week-event-color ${colorClass}`} style={customColor ? { backgroundColor: customColor } : undefined} aria-hidden="true" />
       <span className="week-event-content">
         <span className="week-event-time">
           <span>{ev.start}<span className="week-event-end">–{ev.end}</span></span>
@@ -156,10 +159,11 @@ export default function EventCard({
       data-ghost={ev?.ghost || undefined}
       style={{ backgroundColor: eventTint }}
     >
-      <div className={`${colorBg} w-1 shrink-0`} />
+      <div className={`${colorClass} w-1 shrink-0`} style={customColor ? { backgroundColor: customColor } : undefined} />
 
       <div className="flex-1 p-2 flex flex-col">
-        <div className={`${colorText} text-[0.7rem] font-semibold ${ev?.ghost === "cancelled" ? "line-through" : ""}`}>
+        <div className={`${colorText} text-[0.7rem] font-semibold ${ev?.ghost === "cancelled" ? "line-through" : ""}`}
+          style={customColor ? { color: customColor } : undefined}>
           {subj.name}
         </div>
 

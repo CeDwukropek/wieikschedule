@@ -12,4 +12,6 @@ test('each subject gets one colour from the palette or goes back to Auto', () =>
   expect(onChoose).toHaveBeenCalledWith('Matematyka', 'pink');
   fireEvent.click(screen.getAllByRole('radio', { name: 'Auto' })[0]);
   expect(onChoose).toHaveBeenCalledWith('Fizyka', null);
+  fireEvent.change(screen.getByLabelText('Własny kolor: Matematyka'), { target: { value: '#123abc' } });
+  expect(onChoose).toHaveBeenCalledWith('Matematyka', '#123abc');
 });
