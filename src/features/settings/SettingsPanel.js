@@ -1,5 +1,5 @@
 import { selectExportEvents } from "../schedule/export/selectExportEvents";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronRight, Book, CalendarOff, CalendarRange, History, X } from "lucide-react";
 import GroupFiltersPanel from "../schedule/components/GroupFiltersPanel";
 import GroupSetManager from "../schedule/components/GroupSetManager";
@@ -15,6 +15,8 @@ import EntryFilter from '../plan-items/EntryFilter';
 import RedeemInvite from '../plan-items/RedeemInvite';
 import ReminderSettings from '../plan-items/ReminderSettings';
 import SubjectColors from './SubjectColors';
+import IntegrationCard from './IntegrationCard';
+import { KINDS } from '../plan-items/planItemLogic';
 
 const TAB_KEY = "wieikschedule.settingsTab";
 const readTab = () => { try { return localStorage.getItem(TAB_KEY) === "ai" ? "ai" : "plan"; } catch { return "plan"; } };
@@ -35,6 +37,9 @@ export default function SettingsPanel({
   const [tab, setTabState] = useState(readTab);
   const activeTab = aiAvailable ? tab : "plan";
   const setTab = value => { setTabState(value); try { localStorage.setItem(TAB_KEY, value); } catch { /* per-viewer convenience only */ } };
+  // A broken Odysseus connection marks the integrations tab.
+  const [integrationTone, setIntegrationTone] = useState("idle");
+  const onIntegrationStatus = useCallback(tone => setIntegrationTone(tone), []);
   const onCloseRef = useRef(onToggle);
   onCloseRef.current = onToggle;
 
@@ -140,13 +145,35 @@ export default function SettingsPanel({
   }), planItems, reminders || {});
 
   // Kolokwia and deadlines go with the integrations (reminders reach Odysseus); without them, with the plan.
+  const entryHint = <p className="text-xs text-neutral-400">{showAll ? "Widać terminy wszystkich grup tego planu." : "Widać terminy Twoich grup. Terminy innych grup pokazuje widok całego planu (wyłącz „Pokaż tylko wybrane grupy”)."}</p>;
   const entriesSection = entryFilter && <section className="space-y-2">
     <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
     <EntryFilter {...entryFilter} />
-    <p className="text-xs text-neutral-400">{showAll ? "Widać terminy wszystkich grup tego planu." : "Widać terminy Twoich grup. Terminy innych grup pokazuje widok całego planu (wyłącz „Pokaż tylko wybrane grupy”)."}</p>
+    {entryHint}
     {entryReminders && <ReminderSettings {...entryReminders} />}
     {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
   </section>;
+  const remindedKinds = entryReminders ? Object.keys(KINDS).filter(kind => entryReminders.reminders[kind]?.length).length : 0;
+  const calendar = process.env.REACT_APP_CALENDAR_SYNC === 'true'
+    ? { currentSchedule, activeGroupSetId, groupSetOptions } : null;
+  const integrationCards = <>
+    {process.env.REACT_APP_PERSONAL_SCHEDULE === 'true'
+      ? <AiSettings calendar={calendar} onStatus={onIntegrationStatus}/>
+      : calendar && <IntegrationCard title="Kalendarz w Odysseusie"><CalendarSyncSettings {...calendar}/></IntegrationCard>}
+    {entryReminders && <IntegrationCard title="Przypomnienia" status={{ tone: 'idle',
+      text: remindedKinds ? `Ustawione dla ${remindedKinds} z ${Object.keys(KINDS).length} rodzajów` : 'Bez przypomnień' }}>
+      <p className="text-xs text-neutral-400">Trafiają do kalendarza w Odysseusie i do eksportu ICS.</p>
+      <ReminderSettings {...entryReminders} />
+    </IntegrationCard>}
+    {entryFilter && <IntegrationCard title="Terminy w planie" status={{ tone: 'idle',
+      text: `${{ all: 'Wszystkie', group: 'Grupowe', personal: 'Moje' }[entryFilter.scope] || 'Wszystkie'}${entryFilter.hiddenKinds?.length ? ` · ukryte rodzaje: ${entryFilter.hiddenKinds.length}` : ''}` }}>
+      <EntryFilter {...entryFilter} />
+      {entryHint}
+    </IntegrationCard>}
+    {onRedeemInvite && <IntegrationCard title="Rola starosty" status={{ tone: 'idle', text: 'Masz kod zaproszenia?' }}>
+      <RedeemInvite onRedeem={onRedeemInvite} />
+    </IntegrationCard>}
+  </>;
 
   return (
     <>
@@ -190,13 +217,14 @@ export default function SettingsPanel({
           <div className="p-6 space-y-6 ">
             <GoogleSignInButton />
             {aiAvailable && <div role="tablist" aria-label="Sekcje opcji" className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-800 p-1">
-              {[["plan", "Plan"], ["ai", "AI i integracje"]].map(([id, label]) => (
+              {[["plan", "Plan"], ["ai", "Integracje"]].map(([id, label]) => (
                 <button key={id} type="button" role="tab" id={`settings-tab-${id}`} aria-controls={`settings-panel-${id}`}
                   aria-selected={activeTab === id} tabIndex={activeTab === id ? 0 : -1}
                   onClick={() => setTab(id)}
                   onKeyDown={event => { if (["ArrowLeft", "ArrowRight"].includes(event.key)) { const next = id === "plan" ? "ai" : "plan"; setTab(next); document.getElementById(`settings-tab-${next}`)?.focus(); } }}
                   className={`rounded-md px-3 py-1.5 text-sm ${activeTab === id ? "bg-neutral-950 text-white shadow" : "text-neutral-400 hover:text-white"}`}>
                   {label}
+                  {id === "ai" && integrationTone === "error" && <span className="settings-tab-alert" aria-hidden="true" title="Połączenie z Odysseusem nie działa" />}
                 </button>
               ))}
             </div>}
@@ -326,11 +354,8 @@ export default function SettingsPanel({
             </div>
 
             {aiAvailable && <div id="settings-panel-ai" role="tabpanel" aria-labelledby="settings-tab-ai"
-              hidden={activeTab !== "ai"} className="space-y-6">
-              {entriesSection}
-              {process.env.REACT_APP_PERSONAL_SCHEDULE==='true'&&<AiSettings/>}
-              {process.env.REACT_APP_CALENDAR_SYNC==='true'&&<CalendarSyncSettings currentSchedule={currentSchedule}
-                activeGroupSetId={activeGroupSetId} groupSetOptions={groupSetOptions}/>}
+              hidden={activeTab !== "ai"} className="integration-cards">
+              {integrationCards}
             </div>}
           </div>
         </div>

@@ -40,13 +40,13 @@ describe("AI and integrations live in their own tab", () => {
     expect(screen.getByRole("tab", { name: "Plan" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("combobox", { name: "Plan zajęć" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Asystent AI" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "AI i integracje" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Integracje" }));
     expect(screen.getByRole("heading", { name: "Asystent AI" })).toBeVisible();
     expect(screen.queryByRole("combobox", { name: "Plan zajęć" })).not.toBeInTheDocument();
-    expect(screen.getByRole("tabpanel", { name: "AI i integracje" })).toBeVisible();
+    expect(screen.getByRole("tabpanel", { name: "Integracje" })).toBeVisible();
     unmount();
     render(<SettingsPanel {...props} />);
-    expect(screen.getByRole("tab", { name: "AI i integracje" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Integracje" })).toHaveAttribute("aria-selected", "true");
   });
 
   test("without AI features there are no tabs", () => {
