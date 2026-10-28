@@ -25,7 +25,8 @@ export function itemsWindow(today) {
 
 const norm = value => String(value || "").trim().toLowerCase();
 // Group entries visible in the plan the person sees: the class itself is in their plan, or the subject is
-// with that group (any group for entries concerning every group). Own entries are always visible.
+// with that group. Entries for every group (no group, or "W" — the lecture, i.e. the whole year) need only
+// the subject. A lecture in the plan does not reveal other groups' entries. Own entries are always visible.
 // With hidden, the same choice among the entries the person hid (to show them again).
 export function visibleItems(items, planEvents, { scheduleId, showAll = false, hidden = false } = {}) {
   const ids = new Set(), subjects = new Set(), pairs = new Set();
@@ -33,7 +34,6 @@ export function visibleItems(items, planEvents, { scheduleId, showAll = false, h
     const faculty = ev._sourceScheduleId || scheduleId, subject = norm(ev.title);
     if (ev.event_id) ids.add(String(ev.event_id));
     subjects.add(`${faculty}|${subject}`);
-    if (ev.appliesToAllGroups || !ev.groups?.length) pairs.add(`${faculty}|${subject}|*`);
     for (const group of ev.groups || []) pairs.add(`${faculty}|${subject}|${norm(group)}`);
   }
   return items.filter(item => {
@@ -42,8 +42,8 @@ export function visibleItems(items, planEvents, { scheduleId, showAll = false, h
     if (showAll && item.faculty === scheduleId) return true;
     const subject = `${item.faculty}|${norm(item.subject)}`;
     if (item.timing === "class" && ids.has(String(item.event_id))) return true;
-    if (item.group == null) return subjects.has(subject);
-    return pairs.has(`${subject}|${norm(item.group)}`) || pairs.has(`${subject}|*`);
+    if (item.group == null || norm(item.group) === "w") return subjects.has(subject);
+    return pairs.has(`${subject}|${norm(item.group)}`);
   });
 }
 
