@@ -119,3 +119,31 @@ test('a cancelled class stays visible faded and can be restored from its details
   fireEvent.click(screen.getByRole('button', {name: 'Przywróć zajęcia'}));
   await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id: 'occurrence-a', operation: 'delete'}));
 });
+
+describe('today and past classes', () => {
+  beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(new Date(2026, 9, 21, 10, 0)); });
+  afterEach(() => jest.useRealTimers());
+  const later = {...event, id: 'normalized-b', event_id: 'occurrence-b', day: 2, start: '12:00', end: '13:30', dates: ['2026-10-21']};
+
+  test('marks today and the current time; fades ended classes only when asked', () => {
+    const { container, rerender } = render(<WeekView events={[event, later]} viewedWeekStart={monday}/>);
+    expect(container.querySelector('[aria-current="date"]')).toHaveTextContent('Środa');
+    expect(container.querySelector('.grid-now-line').style.top).toBe(`${180 / 900 * 100}%`);
+    expect(container.querySelector('[data-past]')).toBeNull();
+    rerender(<WeekView events={[event, later]} viewedWeekStart={monday} dimPast/>);
+    const items = [...container.querySelectorAll('.week-event-item')];
+    expect(items.map(item => item.hasAttribute('data-past'))).toEqual([true, false]);
+    expect(container.querySelector('.week-day-name[data-past]')).toHaveTextContent('Poniedziałek');
+  });
+
+  test('another week has no marks of today', () => {
+    const { container } = render(<WeekView events={[event]} viewedWeekStart={new Date(2026, 9, 26)}/>);
+    expect(container.querySelector('[aria-current="date"]')).toBeNull();
+    expect(container.querySelector('.grid-now-line')).toBeNull();
+  });
+});
+
+test('a subject with its own colour is drawn with it', () => {
+  const { container } = render(<WeekView events={[event]} viewedWeekStart={monday} subjects={{ MUD: { name: event.title, color: '#123456' } }}/>);
+  expect(container.querySelector('.week-event-color').style.backgroundColor).toBe('rgb(18, 52, 86)');
+});

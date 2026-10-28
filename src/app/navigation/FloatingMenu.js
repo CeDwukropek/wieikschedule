@@ -52,6 +52,11 @@ export default function FloatingMenu({
     setEntryScope,
     hiddenKinds,
     setHiddenKinds,
+    subjectColors,
+    setSubjectColors,
+    subjectNames,
+    dimPast,
+    setDimPast,
     onRedeemInvite,
     entryReminders,
   } = viewState || {};
@@ -556,6 +561,16 @@ export default function FloatingMenu({
           onToggleShowAll: () => setShowAll((prev) => !prev),
           alwaysShowWeekend,
           onToggleAlwaysShowWeekend: () => setAlwaysShowWeekend((prev) => !prev),
+          dimPast,
+          onToggleDimPast: setDimPast && (() => setDimPast((prev) => !prev)),
+          subjectColors: setSubjectColors ? {
+            names: subjectNames || [],
+            chosen: subjectColors || {},
+            onChoose: (name, color) => setSubjectColors((prev) => {
+              const { [name]: _previous, ...rest } = prev || {};
+              return color ? { ...rest, [name]: color } : rest;
+            }),
+          } : undefined,
           entryFilter: entriesOn ? {
             scope: entryScope,
             hiddenKinds,

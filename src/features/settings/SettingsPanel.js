@@ -1,6 +1,6 @@
 import { selectExportEvents } from "../schedule/export/selectExportEvents";
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, Book, CalendarOff, CalendarRange, X } from "lucide-react";
+import { ChevronRight, Book, CalendarOff, CalendarRange, History, X } from "lucide-react";
 import GroupFiltersPanel from "../schedule/components/GroupFiltersPanel";
 import GroupSetManager from "../schedule/components/GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
@@ -14,6 +14,7 @@ import CalendarSyncSettings from './CalendarSyncSettings';
 import EntryFilter from '../plan-items/EntryFilter';
 import RedeemInvite from '../plan-items/RedeemInvite';
 import ReminderSettings from '../plan-items/ReminderSettings';
+import SubjectColors from './SubjectColors';
 
 const TAB_KEY = "wieikschedule.settingsTab";
 const readTab = () => { try { return localStorage.getItem(TAB_KEY) === "ai" ? "ai" : "plan"; } catch { return "plan"; } };
@@ -99,6 +100,9 @@ export default function SettingsPanel({
     onToggleShowAll,
     alwaysShowWeekend,
     onToggleAlwaysShowWeekend,
+    dimPast,
+    onToggleDimPast,
+    subjectColors,
     entryFilter,
     onRedeemInvite,
     entryReminders,
@@ -279,12 +283,20 @@ export default function SettingsPanel({
                   label="Zawsze pokazuj weekend"
                   icon={<CalendarRange className="w-4 h-4" />}
                 />}
+                {onToggleDimPast && <FilterToggle
+                  pressed={Boolean(dimPast)}
+                  onToggle={onToggleDimPast}
+                  label="Przygaszaj to, co już minęło"
+                  icon={<History className="w-4 h-4" />}
+                />}
               </div>
-              <p className="text-xs text-neutral-400">Sobota i niedziela pojawiają się w tygodniach, w których coś się w nie dzieje{alwaysShowWeekend ? "; teraz zawsze" : ""}.</p>
+              <p className="text-xs text-neutral-400">Sobota i niedziela pojawiają się w tygodniach, w których coś się w nie dzieje{alwaysShowWeekend ? "; teraz zawsze" : ""}.{dimPast ? " Zakończone zajęcia i minione dni są przygaszone." : ""}</p>
+              {subjectColors && <SubjectColors {...subjectColors} />}
             </section>
             {entryFilter && <section className="space-y-2 border-t border-neutral-800 pt-4">
               <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
               <EntryFilter {...entryFilter} />
+              <p className="text-xs text-neutral-400">{showAll ? "Widać terminy wszystkich grup tego planu." : "Widać terminy Twoich grup. Terminy innych grup pokazuje widok całego planu (wyłącz „Pokaż tylko wybrane grupy”)."}</p>
               {entryReminders && <ReminderSettings {...entryReminders} />}
               {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
             </section>}

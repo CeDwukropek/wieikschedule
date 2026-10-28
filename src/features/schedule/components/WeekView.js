@@ -8,6 +8,8 @@ import { tileKey } from "../logic/eventIdentity";
 import DayStrip from "../../plan-items/DayStrip";
 import { minutesLabel, useSlotSelection } from "../../plan-items/useSlotSelection";
 import { slotTerm } from "../../plan-items/planItemEditing";
+import { useNow } from "../hooks/useNow";
+import { hasEnded, nowFraction } from "../logic/timeMarks";
 import "./ScheduleView.css";
 
 const WORKDAYS = [0, 1, 2, 3, 4]; // Pon–Pt; Sob/Nd only when the week has something then
@@ -24,6 +26,7 @@ const WeekView = forwardRef(function WeekView(
     onItemState,
     itemActions,
     onCreateAt,
+    dimPast = false,
   },
   ref,
 ) {
@@ -51,6 +54,13 @@ const WeekView = forwardRef(function WeekView(
     viewedWeekStart instanceof Date
       ? new Date(viewedWeekStart)
       : getWeekStart(new Date());
+  // Today's column and the current time are marked; with dimPast, what has ended is faded.
+  const now = useNow();
+  const todayIso = toIsoDate(now);
+  const dayIso = day => toIsoDate(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + day));
+  const isToday = day => dayIso(day) === todayIso;
+  const isPastDay = day => dimPast && dayIso(day) < todayIso;
+  const nowAt = nowFraction(now, startHour, endHour);
 
   // A free time chosen in a day column becomes a new entry there (signed-in users with entries on).
   const { selection, handlers } = useSlotSelection(onCreateAt && ((day, from, to) => onCreateAt(slotTerm(
@@ -87,7 +97,9 @@ const WeekView = forwardRef(function WeekView(
         {DAYS.map((dayIndex, column) => (
           <div
             key={dayIndex}
-            className="week-day-name"
+            className={`week-day-name${isToday(dayIndex) ? " is-today" : ""}`}
+            data-past={isPastDay(dayIndex) || undefined}
+            aria-current={isToday(dayIndex) ? "date" : undefined}
             style={{
               gridColumn: column + 2,
               gridRow: 1,
@@ -101,7 +113,8 @@ const WeekView = forwardRef(function WeekView(
         {DAYS.map((dayIndex, column) => (
           <div
             key={`date-${dayIndex}`}
-            className="week-day-date"
+            className={`week-day-date${isToday(dayIndex) ? " is-today" : ""}`}
+            data-past={isPastDay(dayIndex) || undefined}
             style={{
               gridColumn: column + 2,
               gridRow: 2,
@@ -113,7 +126,7 @@ const WeekView = forwardRef(function WeekView(
 
         {/* Whole-day entries and deadlines */}
         {hasStrip && DAYS.map((dayIndex, column) => (
-          <div key={`strip-${dayIndex}`} className="week-day-strip" style={{ gridColumn: column + 2, gridRow: 3 }}>
+          <div key={`strip-${dayIndex}`} className="week-day-strip" data-past={isPastDay(dayIndex) || undefined} style={{ gridColumn: column + 2, gridRow: 3 }}>
             <DayStrip items={strip[dayIndex]} onOpen={item => onOpenItem?.(item)} />
           </div>
         ))}
@@ -149,7 +162,8 @@ const WeekView = forwardRef(function WeekView(
                 key={`${day}-${slot.index}`}
                 className={`time-slot border-l border-neutral-800 border-t ${
                   isHourBoundary ? "border-neutral-700" : "border-neutral-800"
-                } ${hourBlock % 2 === 0 ? "hour-even" : ""}`}
+                } ${hourBlock % 2 === 0 ? "hour-even" : ""}${isToday(day) ? " is-today" : ""}`}
+                data-past={isPastDay(day) || undefined}
                 style={{
                   gridColumn: column + 2,
                   gridRow: slot.index + firstSlotRow,
@@ -190,6 +204,7 @@ const WeekView = forwardRef(function WeekView(
                     <div
                       key={uniqueKey}
                       className="week-event-item"
+                      data-past={(dimPast && hasEnded(dayIso(day), ev.end, now)) || undefined}
                       style={{
                         top: `${startOffset / totalMinutes * 100}%`,
                         height: `${duration / totalMinutes * 100}%`,
@@ -207,6 +222,7 @@ const WeekView = forwardRef(function WeekView(
                   );
                 },
               )}
+              {isToday(day) && nowAt !== null && <div className="grid-now-line" data-now aria-hidden="true" style={{ top: `${nowAt * 100}%` }} />}
               {selection?.day === day && <div className="grid-new-slot" aria-hidden="true" style={{
                 top: `${(selection.from - startHour * 60) / totalMinutes * 100}%`,
                 height: `${(selection.to - selection.from) / totalMinutes * 100}%`,
