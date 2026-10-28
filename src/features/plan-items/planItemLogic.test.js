@@ -25,6 +25,18 @@ test('a group entry shows only to people whose plan has that class, subject or g
   expect(visibleItems([...items, hiddenElsewhere], [lab], { scheduleId: 'EiAs3', hidden: true }).map(item => item.id)).toEqual(['hidden']);
 });
 
+test("another group's entry stays hidden although the subject's lecture is in the plan", () => {
+  const modelowanieLecture = { ...lecture, id: 4, event_id: 'lecture-m', title: 'Modelowanie' };
+  const items = [entry('own-group', { group: 'Lk1', timing: 'due', event_id: null }),
+    entry('other-group', { group: 'Lk2', timing: 'due', event_id: null }),
+    entry('whole-year', { group: 'W', timing: 'due', event_id: null })];
+  const shown = ids => visibleItems(items, ids, { scheduleId: 'EiAs3' }).map(item => item.id);
+  expect(shown([lab, modelowanieLecture])).toEqual(['own-group', 'whole-year']);
+  expect(shown([modelowanieLecture])).toEqual(['whole-year']);
+  expect(visibleItems(items, [modelowanieLecture], { scheduleId: 'EiAs3', showAll: true }).map(item => item.id))
+    .toEqual(['own-group', 'other-group', 'whole-year']);
+});
+
 test('entries sit on their class, as blocks at their own time or in the strip under the dates', () => {
   const items = [entry('on-class'), entry('slot', { timing: 'slot', event_id: null, date: '2026-10-24', start_time: '09:00:00', duration_min: 120 }),
     entry('due', { timing: 'due', event_id: null, start_time: null, duration_min: null, due_time: '23:59:00', date: '2026-10-21' }),
