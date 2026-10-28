@@ -165,11 +165,6 @@ export default function SettingsPanel({
       <p className="text-xs text-neutral-400">Trafiają do kalendarza w Odysseusie i do eksportu ICS.</p>
       <ReminderSettings {...entryReminders} />
     </IntegrationCard>}
-    {entryFilter && <IntegrationCard title="Terminy w planie" status={{ tone: 'idle',
-      text: `${{ all: 'Wszystkie', group: 'Grupowe', personal: 'Moje' }[entryFilter.scope] || 'Wszystkie'}${entryFilter.hiddenKinds?.length ? ` · ukryte rodzaje: ${entryFilter.hiddenKinds.length}` : ''}` }}>
-      <EntryFilter {...entryFilter} />
-      {entryHint}
-    </IntegrationCard>}
     {onRedeemInvite && <IntegrationCard title="Rola starosty" status={{ tone: 'idle', text: 'Masz kod zaproszenia?' }}>
       <RedeemInvite onRedeem={onRedeemInvite} />
     </IntegrationCard>}
@@ -328,6 +323,12 @@ export default function SettingsPanel({
                 />}
               </div>
               <p className="text-xs text-neutral-400">Sobota i niedziela pojawiają się w tygodniach, w których coś się w nie dzieje{alwaysShowWeekend ? "; teraz zawsze" : ""}.{dimPast ? " Zakończone zajęcia i minione dni są przygaszone." : ""}</p>
+              {/* Which kolokwia and deadlines the grid, the upcoming list and the ICS export show. */}
+              {aiAvailable && entryFilter && <div className="space-y-2 pt-2">
+                <p className="text-xs font-medium text-neutral-300">Kolokwia i terminy w planie</p>
+                <EntryFilter {...entryFilter} />
+                {entryHint}
+              </div>}
               {subjectColors && <SubjectColors {...subjectColors} />}
             </section>
             {!aiAvailable && entriesSection}
