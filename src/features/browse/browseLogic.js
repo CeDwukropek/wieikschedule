@@ -53,7 +53,7 @@ export function matchesBrowse(row, { mode, key }) {
 
 // One class held for several groups or plans at once is one row per group in the data (some plans also list
 // one meeting as a lecture, a lab and a project); the same instructor, room, subject and time is one class here.
-function mergeShared(rows) {
+export function sharedClasses(rows) {
   const classes = new Map();
   for (const row of rows) {
     const key = [row.date, row.start_time, row.duration_min, row.subject, roomKey(row.room), row.instructor].join("|");
@@ -70,7 +70,7 @@ function mergeShared(rows) {
 // Classes of the browsed instructor or room as calendar events, each with the plans and groups it is for.
 // The tile shows what the person cannot tell from the browsed plan itself (the room, or the plans and groups).
 export function browseTimetable(rows, browse) {
-  const classes = mergeShared(rows.filter(row => matchesBrowse(row, browse)));
+  const classes = sharedClasses(rows.filter(row => matchesBrowse(row, browse)));
   const byId = new Map(classes.map(shared => [String(shared.row.id), shared]));
   const table = normalizeTimetable("browse", classes.map(({ row, audience }) =>
     ({ ...row, group: [...new Set([...audience.values()].flatMap(groups => [...groups]))].join("/") })));
@@ -92,16 +92,18 @@ export const minutesLabel = hm;
 // Rooms on a day: for each, the free windows between from and to (minutes), and its state at a minute.
 // Rooms with no class that day are free all day. Busy rooms say when they are free next. A break shorter than
 // half an hour between two classes is not a free room.
-export function freeRooms(rows, rooms, date, minute, { from = 7 * 60, to = 22 * 60, shortest = 30 } = {}) {
+// keyOf maps a room's key to the catalog's (aliases of one room).
+export function freeRooms(rows, rooms, date, minute, { from = 7 * 60, to = 22 * 60, shortest = 30, keyOf = key => key } = {}) {
   const busy = new Map();
   for (const row of rows) {
     if (row.date !== date || String(row.status || "aktywne") === "wolne") continue;
     const label = cleanRoom(row.room);
     if (!label) continue;
     const start = timeToMinutes(String(row.start_time).slice(0, 5));
-    const list = busy.get(label.toUpperCase()) || [];
+    const key = keyOf(label.toUpperCase());
+    const list = busy.get(key) || [];
     list.push([start, start + (Number(row.duration_min) || 90)]);
-    busy.set(label.toUpperCase(), list);
+    busy.set(key, list);
   }
   return rooms.filter(room => isRoom(room.label)).map(room => {
     const taken = (busy.get(room.key) || []).sort((a, b) => a[0] - b[0]);
@@ -119,6 +121,22 @@ export function freeRooms(rows, rooms, date, minute, { from = 7 * 60, to = 22 * 
   }).sort((a, b) => (Boolean(b.now) - Boolean(a.now))
     || (a.now && b.now ? (b.now[1] - minute) - (a.now[1] - minute) : (a.next?.[0] ?? 9999) - (b.next?.[0] ?? 9999))
     || a.label.localeCompare(b.label, "pl", { numeric: true }));
+}
+
+// Classes in each room on a day (one block for a class held for several groups), for the free-rooms grid.
+export function roomDay(rows, date, keyOf = key => key) {
+  const byRoom = new Map();
+  const day = rows.filter(row => row.date === date && String(row.status || "aktywne") !== "wolne" && cleanRoom(row.room));
+  for (const { row, audience, types } of sharedClasses(day)) {
+    const start = timeToMinutes(String(row.start_time).slice(0, 5));
+    const key = keyOf(roomKey(row.room));
+    const list = byRoom.get(key) || [];
+    list.push({ start, end: start + (Number(row.duration_min) || 90), subject: row.subject || "Zajęcia", type: [...types].join(" + "),
+      teacher: row.instructor || "", audience: [...audience].map(([faculty, groups]) => [faculty, [...groups].join(", ")].filter(Boolean).join(" ")).join("; ") });
+    byRoom.set(key, list);
+  }
+  byRoom.forEach(list => list.sort((a, b) => a.start - b.start));
+  return byRoom;
 }
 
 // The browsed plan in the address, so it can be shared: ?prowadzacy=…, ?sala=…, ?wolne.

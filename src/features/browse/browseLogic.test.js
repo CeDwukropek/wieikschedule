@@ -1,4 +1,4 @@
-import { browseFromSearch, browseSearch, browseTimetable, buildDirectory, cleanRoom, freeRooms, isRoom, searchDirectory } from "./browseLogic";
+import { browseFromSearch, browseSearch, browseTimetable, buildDirectory, cleanRoom, freeRooms, isRoom, roomDay, searchDirectory } from "./browseLogic";
 
 const row = (id, extra) => ({ id, faculty: "EiAs3", date: "2026-10-28", start_time: "09:15:00", duration_min: 90, subject: "Analiza",
   instructor: "dr inż. M. Pawlik", room: "A3", group: "L5", type: "laboratorium", status: "aktywne", ...extra });
@@ -60,4 +60,12 @@ test("the browsed plan is kept in the address", () => {
   expect(browseSearch("?x=1&sala=A3", { mode: "teacher", label: "mgr J. Firganek" })).toBe("?x=1&prowadzacy=mgr+J.+Firganek");
   expect(browseSearch("?sala=A3", { mode: "free" })).toBe("?wolne");
   expect(browseSearch("?wolne", { mode: "mine" })).toBe("");
+});
+
+test("a room's day lists its classes once each, under the catalog's key", () => {
+  const rows = [row(1, { room: "H / C", group: "L1" }), row(2, { room: "H/C", group: "L2" }), row(3, { room: "A3", start_time: "07:30:00" }),
+    row(4, { room: "A3", date: "2026-10-29" })];
+  const day = roomDay(rows, "2026-10-28", key => (key === "H/C" ? "HALA C" : key));
+  expect([...day.keys()]).toEqual(["HALA C", "A3"]);
+  expect(day.get("HALA C")).toEqual([{ start: 555, end: 645, subject: "Analiza", type: "laboratorium", teacher: "dr inż. M. Pawlik", audience: "EiAs3 L1, L2" }]);
 });
