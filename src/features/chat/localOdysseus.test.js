@@ -1,11 +1,11 @@
-import {nativeUrl,nativeCapabilities,setLocalToken,localToken,clearLocalTokens} from './localOdysseus';
+import {nativeUrl,nativeCapabilities,setLocalToken,localToken,clearLocalTokens,isTokenRemembered} from './localOdysseus';
 import {sendScheduleAgentMessage} from './scheduleAgentClient';
 import {personalRequest} from '../my-plan/personalScheduleApi';
 import {auth} from '../../lib/firebaseClient';
 jest.mock('../my-plan/personalScheduleApi',()=>({personalRequest:jest.fn()}));
 jest.mock('../../lib/firebaseClient',()=>({auth:{currentUser:{uid:'owner-a'}}}));
 const settings={provider:'odysseus',local_endpoint:'https://native.test/local-odysseus',local_endpoint_id:'local',local_model:'local-model'};
-beforeEach(()=>{jest.clearAllMocks();clearLocalTokens();auth.currentUser={uid:'owner-a'};global.fetch=jest.fn();});
+beforeEach(()=>{jest.clearAllMocks();clearLocalTokens();localStorage.clear();auth.currentUser={uid:'owner-a'};global.fetch=jest.fn();});
 afterEach(()=>{delete global.fetch;});
 test('native URL preserves a deployment prefix and credentials stay scoped to one account',()=>{
  expect(nativeUrl(settings.local_endpoint,'api/schedule/chat').href).toBe('https://native.test/local-odysseus/api/schedule/chat');
@@ -57,4 +57,21 @@ test('a removed endpoint cannot silently route the conversation to another provi
  await expect(sendScheduleAgentMessage({message:'Private',scheduleName:'TEST',sessionId:'s'})).rejects.toThrow('Zapisany model lub połączenie jest niedostępne');
  expect(personalRequest).toHaveBeenCalledTimes(1);
  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test('a remembered token survives a reload (memory cleared) only for its account',()=>{
+  setLocalToken('a',' ody_a ',{remember:true});
+  clearLocalTokens();
+  expect(localToken('a')).toBe('ody_a');
+  expect(isTokenRemembered('a')).toBe(true);
+  expect(localToken('b')).toBe('');
+});
+test('a token not remembered lives in memory only; forgetting removes the stored one',()=>{
+  setLocalToken('a','ody_a',{remember:true});
+  setLocalToken('a','ody_a',{remember:false});
+  expect(localToken('a')).toBe('ody_a');
+  clearLocalTokens();
+  expect(localToken('a')).toBe('');
+  setLocalToken('a','ody_memory');
+  expect(isTokenRemembered('a')).toBe(false);
 });

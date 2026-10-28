@@ -166,7 +166,7 @@
 .week-event-card[data-ghost="moved-from"] .week-event-room { color: #fcd34d; display: block; }
 .day-event-ghost { opacity: .55; outline: 1px dashed #a3a3a3; outline-offset: -1px; }
 .event-details-badges .event-details-ghost { background: #404040; color: #fde68a; }
-.week-event-color { width: 3px; flex: 0 0 3px; }
+.week-event-color { width: 4px; flex: 0 0 4px; }
 .week-event-content {
   min-width: 0;
   flex: 1;
@@ -279,7 +279,7 @@
   .week-day-name { font-size: 11px; }
   .week-day-date { font-size: 10px; }
   .week-hour-label { font-size: 8px; padding-right: 3px; }
-  .week-event-color { width: 2px; flex-basis: 2px; }
+  .week-event-color { width: 3px; flex-basis: 3px; }
   .week-event-content { padding: 3px 2px; gap: 2px; }
   .week-event-time { font-size: 9px; justify-content: space-between; gap: 2px; }
   .week-event-end, .week-event-room { display: none; }
@@ -390,9 +390,6 @@
 .upcoming-row span { color: #d4d4d4; }
 .upcoming-row[data-done] { opacity: .6; }
 .upcoming-review { color: #fcd34d !important; }
-.plan-items-trigger { background: #3b0764; color: #f3e8ff; }
-.plan-items-trigger .plan-panel-count { background: #581c87; }
-.plan-items-add { margin-left: 8px; background: #1f1f1f; color: #f3e8ff; border: 1px solid #581c87; }
 
 /* Adding and editing entries */
 .event-details-add-entry { margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;

@@ -5,9 +5,11 @@ import {nativeCapabilities,setLocalToken} from '../chat/localOdysseus';
 let mockUser;
 jest.mock('../auth/useFirebaseAuth',()=>({useFirebaseAuth:()=>({user:mockUser})}));
 jest.mock('../my-plan/personalScheduleApi',()=>({personalRequest:jest.fn()}));
-jest.mock('../chat/localOdysseus',()=>({nativeCapabilities:jest.fn(),setLocalToken:jest.fn(),localToken:()=>''}));
+let mockStoredToken='';
+jest.mock('../chat/localOdysseus',()=>({nativeCapabilities:jest.fn(),setLocalToken:jest.fn(),localToken:()=>mockStoredToken,
+  isTokenRemembered:()=>Boolean(mockStoredToken)}));
 const settings={provider:'n8n',model:'',local_endpoint:'',has_api_key:false};
-beforeEach(()=>{jest.clearAllMocks();mockUser={uid:'owner-a'};});
+beforeEach(()=>{jest.clearAllMocks();mockUser={uid:'owner-a'};mockStoredToken='';});
 test('saving the first key loads a dynamic dropdown and preserves model selection',async()=>{
   personalRequest.mockImplementation(async(path,body)=>{
     if(path==='models')return {models:[{id:'available-a'},{id:'available-b'}]};
@@ -61,8 +63,22 @@ test('native connection loads local models and saves selection without persistin
  fireEvent.change(screen.getByLabelText('Model Odysseusa'),{target:{value:'model-b'}});
  fireEvent.click(screen.getByRole('button',{name:'Zapisz ustawienia AI'}));
  await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint_id:'local',local_model:'model-b'})));
- expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_synthetic');
+ expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_synthetic',{remember:true});
  expect(JSON.stringify(personalRequest.mock.calls)).not.toContain('ody_synthetic');
+});
+test('a remembered token lists the models at once; unticking forgets it on this device',async()=>{
+ mockStoredToken='ody_remembered';
+ const local={...settings,provider:'odysseus',local_endpoint:'https://native.test',local_endpoint_id:'local',local_model:'model-b'};
+ personalRequest.mockImplementation(async(path,body)=>({settings:{...local,...body}}));
+ nativeCapabilities.mockResolvedValue({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',name:'My local server',models:['model-a','model-b']}]});
+ render(<AiSettings/>);
+ expect(await screen.findByRole('option',{name:'model-b'})).toBeInTheDocument();
+ expect(nativeCapabilities).toHaveBeenCalledWith('https://native.test','owner-a','ody_remembered',expect.anything());
+ expect(screen.getByLabelText('Model Odysseusa')).toHaveValue('model-b');
+ const remember=screen.getByRole('checkbox',{name:/Zapamiętaj token/});
+ expect(remember).toBeChecked();
+ fireEvent.click(remember);
+ expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_remembered',{remember:false});
 });
 test('a catalogue containing only cloud models requires an explicit provider selection',async()=>{
  const local={...settings,provider:'odysseus',local_endpoint:'https://native.test'};

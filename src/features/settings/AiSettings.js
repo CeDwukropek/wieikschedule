@@ -1,18 +1,19 @@
 import {useEffect,useRef,useState} from 'react';
 import {useFirebaseAuth} from '../auth/useFirebaseAuth';
 import {personalRequest} from '../my-plan/personalScheduleApi';
-import {nativeCapabilities,setLocalToken,localToken} from '../chat/localOdysseus';
+import {nativeCapabilities,setLocalToken,localToken,isTokenRemembered} from '../chat/localOdysseus';
 export default function AiSettings(){
   const {user}=useFirebaseAuth();
   const activeUid=useRef(user?.uid);activeUid.current=user?.uid;
   const [state,setState]=useState(null),[apiKey,setApiKey]=useState(''),[notice,setNotice]=useState(null),[busy,setBusy]=useState(false);
   const [catalog,setCatalog]=useState({uid:'',models:[],loading:false,error:''});
   const [catalogVersion,setCatalogVersion]=useState(0);
-  const [localAccess,setLocalAccess]=useState(''),[native,setNative]=useState(null);
+  const [localAccess,setLocalAccess]=useState(''),[native,setNative]=useState(null),[remember,setRemember]=useState(true);
   const ready=Boolean(user&&state?.uid===user.uid);
   const uid=user?.uid,provider=state?.provider,hasKey=Boolean(state?.has_api_key);
   useEffect(()=>{
     setState(null);setApiKey('');setNotice(null);setBusy(false);setNative(null);setLocalAccess(localToken(user?.uid));
+    setRemember(user?isTokenRemembered(user.uid)||!localToken(user.uid):true);
     if(!user)return undefined;
     let active=true;
     personalRequest('ai-settings').then(data=>{if(active)setState({...data.settings,uid:user.uid});}).catch(err=>{if(active)setNotice({area:'load',tone:'error',text:err.message});});
@@ -29,6 +30,16 @@ export default function AiSettings(){
     });
     return ()=>{active=false;};
   },[ready,uid,provider,hasKey,catalogVersion]);
+  // With a saved address and a known token the models are listed at once, without "Sprawdź połączenie".
+  const endpoint=state?.local_endpoint;
+  useEffect(()=>{
+    if(!ready||provider!=='odysseus'||!endpoint||!localToken(uid))return undefined;
+    const controller=new AbortController();
+    nativeCapabilities(endpoint,uid,localToken(uid),controller.signal).then(result=>{
+      if(activeUid.current===uid)setNative(previous=>previous||result);
+    },err=>{if(err?.name!=='AbortError'&&activeUid.current===uid)setNotice({area:'connect',tone:'error',text:err.message});});
+    return ()=>controller.abort();
+  },[ready,provider,endpoint,uid]);
   if(!user)return <p className="text-sm text-neutral-400">Zaloguj się, aby skonfigurować asystenta AI.</p>;
   const models=catalog.uid===user.uid?catalog.models:[];
   const save=async(remove=false)=>{
@@ -37,7 +48,7 @@ export default function AiSettings(){
       const data=await personalRequest('ai-settings',{provider:state.provider,model:state.model,local_endpoint:state.local_endpoint,
         local_endpoint_id:state.local_endpoint_id||'',local_model:state.local_model||'',local_memory:state.local_memory||false,api_key:apiKey,remove_api_key:remove});
       if(activeUid.current!==user.uid)return;
-      setLocalToken(user.uid,localAccess);
+      setLocalToken(user.uid,localAccess,{remember});
       setState({...data.settings,uid:user.uid});setApiKey('');setNotice({area:remove?'key':'save',tone:'ok',text:remove?'Usunięto zapisany klucz.':'Zapisano ustawienia AI.'});
       setCatalogVersion(value=>value+1);
     }catch(err){if(activeUid.current===user.uid)setNotice({area:remove?'key':'save',tone:'error',text:err.message});}finally{if(activeUid.current===user.uid)setBusy(false);}
@@ -47,7 +58,7 @@ export default function AiSettings(){
     try{
       const result=await nativeCapabilities(state.local_endpoint,user.uid,localAccess);
       if(activeUid.current!==user.uid)return;
-      setNative(result);setLocalToken(user.uid,localAccess);
+      setNative(result);setLocalToken(user.uid,localAccess,{remember});
       if(!result.endpoints.length)throw new Error('Odysseus nie ma dopuszczonego połączenia z modelem dla planu.');
       const endpoint=result.endpoints.find(row=>row.id===state.local_endpoint_id)||result.endpoints.find(row=>row.execution!=='cloud');
       setState(previous=>({...previous,local_endpoint_id:endpoint?.id||'',
@@ -91,7 +102,11 @@ export default function AiSettings(){
           <p className="text-xs font-medium text-gray-300">1. Połączenie</p>
           <label className="block text-sm">Adres Odysseusa<input type="url" className={input} placeholder="https://twoj-serwer:port" value={state.local_endpoint} maxLength={2048} onChange={event=>{setState({...state,local_endpoint:event.target.value});setNative(null);}}/></label>
           <label className="block text-sm">Token dostępu Odysseusa (chat)<input type="password" autoComplete="off" className={input} value={localAccess} onChange={event=>setLocalAccess(event.target.value)} placeholder="ody_… lub aktywne logowanie w Odysseusie"/></label>
-          <p className="text-xs text-neutral-500">Token zostaje tylko w tej karcie przeglądarki; nie zapisujemy go.</p>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={remember} onChange={event=>{
+            setRemember(event.target.checked);if(!event.target.checked)setLocalToken(user.uid,localAccess,{remember:false});}}/>
+            <span>Zapamiętaj token na tym urządzeniu<span className="block text-xs text-neutral-500">{remember
+              ?'Zostaje w tej przeglądarce dla Twojego konta; nie trafia na nasz serwer. Odznacz na wspólnym komputerze.'
+              :'Token zostaje tylko do zamknięcia karty; nie zapisujemy go.'}</span></span></label>
           <button type="button" className="rounded bg-neutral-800 px-3 py-1.5 text-sm" disabled={busy||!state.local_endpoint} onClick={connect}>Sprawdź połączenie z Odysseusem</button>
           {native&&<p className="text-xs text-emerald-300">Połączono · dostępnych połączeń z modelem: {native.endpoints.length}</p>}
           {message('connect')}

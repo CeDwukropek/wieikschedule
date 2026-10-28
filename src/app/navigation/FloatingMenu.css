@@ -336,3 +336,24 @@
 @media (max-width: 640px) {
   .schedule-dock.is-large { --dock-history-height: max(0px, calc(100dvh - var(--keyboard-offset, 0px) - 130px)); }
 }
+
+/* Second row: upcoming entries, starosta panel, new entry (only the available ones, equal widths) */
+.dock-actions {
+  display: grid;
+  grid-template-columns: repeat(var(--dock-actions), minmax(0, 1fr));
+  gap: var(--dock-gap);
+  height: 52px;
+  margin-top: var(--dock-gap);
+  overflow: visible;
+  transition: height 320ms var(--dock-ease), margin-top 320ms var(--dock-ease), opacity 200ms ease;
+}
+.dock-actions.is-hidden { height: 0; margin-top: 0; opacity: 0; pointer-events: none; }
+.dock-action { position: relative; height: 100%; }
+.dock-action:hover { background: #383838; }
+.dock-action-starosta { background: #3d2147; }
+.dock-action-starosta:hover { background: #4b2a57; }
+.dock-action-count {
+  position: absolute; top: 7px; left: calc(50% + 10px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--dock-accent); color: #000; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+}
+.dock-action-count.is-attention { background: #fcd34d; }

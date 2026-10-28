@@ -19,6 +19,7 @@ import "./FloatingMenu.css";
 import { useChatbot } from "../../features/chat/useChatbot";
 import DateSelectionPanel from "./DateSelectionPanel";
 import BrowsePanel, { browseIcon } from "../../features/browse/BrowsePanel";
+import DockActions from "./DockActions";
 import { BROWSE_MODES } from "../../features/browse/browseLogic";
 import ChatPanel from "../../features/chat/ChatPanel";
 import { ReactComponent as RoundedCorner } from "./RoundedCorner.svg";
@@ -38,6 +39,7 @@ export default function FloatingMenu({
   exportState,
   chatState,
   browseState,
+  actionsState,
 }) {
   const { open: isSettingsOpen, setOpen: setIsSettingsOpen } = panelState || {};
   const [selectionOpen, setSelectionOpen] = useState(false);
@@ -476,6 +478,8 @@ export default function FloatingMenu({
             </button>
           )}
         </nav>
+
+        <DockActions actions={actionsState} hidden={chatActive} />
 
         <div className="dock-popover">
           <div className="dock-cap">

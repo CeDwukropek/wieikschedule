@@ -32,7 +32,6 @@ import {planItemsRequest} from '../features/plan-items/planItemsApi';
 import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
-import {CalendarPlus,ShieldCheck} from 'lucide-react';
 import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
 import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey} from '../features/browse/browseLogic';
 import {useBrowse} from '../features/browse/useBrowse';
@@ -300,6 +299,11 @@ export default function App() {
     onCreateAt: itemActions?term=>setDraft({term,faculty:schedule.currentSchedule}):undefined,
     onBrowse: browseFrom,
   };
+  const dockActions=itemsOn&&planItems.ready?{
+    upcoming:{count:upcomingCount,onOpen:()=>setUpcomingOpen(true)},
+    starosta:itemActions&&planItems.roles.length>0?{count:reviewCount,onOpen:()=>setStarostaOpen(true)}:undefined,
+    add:itemActions?{onOpen:newDraft}:undefined,
+  }:undefined;
   // Another plan is only looked at: no private changes, entries or new terms there.
   const browseProps={subjects:browsedSubjects,dimPast:view.dimPast,ref:exportRef,onBrowse:browseFrom,
     events:browsed?.schedule||[]};
@@ -307,7 +311,7 @@ export default function App() {
   const shownEvent=shownItem&&dialogEventFromItem(shownItem);
 
   return (
-    <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
+    <div className={`min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 ${dockActions?'pb-[calc(200px+env(safe-area-inset-bottom))]':'pb-[calc(140px+env(safe-area-inset-bottom))]'}`}>
       <FloatingMenu
         panelState={{ open, setOpen }}
         viewState={{...view,subjectNames:planSubjectNames,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
@@ -349,6 +353,7 @@ export default function App() {
           onScheduleChange: schedule.handleScheduleChange,
         }}
         exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items, reminders:planReminders.reminders }}
+        actionsState={dockActions}
         browseState={{browse,onBrowse:setBrowse,directory:browseData.directory,directoryError:browseData.directoryError,
           onWantDirectory:()=>setWantDirectory(true)}}
         chatState={{
@@ -386,18 +391,9 @@ export default function App() {
           <p>Schedule App</p>
         </div>
       </div>
-      {itemsOn&&<section className="mb-2 text-sm">
-        {planItems.error&&<p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
-          <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p>}
-        {planItems.ready&&<button type="button" className="plan-panel-trigger plan-items-trigger" aria-haspopup="dialog" onClick={()=>setUpcomingOpen(true)}>
-          Nadchodzące terminy{upcomingCount>0&&<span className="plan-panel-count">{upcomingCount}</span>}
-        </button>}
-        {itemActions&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog" onClick={newDraft}>
-          <CalendarPlus size={15} aria-hidden="true"/>Dodaj termin</button>}
-        {itemActions&&planItems.roles.length>0&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog"
-          onClick={()=>setStarostaOpen(true)}><ShieldCheck size={15} aria-hidden="true"/>Panel starosty
-          {reviewCount>0&&<span className="plan-panel-count plan-panel-count-attention">{reviewCount} do sprawdzenia</span>}</button>}
-      </section>}
+      {/* Upcoming entries, the starosta panel and new entries are in the dock's second row. */}
+      {itemsOn&&planItems.error&&<section className="mb-2 text-sm"><p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
+        <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p></section>}
       {user&&personalEnabled&&<section className="mb-4 text-sm">
         {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
         {/* The university plan stays visible; only private changes, edits and ICS export wait for the API. */}

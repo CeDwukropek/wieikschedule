@@ -139,6 +139,15 @@ export default function SettingsPanel({
     externalSelections, timetables: loadedTimetables, addedEvents,
   }), planItems, reminders || {});
 
+  // Kolokwia and deadlines go with the integrations (reminders reach Odysseus); without them, with the plan.
+  const entriesSection = entryFilter && <section className="space-y-2">
+    <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
+    <EntryFilter {...entryFilter} />
+    <p className="text-xs text-neutral-400">{showAll ? "Widać terminy wszystkich grup tego planu." : "Widać terminy Twoich grup. Terminy innych grup pokazuje widok całego planu (wyłącz „Pokaż tylko wybrane grupy”)."}</p>
+    {entryReminders && <ReminderSettings {...entryReminders} />}
+    {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
+  </section>;
+
   return (
     <>
       {/* Side panel backdrop */}
@@ -293,13 +302,7 @@ export default function SettingsPanel({
               <p className="text-xs text-neutral-400">Sobota i niedziela pojawiają się w tygodniach, w których coś się w nie dzieje{alwaysShowWeekend ? "; teraz zawsze" : ""}.{dimPast ? " Zakończone zajęcia i minione dni są przygaszone." : ""}</p>
               {subjectColors && <SubjectColors {...subjectColors} />}
             </section>
-            {entryFilter && <section className="space-y-2 border-t border-neutral-800 pt-4">
-              <h3 className={SECTION_TITLE}>Kolokwia i terminy</h3>
-              <EntryFilter {...entryFilter} />
-              <p className="text-xs text-neutral-400">{showAll ? "Widać terminy wszystkich grup tego planu." : "Widać terminy Twoich grup. Terminy innych grup pokazuje widok całego planu (wyłącz „Pokaż tylko wybrane grupy”)."}</p>
-              {entryReminders && <ReminderSettings {...entryReminders} />}
-              {onRedeemInvite && <RedeemInvite onRedeem={onRedeemInvite} />}
-            </section>}
+            {!aiAvailable && entriesSection}
             {/* Export buttons */}
             <section className="space-y-2 border-t border-neutral-800 pt-4">
               <h3 className={SECTION_TITLE}>Eksport</h3>
@@ -324,6 +327,7 @@ export default function SettingsPanel({
 
             {aiAvailable && <div id="settings-panel-ai" role="tabpanel" aria-labelledby="settings-tab-ai"
               hidden={activeTab !== "ai"} className="space-y-6">
+              {entriesSection}
               {process.env.REACT_APP_PERSONAL_SCHEDULE==='true'&&<AiSettings/>}
               {process.env.REACT_APP_CALENDAR_SYNC==='true'&&<CalendarSyncSettings currentSchedule={currentSchedule}
                 activeGroupSetId={activeGroupSetId} groupSetOptions={groupSetOptions}/>}

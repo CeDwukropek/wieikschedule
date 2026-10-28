@@ -1,8 +1,18 @@
-// Native access token is kept only in memory, per Firebase account.
+// The Odysseus access token is kept in memory per Firebase account and, when the person chooses so,
+// also on this device (localStorage, per account), so it survives a reload. It never reaches our API.
 const tokens=new Map();
-export function setLocalToken(uid,token){tokens.clear();if(uid&&token.trim())tokens.set(uid,token.trim());}
+const storageKey=uid=>`wieikschedule.${uid}.odysseusToken`;
+function storedToken(uid){try{return uid?localStorage.getItem(storageKey(uid))||'':'';}catch{return '';}}
+export function setLocalToken(uid,token,{remember}={}){
+  tokens.clear();
+  const value=String(token||'').trim();
+  if(uid&&value)tokens.set(uid,value);
+  if(!uid||remember===undefined)return;
+  try{if(remember&&value)localStorage.setItem(storageKey(uid),value);else localStorage.removeItem(storageKey(uid));}catch{/* memory only */}
+}
 export function clearLocalTokens(){tokens.clear();}
-export function localToken(uid){return tokens.get(uid)||'';}
+export function localToken(uid){return tokens.get(uid)||storedToken(uid);}
+export const isTokenRemembered=uid=>Boolean(storedToken(uid));
 export function nativeUrl(endpoint,path){
   const base=new URL(endpoint);base.pathname=base.pathname.replace(/\/$/,'')+'/';
   return new URL(path.replace(/^\//,''),base);
