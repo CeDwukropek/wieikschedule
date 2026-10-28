@@ -27,6 +27,7 @@ const WeekView = forwardRef(function WeekView(
     itemActions,
     onCreateAt,
     dimPast = false,
+    onBrowse,
   },
   ref,
 ) {
@@ -239,6 +240,7 @@ const WeekView = forwardRef(function WeekView(
         planActions={planActions}
         onItemState={onItemState}
         itemActions={itemActions}
+        onBrowse={onBrowse}
       />}
     </div>
   );

@@ -18,6 +18,8 @@ import SettingsPanel from "../../features/settings/SettingsPanel";
 import "./FloatingMenu.css";
 import { useChatbot } from "../../features/chat/useChatbot";
 import DateSelectionPanel from "./DateSelectionPanel";
+import BrowsePanel, { browseIcon } from "../../features/browse/BrowsePanel";
+import { BROWSE_MODES } from "../../features/browse/browseLogic";
 import ChatPanel from "../../features/chat/ChatPanel";
 import { ReactComponent as RoundedCorner } from "./RoundedCorner.svg";
 
@@ -35,9 +37,12 @@ export default function FloatingMenu({
   scheduleState,
   exportState,
   chatState,
+  browseState,
 }) {
   const { open: isSettingsOpen, setOpen: setIsSettingsOpen } = panelState || {};
   const [selectionOpen, setSelectionOpen] = useState(false);
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const { browse = { mode: "mine" }, onBrowse, directory, directoryError, onWantDirectory } = browseState || {};
   const {
     viewMode,
     setViewMode,
@@ -135,6 +140,7 @@ export default function FloatingMenu({
   const dockRef = useRef(null);
   const inputRef = useRef(null);
   const dateButtonRef = useRef(null);
+  const browseButtonRef = useRef(null);
   const backButtonRef = useRef(null);
   const composerId = useId();
   const refreshPendingRef = useRef(false);
@@ -201,6 +207,7 @@ export default function FloatingMenu({
   }, [lastPreview?.id, lastPreview?.items?.length]);
 
   const isWeek = viewMode === "week";
+  const BrowseIcon = browseIcon(browse, isWeek);
   const label = isWeek ? viewedWeekRange : currentDayLabel;
 
   const handlePrev = isWeek ? onPrevWeek : onPrevDay;
@@ -289,6 +296,23 @@ export default function FloatingMenu({
     };
   }, [selectionOpen, isChatMode, isChatWindowOpen]);
 
+  // The browse panel closes like the date list: outside the dock or with Escape.
+  useEffect(() => {
+    if (!browseOpen) return;
+    const handlePointer = (event) => { if (!dockRef.current?.contains(event.target)) setBrowseOpen(false); };
+    const handleKey = (event) => {
+      if (event.key !== "Escape") return;
+      setBrowseOpen(false);
+      browseButtonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [browseOpen]);
+
   useEffect(() => {
     if (!refreshNotice) return;
     const timer = setTimeout(() => setRefreshNotice(null), 5000);
@@ -298,6 +322,7 @@ export default function FloatingMenu({
   useEffect(() => {
     if (!isChatMode) return;
     setSelectionOpen(false);
+    setBrowseOpen(false);
   }, [isChatMode]);
 
   useEffect(() => {
@@ -381,12 +406,18 @@ export default function FloatingMenu({
 
           <div className="dock-center dock-island">
             <div className="dock-center-buttons" inert={chatActive ? true : undefined} aria-hidden={chatActive}>
-              <button type="button" className="dock-button dock-edge-button"
+              {onBrowse ? <button ref={browseButtonRef} type="button" className={`dock-button dock-edge-button ${browse.mode !== "mine" ? "is-browsing" : ""}`}
+                onClick={() => { setSelectionOpen(false); onWantDirectory?.(); setBrowseOpen(prev => !prev); }}
+                aria-expanded={browseOpen} aria-controls="dock-browse-options"
+                aria-label={`Co oglądasz: ${BROWSE_MODES[browse.mode]}${browse.label ? ` ${browse.label}` : ""}, ${isWeek ? "tydzień" : "dzień"}`}
+                title="Tydzień lub dzień; mój plan, prowadzący, sala, wolne sale">
+                <BrowseIcon size={19} aria-hidden="true" />
+              </button> : <button type="button" className="dock-button dock-edge-button"
                 onClick={() => setViewMode(isWeek ? "day" : "week")}
                 aria-label={isWeek ? "Przełącz na widok dnia" : "Przełącz na widok tygodnia"}
                 title={isWeek ? "Widok dnia" : "Widok tygodnia"}>
                 {isWeek ? <Calendar size={19} aria-hidden="true" /> : <List size={19} aria-hidden="true" />}
-              </button>
+              </button>}
               <button type="button" className="dock-button" onClick={handlePrev} disabled={!canGoPrev}
                 aria-label={isWeek ? "Poprzedni tydzień" : "Poprzedni dzień"} title={isWeek ? "Poprzedni tydzień" : "Poprzedni dzień"}>
                 <ChevronLeft size={22} aria-hidden="true" />
@@ -401,7 +432,7 @@ export default function FloatingMenu({
               </button>
               <button type="button" className="dock-button dock-edge-button" aria-label="Otwórz menu" title="Menu i ustawienia"
                 aria-expanded={isSettingsOpen} aria-controls="schedule-settings-panel"
-                onClick={() => { setSelectionOpen(false); setIsSettingsOpen(true); }}>
+                onClick={() => { setSelectionOpen(false); setBrowseOpen(false); setIsSettingsOpen(true); }}>
                 <Menu size={20} aria-hidden="true" />
               </button>
             </div>
@@ -456,7 +487,7 @@ export default function FloatingMenu({
               className="dock-tab"
               onClick={() => {
                 if (chatActive) setIsChatWindowOpen((prev) => !prev);
-                else setSelectionOpen((prev) => !prev);
+                else { setBrowseOpen(false); setSelectionOpen((prev) => !prev); }
               }}
               aria-label={chatActive ? (isChatWindowOpen ? "Zwiń chat" : "Rozwiń chat") : `${dateLabel}: ${label || ""}`}
               aria-expanded={chatActive ? isChatWindowOpen : selectionOpen}
@@ -485,6 +516,17 @@ export default function FloatingMenu({
             weekActiveRef={weekActiveRef}
             onClose={closeSelection}
           />
+
+          {onBrowse && <BrowsePanel
+            open={browseOpen && !chatActive}
+            isWeek={isWeek}
+            onLayout={setViewMode}
+            browse={browse}
+            onBrowse={onBrowse}
+            directory={directory}
+            directoryError={directoryError}
+            onClose={() => setBrowseOpen(false)}
+          />}
 
           {isAiChatEnabled && (
             <div className="dock-history-popup"

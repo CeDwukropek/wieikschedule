@@ -21,8 +21,9 @@ export function splitTeacherDisplay(teacher) {
   const normalized = normalizeTeacherDisplay(teacher);
   if (!normalized) return [];
 
+  // Several instructors of one class are separated by "/" or "," (no title contains a comma).
   return normalized
-    .split("/")
+    .split(/[,/]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
