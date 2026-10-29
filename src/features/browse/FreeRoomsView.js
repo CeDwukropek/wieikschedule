@@ -3,7 +3,7 @@ import { toIsoDate } from "../../utils/date";
 import { useNow } from "../schedule/hooks/useNow";
 import { minutesOfDay } from "../schedule/logic/timeMarks";
 import { timeToMinutes } from "../../utils/time";
-import { freeRooms, isRoom, minutesLabel, roomClassEvent, roomDay, roomKey, cleanRoom } from "./browseLogic";
+import { daysOff, freeRooms, isRoom, minutesLabel, roomClassEvent, roomDay, roomKey, cleanRoom } from "./browseLogic";
 import EventDetailsDialog from "../schedule/components/EventDetailsDialog";
 import { catalogKey, groupRooms } from "../rooms/roomCatalog";
 import { useRoomCatalog } from "../rooms/useRoomCatalog";
@@ -61,6 +61,10 @@ export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, load
   const list = useMemo(() => freeRooms(rows, shown, iso, minute, { keyOf }), [rows, shown, iso, minute, keyOf]);
   const classesByRoom = useMemo(() => roomDay(rows, iso, keyOf), [rows, iso, keyOf]);
   const free = list.filter(room => room.now), taken = list.filter(room => !room.now);
+  // Days off do not hide the rooms: a class may still be held (e.g. a makeup), so they are only announced.
+  const offDays = useMemo(() => daysOff(rows), [rows]);
+  const off = offDays.get(iso);
+  const classesToday = useMemo(() => [...classesByRoom.values()].reduce((sum, list) => sum + list.length, 0), [classesByRoom]);
   const freeNow = useMemo(() => new Set(free.map(room => room.key)), [free]);
 
   return (
@@ -69,8 +73,10 @@ export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, load
         <div className="free-rooms-days" role="group" aria-label="Dzień">
           {DAY_NAMES.map((name, index) => {
             const value = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + index);
-            return <button key={name} type="button" aria-pressed={day === index} onClick={() => setDay(index)}>
-              {name} <small>{value.toLocaleDateString("pl-PL", { day: "numeric", month: "numeric" })}</small>
+            const dayOff = offDays.get(toIsoDate(value));
+            return <button key={name} type="button" aria-pressed={day === index} onClick={() => setDay(index)} data-off={dayOff ? true : undefined}
+              title={dayOff ? `Dzień wolny: ${dayOff.names.join(", ")}` : undefined}>
+              {name} <small>{value.toLocaleDateString("pl-PL", { day: "numeric", month: "numeric" })}{dayOff ? " · wolne" : ""}</small>
             </button>;
           })}
         </div>
@@ -87,6 +93,12 @@ export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, load
         {[{ id: "all", short: "Wszystkie", name: "Wszystkie budynki" }, ...buildings].map(item =>
           <button key={item.id} type="button" aria-pressed={building === item.id} title={item.name} onClick={() => setBuilding(item.id)}>{item.short}</button>)}
       </div>}
+      {off && !loading && <p className="free-rooms-day-off" role="note">
+        <strong>{date.toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "numeric" })}: dzień wolny{off.names.length ? ` — ${off.names.join(", ")}` : ""}</strong>
+        {off.plans.length ? ` (w planach ${off.plans.join(", ")})` : ""}.{" "}
+        {classesToday ? `Mimo to w planach są tego dnia zajęcia (${classesToday}), więc sale pokazujemy jak zwykle.`
+          : "W planach nie ma tego dnia zajęć, ale budynki mogą być zamknięte albo sale zajęte na inne wydarzenia."}
+      </p>}
       <p className="free-rooms-note">Sale z zajęć wszystkich planów w aplikacji. Sala może być zajęta przez zajęcia spoza nich, rezerwacje lub egzaminy.
         {buildings.some(item => !item.confirmed) && " Podział na budynki jest wstępny."}</p>
       {error ? <p role="alert">{error} <button type="button" className="underline" onClick={onRetry}>Spróbuj ponownie</button></p>

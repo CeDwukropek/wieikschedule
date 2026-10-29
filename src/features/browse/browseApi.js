@@ -27,14 +27,14 @@ const plusDays = (iso, days) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-// Every plan's classes in the week starting on monday (ISO date), without days off.
+// Every plan's classes in the week starting on monday (ISO date), with the days off (status "wolne").
 export function loadWeekAcrossPlans(monday) {
   const cached = weeks.get(monday);
   if (cached && Date.now() - cached.at < WEEK_REUSE_MS) return cached.request;
   if (!supabase) return Promise.reject(new Error("Plan jest chwilowo niedostępny."));
   const request = readPages(() => supabase.from("events").select(FIELDS)
     .gte("date", monday).lte("date", plusDays(monday, 6))
-    .or("status.is.null,status.eq.aktywne")
+    .or("status.is.null,status.eq.aktywne,status.eq.wolne")
     .order("date").order("start_time").order("id"));
   weeks.set(monday, { at: Date.now(), request });
   request.catch(() => weeks.delete(monday));

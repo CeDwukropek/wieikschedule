@@ -45,7 +45,10 @@ export function searchDirectory(list, query, limit = 8) {
   return list.filter(entry => words.every(word => fold(entry.label).includes(word))).slice(0, limit);
 }
 
+const isDayOff = row => String(row.status || "").trim().toLowerCase() === "wolne";
+
 export function matchesBrowse(row, { mode, key }) {
+  if (isDayOff(row)) return false;
   if (mode === "teacher") return splitTeacherDisplay(row.instructor).includes(key);
   if (mode === "room") return roomKey(row.room) === key;
   return false;
@@ -145,6 +148,21 @@ export function roomDay(rows, date, keyOf = key => key) {
 export function roomClassEvent(item) {
   return { id: `room-${item.id}`, event_id: item.id, title: item.subject, type: item.type, start: minutesLabel(item.start),
     end: minutesLabel(item.end), room: item.room, teacher: item.teacher, groups: item.groups, plan: item.plan };
+}
+
+// Days off in the week's rows: ISO date → names (e.g. "Wszystkich Świętych") and the plans they are for
+// (empty when they are for every plan).
+export function daysOff(rows) {
+  const days = new Map();
+  for (const row of rows) {
+    if (!isDayOff(row) || !row.date) continue;
+    const day = days.get(row.date) || { names: [], plans: [] };
+    const name = String(row.subject || "").trim();
+    if (name && !day.names.includes(name)) day.names.push(name);
+    if (row.faculty && row.faculty !== "all" && !day.plans.includes(row.faculty)) day.plans.push(row.faculty);
+    days.set(row.date, day);
+  }
+  return days;
 }
 
 // The browsed plan in the address, so it can be shared: ?prowadzacy=…, ?sala=…, ?wolne.
