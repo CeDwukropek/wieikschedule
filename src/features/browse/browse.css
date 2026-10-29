@@ -1,0 +1,85 @@
+/* "Co oglądasz" in the dock: layout, own plan, an instructor, a room or free rooms */
+.browse-panel { max-height: min(60dvh, 440px); }
+.browse-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border-radius: 9px; background: #242424; }
+.browse-layout button { min-height: 36px; border-radius: 7px; font-size: 13px; color: #a3a3a3; }
+.browse-layout button[aria-pressed="true"] { background: #3a4235; color: #cbffb7; box-shadow: inset 0 0 0 1px #62f52b30; }
+.browse-option { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.browse-option > span { min-width: 0; }
+.browse-option small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browse-search { display: flex; flex-direction: column; gap: 6px; }
+.browse-search input { min-height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #404040; background: #171717; color: #f5f5f5; font-size: 16px; }
+.browse-search input:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 1px; }
+.browse-search ul { display: flex; flex-direction: column; gap: 4px; }
+.browse-search .dock-date-option { width: 100%; }
+.browse-hint { padding: 6px 4px; font-size: 12px; color: #a3a3a3; }
+.dock-button.is-browsing { color: #62f52b; }
+
+/* Above the grid while another plan is shown */
+.browse-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-bottom: 10px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid #62f52b40; background: #62f52b0d; font-size: 14px; }
+.browse-banner > p:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.browse-banner > p:first-child span { color: #a3a3a3; }
+.browse-banner strong { color: #f5f5f5; overflow-wrap: anywhere; }
+.browse-banner small { color: #a3a3a3; font-size: 12px; }
+.browse-banner > button { min-height: 36px; padding: 0 12px; border-radius: 8px; background: #262626; color: #e5e5e5; font-size: 13px; }
+.browse-banner > button:hover { background: #404040; }
+.browse-banner > p[role] { flex-basis: 100%; font-size: 13px; }
+
+/* An instructor or room in the class details opens their plan */
+.event-details-browse { display: block; text-align: left; color: #7dd3fc; text-decoration: underline; text-underline-offset: 2px; }
+.event-details-browse:hover { color: #bae6fd; }
+
+/* Free rooms */
+.free-rooms { display: flex; flex-direction: column; gap: 10px; }
+.free-rooms-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
+.free-rooms-days { display: flex; flex-wrap: wrap; gap: 4px; }
+.free-rooms-days button { min-height: 40px; padding: 2px 10px; border-radius: 8px; background: #1f1f1f; color: #d4d4d4; font-size: 13px; line-height: 1.1; }
+.free-rooms-days button small { display: block; font-size: 10px; color: #a3a3a3; }
+.free-rooms-days button[aria-pressed="true"] { background: #3a4235; color: #cbffb7; box-shadow: inset 0 0 0 1px #62f52b40; }
+.free-rooms-time { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #a3a3a3; }
+.free-rooms-time input { min-height: 40px; padding: 0 8px; border-radius: 8px; border: 1px solid #404040; background: #171717; color: #f5f5f5; font-size: 16px; color-scheme: dark; }
+.free-rooms-now { min-height: 40px; padding: 0 12px; border-radius: 8px; background: #262626; color: #e5e5e5; font-size: 13px; }
+.free-rooms-note { font-size: 12px; color: #a3a3a3; }
+.free-rooms-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.free-rooms-lists h3 { margin-bottom: 6px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #a3a3a3; }
+.free-rooms-lists h3 span { font-weight: 400; }
+.free-rooms-lists ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.free-rooms-lists li button { width: 100%; min-height: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 8px 10px; border-radius: 8px; background: #171717; border: 1px solid #262626; text-align: left; font-size: 12px; color: #d4d4d4; }
+.free-rooms-lists li button:hover { border-color: #525252; }
+.free-rooms-lists li button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 1px; }
+.free-rooms-lists strong { font-size: 15px; color: #f5f5f5; }
+.free-rooms-lists small { font-size: 11px; color: #a3a3a3; }
+.free-rooms-lists > div:first-child li button { border-color: #62f52b40; background: #62f52b0a; }
+.free-rooms-lists > div:first-child li button span { color: #b4f5a0; }
+.free-rooms-layout, .free-rooms-buildings { display: flex; flex-wrap: wrap; gap: 4px; }
+.free-rooms-layout button, .free-rooms-buildings button { min-height: 36px; padding: 0 12px; border-radius: 8px; background: #1f1f1f; color: #d4d4d4; font-size: 13px; }
+.free-rooms-layout button[aria-pressed="true"], .free-rooms-buildings button[aria-pressed="true"] { background: #3a4235; color: #cbffb7; box-shadow: inset 0 0 0 1px #62f52b40; }
+.free-rooms-lists em { margin-left: 4px; font-style: normal; font-size: 10px; font-weight: 400; color: #a3a3a3; }
+
+/* Free-rooms grid: a column per room, grouped by building; empty space is free time */
+.rooms-grid-scroll { overflow-x: auto; border: 1px solid #262626; border-radius: 10px; background: #111; }
+.rooms-grid-scroll:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.rooms-grid { --hour: 44px; display: grid; grid-template-columns: 44px repeat(var(--rooms), minmax(76px, 1fr)); grid-template-rows: auto auto calc(15 * var(--hour)); min-width: min-content; }
+.rooms-grid-corner, .rooms-grid-hours { position: sticky; left: 0; z-index: 3; background: #111; }
+.rooms-grid-building { padding: 6px 8px 2px; text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #a3a3a3; border-left: 1px solid #404040; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rooms-grid-room { padding: 4px 2px 8px; font-size: 13px; font-weight: 600; color: #e5e5e5; border-bottom: 1px solid #404040; border-left: 1px solid #262626; }
+.rooms-grid-room[data-first] { border-left-color: #404040; }
+.rooms-grid-room[data-free] { color: #62f52b; }
+.rooms-grid-room:hover { background: #1f1f1f; }
+.rooms-grid-hours { position: sticky; border-right: 1px solid #262626; }
+.rooms-grid-hours span { position: absolute; right: 6px; transform: translateY(-1px); font-size: 10px; color: #a3a3a3; font-variant-numeric: tabular-nums; }
+.rooms-grid-column { position: relative; border-left: 1px solid #262626;
+  background-image: repeating-linear-gradient(to bottom, #262626 0 1px, transparent 1px var(--hour)); background-color: rgba(98, 245, 43, 0.04); }
+.rooms-grid-column[data-first] { border-left-color: #404040; }
+.rooms-grid-class { position: absolute; left: 2px; right: 2px; margin-top: 1px; overflow: hidden; padding: 2px 4px; border-radius: 4px;
+  background: #2a2a2a; box-shadow: inset 0 0 0 1px #3a3a3a; font-size: 10px; line-height: 1.2; color: #d4d4d4; text-align: left; cursor: pointer; }
+.rooms-grid-class:hover { background: #333; box-shadow: inset 0 0 0 1px #737373; }
+.rooms-grid-class:focus-visible { outline: 2px solid #7dd3fc; outline-offset: -2px; }
+.rooms-grid-class span { display: block; color: #a3a3a3; font-variant-numeric: tabular-nums; }
+.rooms-grid-class strong { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.rooms-grid-line { position: absolute; left: 0; right: 0; height: 2px; margin-top: -1px; background: #62f52b; box-shadow: 0 0 6px rgba(98, 245, 43, .6); z-index: 2; pointer-events: none; }
+.free-rooms-days button[data-off] small { color: #fcd34d; }
+.free-rooms-days button[data-off]:not([aria-pressed="true"]) { box-shadow: inset 0 0 0 1px #fcd34d40; }
+.free-rooms-day-off { padding: 8px 12px; border-radius: 8px; border: 1px solid #fcd34d55; background: #fcd34d12; color: #fde68a; font-size: 13px; }
+.free-rooms-day-off strong { font-weight: 600; }

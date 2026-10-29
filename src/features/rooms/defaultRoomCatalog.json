@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source": "wbudowany",
+  "buildings": [
+    { "id": "aule", "name": "Aule A1–A4", "short": "Aule", "order": 10, "confirmed": false },
+    { "id": "numerowane", "name": "Sale numerowane", "short": "Nr", "order": 20, "confirmed": false },
+    { "id": "f", "name": "Sale F", "short": "F", "order": 30, "confirmed": false },
+    { "id": "wa", "name": "Sale WA", "short": "WA", "order": 40, "confirmed": false },
+    { "id": "sjo", "name": "Studium Języków Obcych", "short": "SJO", "order": 50, "confirmed": false },
+    { "id": "inne", "name": "Inne", "short": "Inne", "order": 90, "confirmed": false }
+  ],
+  "rules": [
+    { "match": "SJO$", "building": "sjo" },
+    { "match": "^A\\d$", "building": "aule" },
+    { "match": "^F\\d", "building": "f" },
+    { "match": "^WA\\d", "building": "wa" },
+    { "match": "^\\d", "building": "numerowane" }
+  ],
+  "rooms": {},
+  "hidden": ["BHP"]
+}

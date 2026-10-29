@@ -2,16 +2,16 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {useFirebaseAuth} from '../auth/useFirebaseAuth';
 import {authorizedRequest} from '../my-plan/personalScheduleApi';
 const when=value=>new Date(value).toLocaleString('pl-PL',{dateStyle:'short',timeStyle:'short'});
-export default function CalendarSyncSettings({currentSchedule,activeGroupSetId,groupSetOptions=[]}){
+export default function CalendarSyncSettings({currentSchedule,activeGroupSetId,groupSetOptions=[],onLinks}){
   const {user}=useFirebaseAuth();
   const activeUid=useRef(user?.uid);activeUid.current=user?.uid;
   const [links,setLinks]=useState(null),[setId,setSetId]=useState(activeGroupSetId||''),[label,setLabel]=useState('Odysseus');
   const [code,setCode]=useState(null),[revoking,setRevoking]=useState(''),[status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   const load=useCallback(async()=>{
     const uid=user?.uid;
-    try{const data=await authorizedRequest('calendar-sync/links','GET');if(activeUid.current===uid)setLinks(data.links);}
+    try{const data=await authorizedRequest('calendar-sync/links','GET');if(activeUid.current===uid){setLinks(data.links);onLinks?.(data.links.filter(link=>link.active));}}
     catch(err){if(activeUid.current===uid)setStatus(err.message);}
-  },[user]);
+  },[user,onLinks]);
   useEffect(()=>{setLinks(null);setCode(null);setStatus('');setRevoking('');if(user)load();},[user,load]);
   useEffect(()=>{setSetId(activeGroupSetId||'');},[activeGroupSetId,currentSchedule]);
   if(!user)return null;
@@ -28,8 +28,7 @@ export default function CalendarSyncSettings({currentSchedule,activeGroupSetId,g
     setRevoking('');setStatus('Połączenie odwołane. Kalendarz w Odysseusie przestanie się aktualizować.');await load();
   });
   const setName=(faculty,id)=>faculty===currentSchedule?groupSetOptions.find(option=>option.id===id)?.name||id:id;
-  return <section className="space-y-3 border-t border-neutral-800 pt-4">
-    <h3 className="font-semibold">Kalendarz w Odysseusie</h3>
+  return <section className="space-y-3" aria-label="Kalendarz w Odysseusie">
     <p className="text-xs text-neutral-400">Odysseus pokaże Twój plan w swoim kalendarzu i będzie go odświeżał. Połączenie daje dostęp tylko do Twojego planu i prywatnych zmian; wygasa po 180 dniach bez użycia.</p>
     <label className="block text-sm">Zestaw grup<select className="block w-full bg-neutral-800 rounded p-2" value={setId} onChange={event=>setSetId(event.target.value)}>
       {groupSetOptions.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}

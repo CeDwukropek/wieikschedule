@@ -125,7 +125,7 @@ export default function EventCard({
         <span className="week-event-time">
           <span>{ev.start}<span className="week-event-end">–{ev.end}</span></span>
           <span className="week-event-kind">{shortType(ev.type)}</span>
-          <span className="week-event-room">{ev.ghost === 'moved-from' ? movedToLabel(ev) : ev.room}</span>
+          <span className="week-event-room">{ev.ghost === 'moved-from' ? movedToLabel(ev) : ev.note ?? ev.room}</span>
         </span>
         <span className="week-event-title">{subj.name}</span>
         <EntryMarks entries={ev.entries} compact />
@@ -168,6 +168,12 @@ export default function EventCard({
         </div>
 
         <EntryMarks entries={ev.entries} />
+
+        {ev.plan ? (
+          <div className="mt-1 inline-flex w-fit items-center rounded bg-neutral-700/60 px-1.5 py-0.5 text-[10px] font-medium text-neutral-200">
+            Plan {ev.plan}
+          </div>
+        ) : null}
 
         {ev?.ghost ? (
           <div className="mt-1 inline-flex w-fit items-center rounded bg-neutral-700/60 px-1.5 py-0.5 text-[10px] font-medium text-neutral-200">

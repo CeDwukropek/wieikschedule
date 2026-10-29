@@ -5,9 +5,13 @@ import {nativeCapabilities,setLocalToken} from '../chat/localOdysseus';
 let mockUser;
 jest.mock('../auth/useFirebaseAuth',()=>({useFirebaseAuth:()=>({user:mockUser})}));
 jest.mock('../my-plan/personalScheduleApi',()=>({personalRequest:jest.fn()}));
-jest.mock('../chat/localOdysseus',()=>({nativeCapabilities:jest.fn(),setLocalToken:jest.fn(),localToken:()=>''}));
+let mockStoredToken='';
+jest.mock('../chat/localOdysseus',()=>({nativeCapabilities:jest.fn(),setLocalToken:jest.fn(),localToken:()=>mockStoredToken,
+  isTokenRemembered:()=>Boolean(mockStoredToken)}));
 const settings={provider:'n8n',model:'',local_endpoint:'',has_api_key:false};
-beforeEach(()=>{jest.clearAllMocks();mockUser={uid:'owner-a'};});
+const openAiFlag=process.env.REACT_APP_OPENAI_ASSISTANT;
+beforeEach(()=>{jest.clearAllMocks();mockUser={uid:'owner-a'};mockStoredToken='';process.env.REACT_APP_OPENAI_ASSISTANT='true';});
+afterAll(()=>{process.env.REACT_APP_OPENAI_ASSISTANT=openAiFlag;});
 test('saving the first key loads a dynamic dropdown and preserves model selection',async()=>{
   personalRequest.mockImplementation(async(path,body)=>{
     if(path==='models')return {models:[{id:'available-a'},{id:'available-b'}]};
@@ -58,11 +62,28 @@ test('native connection loads local models and saves selection without persistin
  fireEvent.change(screen.getByLabelText('Token dostępu Odysseusa (chat)'),{target:{value:'ody_synthetic'}});
  fireEvent.click(screen.getByRole('button',{name:'Sprawdź połączenie z Odysseusem'}));
  await screen.findByRole('option',{name:'model-b'});
+ // A working connection is saved with the local model chosen by itself; a model choice is saved at once.
+ await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint:'https://native.test',local_endpoint_id:'local',local_model:'model-a'})));
+ expect(await screen.findByText('Połączenie działa i zostało zapisane.')).toBeInTheDocument();
  fireEvent.change(screen.getByLabelText('Model Odysseusa'),{target:{value:'model-b'}});
- fireEvent.click(screen.getByRole('button',{name:'Zapisz ustawienia AI'}));
  await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint_id:'local',local_model:'model-b'})));
- expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_synthetic');
+ expect(screen.queryByRole('button',{name:'Zapisz ustawienia AI'})).not.toBeInTheDocument();
+ expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_synthetic',{remember:true});
  expect(JSON.stringify(personalRequest.mock.calls)).not.toContain('ody_synthetic');
+});
+test('a remembered token lists the models at once; unticking forgets it on this device',async()=>{
+ mockStoredToken='ody_remembered';
+ const local={...settings,provider:'odysseus',local_endpoint:'https://native.test',local_endpoint_id:'local',local_model:'model-b'};
+ personalRequest.mockImplementation(async(path,body)=>({settings:{...local,...body}}));
+ nativeCapabilities.mockResolvedValue({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',name:'My local server',models:['model-a','model-b']}]});
+ render(<AiSettings/>);
+ expect(await screen.findByRole('option',{name:'model-b'})).toBeInTheDocument();
+ expect(nativeCapabilities).toHaveBeenCalledWith('https://native.test','owner-a','ody_remembered',expect.anything());
+ expect(screen.getByLabelText('Model Odysseusa')).toHaveValue('model-b');
+ const remember=screen.getByRole('checkbox',{name:/Zapamiętaj token/});
+ expect(remember).toBeChecked();
+ fireEvent.click(remember);
+ expect(setLocalToken).toHaveBeenCalledWith('owner-a','ody_remembered',{remember:false});
 });
 test('a catalogue containing only cloud models requires an explicit provider selection',async()=>{
  const local={...settings,provider:'odysseus',local_endpoint:'https://native.test'};
@@ -81,12 +102,13 @@ test('a catalogue containing only cloud models requires an explicit provider sel
  expect(screen.getByRole('note')).toHaveTextContent('Wybrany dostawca: Google Gemini');
  expect(screen.getByRole('note')).toHaveTextContent('historia rozmowy i wyniki narzędzi planu');
  expect(screen.queryByLabelText('Klucz API')).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole('button',{name:'Zapisz ustawienia AI'}));
  await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint_id:'google',local_model:'gemini-test',api_key:''})));
+ // Before the explicit choice, the connection was saved without a cloud provider.
+ expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({local_endpoint_id:'',local_model:''}));
 });
 test('connection discovery prefers a local model over a cloud model listed first',async()=>{
  const local={...settings,provider:'odysseus',local_endpoint:'https://native.test'};
- personalRequest.mockResolvedValue({settings:local});
+ personalRequest.mockImplementation(async(path,body)=>({settings:{...local,...body}}));
  nativeCapabilities.mockResolvedValue({endpoints:[
    {id:'cloud',name:'OpenAI',execution:'cloud',destination:'OpenAI',models:['cloud-test']},
    {id:'local',name:'Local server',execution:'local',models:['local-test']}
@@ -105,5 +127,17 @@ test('a failed connection check is explained inside the connection step, next to
  const message=await screen.findByText(/Odysseus wymaga logowania/);
  const step=screen.getByRole('button',{name:'Sprawdź połączenie z Odysseusem'}).parentElement;
  expect(step).toContainElement(message);
- expect(screen.getByRole('button',{name:'Zapisz ustawienia AI'}).nextElementSibling).toBeNull();
+ expect(screen.getByText('Połączenie nie działa')).toBeInTheDocument();
+});
+
+test('without the OpenAI flag only Odysseus is offered and a saved OpenAI choice is saved as Odysseus',async()=>{
+ process.env.REACT_APP_OPENAI_ASSISTANT='false';
+ personalRequest.mockImplementation(async(path,body)=>({settings:{...settings,provider:'n8n',local_endpoint:'https://native.test',...body}}));
+ nativeCapabilities.mockResolvedValue({protocol:'wieik-schedule-native-v1',endpoints:[{id:'local',name:'Local',models:['model-a']}]});
+ render(<AiSettings/>);
+ expect(await screen.findByLabelText('Adres Odysseusa')).toBeInTheDocument();
+ expect(screen.queryByText('OpenAI z własnym kluczem')).not.toBeInTheDocument();
+ expect(screen.queryByLabelText('Klucz API')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Sprawdź połączenie z Odysseusem'}));
+ await waitFor(()=>expect(personalRequest).toHaveBeenCalledWith('ai-settings',expect.objectContaining({provider:'odysseus',local_model:'model-a'})));
 });

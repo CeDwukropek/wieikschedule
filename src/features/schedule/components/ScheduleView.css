@@ -390,9 +390,6 @@
 .upcoming-row span { color: #d4d4d4; }
 .upcoming-row[data-done] { opacity: .6; }
 .upcoming-review { color: #fcd34d !important; }
-.plan-items-trigger { background: #3b0764; color: #f3e8ff; }
-.plan-items-trigger .plan-panel-count { background: #581c87; }
-.plan-items-add { margin-left: 8px; background: #1f1f1f; color: #f3e8ff; border: 1px solid #581c87; }
 
 /* Adding and editing entries */
 .event-details-add-entry { margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;

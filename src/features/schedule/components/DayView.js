@@ -26,6 +26,7 @@ const DayView = forwardRef(function DayView(
     itemActions,
     onCreateAt,
     dimPast = false,
+    onBrowse,
   },
   ref,
 ) {
@@ -189,6 +190,7 @@ const DayView = forwardRef(function DayView(
         planActions={planActions}
         onItemState={onItemState}
         itemActions={itemActions}
+        onBrowse={onBrowse}
       />}
     </div>
   );

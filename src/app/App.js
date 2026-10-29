@@ -22,7 +22,7 @@ import MyPlanPanel from '../features/my-plan/MyPlanPanel';
 import {seriesMembers} from '../features/my-plan/seriesChanges';
 import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
 import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
-import {getWeekStart,toIsoDate} from '../utils/date';
+import {getWeekStart,parseDaySelection,toIsoDate} from '../utils/date';
 import {usePlanItems} from '../features/plan-items/usePlanItems';
 import {filterItems,isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
 import PlanItemDialog from '../features/plan-items/PlanItemDialog';
@@ -32,8 +32,10 @@ import {planItemsRequest} from '../features/plan-items/planItemsApi';
 import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
-import {CalendarPlus,ShieldCheck} from 'lucide-react';
 import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
+import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey} from '../features/browse/browseLogic';
+import {useBrowse} from '../features/browse/useBrowse';
+import FreeRoomsView from '../features/browse/FreeRoomsView';
 
 const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
@@ -114,6 +116,21 @@ export default function App() {
     savedSettings,
     showWeekend,
   });
+  // Browsing an instructor's or a room's plan, or free rooms, across all plans; kept in the address for sharing.
+  const [browse,setBrowseState]=useState(()=>browseFromSearch(window.location.search));
+  const [wantDirectory,setWantDirectory]=useState(false);
+  const setBrowse=useCallback(next=>{
+    setBrowseState(next);
+    try{window.history.replaceState(window.history.state,'',`${window.location.pathname}${browseSearch(window.location.search,next)}${window.location.hash}`);}
+    catch{/* the address is a convenience only */}
+  },[]);
+  const browsing=browse.mode!=='mine';
+  const browseData=useBrowse({browsing,weekStart:view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart,
+    wantDirectory:wantDirectory||browse.mode==='free'});
+  const browsed=useMemo(()=>browse.mode==='teacher'||browse.mode==='room'?browseTimetable(browseData.rows,browse):null,[browseData.rows,browse]);
+  const browsedSubjects=useMemo(()=>browsed?withSubjectColors(browsed.subjects,view.subjectColors):{},[browsed,view.subjectColors]);
+  const browseFrom=useCallback(({teacher,room})=>setBrowse(teacher?{mode:'teacher',key:teacher,label:teacher}
+    :{mode:'room',key:roomKey(room),label:cleanRoom(room)}),[setBrowse]);
   const myPlan = useMyPlanEvents({
     scheduleName: schedule.currentSchedule,
     scopeId: user?.uid || guestId,
@@ -280,11 +297,21 @@ export default function App() {
     onItemState,
     itemActions,
     onCreateAt: itemActions?term=>setDraft({term,faculty:schedule.currentSchedule}):undefined,
+    onBrowse: browseFrom,
   };
+  const dockActions=itemsOn&&planItems.ready?{
+    upcoming:{count:upcomingCount,onOpen:()=>setUpcomingOpen(true)},
+    starosta:itemActions&&planItems.roles.length>0?{count:reviewCount,onOpen:()=>setStarostaOpen(true)}:undefined,
+    add:itemActions?{onOpen:newDraft}:undefined,
+  }:undefined;
+  // Another plan is only looked at: no private changes, entries or new terms there.
+  const browseProps={subjects:browsedSubjects,dimPast:view.dimPast,ref:exportRef,onBrowse:browseFrom,
+    events:browsed?.schedule||[]};
+  const browseDays=view.alwaysShowWeekend||browseProps.events.some(ev=>ev.day>=5)?WHOLE_WEEK:WORKDAYS;
   const shownEvent=shownItem&&dialogEventFromItem(shownItem);
 
   return (
-    <div className="min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 pb-[calc(140px+env(safe-area-inset-bottom))]">
+    <div className={`min-h-screen bg-black text-white px-2 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6 ${dockActions?'pb-[calc(200px+env(safe-area-inset-bottom))]':'pb-[calc(140px+env(safe-area-inset-bottom))]'}`}>
       <FloatingMenu
         panelState={{ open, setOpen }}
         viewState={{...view,subjectNames:planSubjectNames,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
@@ -326,6 +353,9 @@ export default function App() {
           onScheduleChange: schedule.handleScheduleChange,
         }}
         exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items, reminders:planReminders.reminders }}
+        actionsState={dockActions}
+        browseState={{browse,onBrowse:setBrowse,directory:browseData.directory,directoryError:browseData.directoryError,
+          onWantDirectory:()=>setWantDirectory(true)}}
         chatState={{
           enabled: process.env.REACT_APP_ENABLE_AI_CHAT !== "false",
           scheduleName: schedule.currentSchedule,
@@ -361,18 +391,9 @@ export default function App() {
           <p>Schedule App</p>
         </div>
       </div>
-      {itemsOn&&<section className="mb-2 text-sm">
-        {planItems.error&&<p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
-          <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p>}
-        {planItems.ready&&<button type="button" className="plan-panel-trigger plan-items-trigger" aria-haspopup="dialog" onClick={()=>setUpcomingOpen(true)}>
-          Nadchodzące terminy{upcomingCount>0&&<span className="plan-panel-count">{upcomingCount}</span>}
-        </button>}
-        {itemActions&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog" onClick={newDraft}>
-          <CalendarPlus size={15} aria-hidden="true"/>Dodaj termin</button>}
-        {itemActions&&planItems.roles.length>0&&<button type="button" className="plan-panel-trigger plan-items-add" aria-haspopup="dialog"
-          onClick={()=>setStarostaOpen(true)}><ShieldCheck size={15} aria-hidden="true"/>Panel starosty
-          {reviewCount>0&&<span className="plan-panel-count plan-panel-count-attention">{reviewCount} do sprawdzenia</span>}</button>}
-      </section>}
+      {/* Upcoming entries, the starosta panel and new entries are in the dock's second row. */}
+      {itemsOn&&planItems.error&&<section className="mb-2 text-sm"><p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
+        <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p></section>}
       {user&&personalEnabled&&<section className="mb-4 text-sm">
         {!personal.ready&&!personal.error&&<p role="status">Sprawdzanie prywatnych zmian…</p>}
         {/* The university plan stays visible; only private changes, edits and ICS export wait for the API. */}
@@ -385,7 +406,28 @@ export default function App() {
           {proposals.length>0&&<span className="plan-panel-count plan-panel-count-attention">{proposals.length} do zatwierdzenia</span>}
         </button>}
       </section>}
-      {view.viewMode === "week" ? (
+      {browsing&&<section className="browse-banner" aria-live="polite">
+        <p><span>{browse.mode==='free'?'Wolne sale':`Plan: ${BROWSE_MODES[browse.mode].toLowerCase()}`}</span>
+          {browse.label&&<strong>{browse.label}</strong>}
+          {browsed&&!browseData.loading&&!browseData.error&&<small>{browsed.schedule.length?'zajęcia ze wszystkich planów':'brak zajęć w tym tygodniu we wszystkich planach'}</small>}
+        </p>
+        <button type="button" onClick={()=>setBrowse({mode:'mine'})}>Wróć do mojego planu</button>
+        {browsed&&browseData.loading&&<p role="status">Wczytywanie zajęć wszystkich planów…</p>}
+        {browsed&&browseData.error&&<p role="alert">{browseData.error} <button type="button" className="underline" onClick={browseData.retry}>Spróbuj ponownie</button></p>}
+      </section>}
+      {browse.mode==='free'?(
+        <FreeRoomsView key={toIsoDate(view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart)}
+          rows={browseData.rows} rooms={browseData.directory?.rooms} loading={browseData.loading} error={browseData.error} onRetry={browseData.retry}
+          weekStart={view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart}
+          initialDay={view.viewMode==='day'?parseDaySelection(navigation.daySelection.selection,(today.getDay()+6)%7).dayIndex
+            :toIsoDate(getWeekStart(today))===toIsoDate(navigation.viewedWeekStart)?(today.getDay()+6)%7:0}
+          onOpenRoom={room=>setBrowse({mode:'room',key:room.key,label:room.label})} onBrowse={browseFrom}/>
+      ):browsing?(view.viewMode==='week'?(
+        <WeekView {...browseProps} days={browseDays} viewedWeekStart={navigation.viewedWeekStart}/>
+      ):(
+        <DayView {...browseProps} key={navigation.daySelection.selection} weekStart={navigation.selectedDayWeekStart}
+          selection={navigation.daySelection.selection}/>
+      )):view.viewMode === "week" ? (
         <WeekView
           {...calendarProps}
           events={weekPlaced.events}
