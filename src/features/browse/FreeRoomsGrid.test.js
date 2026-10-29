@@ -18,3 +18,12 @@ test('rooms stand side by side under their buildings with classes at their times
   expect(onOpenRoom).toHaveBeenCalledWith(rooms[1]);
   expect(container.querySelectorAll('.rooms-grid-line')).toHaveLength(4);
 });
+
+test('a class in the grid opens its details', () => {
+  const onOpenClass = jest.fn();
+  const item = { start: 555, end: 645, subject: 'Analiza', type: 'Wykład', audience: 'EiAs3 L5', teacher: 'dr X' };
+  render(<FreeRoomsGrid rooms={rooms} minute={600} freeNow={new Set()} onOpenRoom={() => {}} onOpenClass={onOpenClass}
+    classesByRoom={new Map([['A3', [item]]])}/>);
+  fireEvent.click(screen.getByRole('button', { name: 'A3, 09:15–10:45: Analiza, EiAs3 L5. Pokaż szczegóły' }));
+  expect(onOpenClass).toHaveBeenCalledWith(item);
+});

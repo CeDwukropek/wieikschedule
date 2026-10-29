@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Clock, MapPin, Users, UserRound, CalendarDays, CalendarPlus } from 'lucide-react';
+import { X, Clock, MapPin, Users, UserRound, CalendarDays, CalendarPlus, GraduationCap } from 'lucide-react';
 import { splitTeacherDisplay } from '../logic/teacherDisplay';
 import { eventSubject } from './EventCard';
 import ClassPlanActions from '../../my-plan/ClassPlanActions';
@@ -61,7 +61,6 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           {ev.ghost === 'moved-from' && <span className="event-details-ghost">Przeniesione</span>}
           {ev.personal_override && !ev.ghost && <span className="event-details-personal">Zmienione u mnie</span>}
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
-          {ev.plan && <span>Plan {ev.plan}</span>}
         </div>
         <dl className="event-details-list">
           <div><dt><CalendarDays size={17}/>Data</dt><dd>{date.toLocaleDateString('pl-PL', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}</dd></div>
@@ -73,6 +72,8 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
             ? <button key={teacher} type="button" className="event-details-browse" onClick={() => { onClose(); onBrowse({ teacher }); }}
               aria-label={`${teacher}: pokaż plan prowadzącego`}>{teacher}</button>
             : <span key={teacher}>{teacher}</span>) : 'Nie podano'}</dd></div>
+          {/* Classes seen in an instructor's, a room's or the free-rooms view come from other plans. */}
+          {ev.plan && <div><dt><GraduationCap size={17}/>Kierunek</dt><dd>{ev.plan}</dd></div>}
           <div><dt><Users size={17}/>Grupa</dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
         </dl>
         {entryForm ? <section className="event-details-actions" aria-label={entryForm.type === 'edit' ? 'Edycja terminu' : 'Nowy termin na tych zajęciach'}>

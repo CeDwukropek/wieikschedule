@@ -131,12 +131,20 @@ export function roomDay(rows, date, keyOf = key => key) {
     const start = timeToMinutes(String(row.start_time).slice(0, 5));
     const key = keyOf(roomKey(row.room));
     const list = byRoom.get(key) || [];
-    list.push({ start, end: start + (Number(row.duration_min) || 90), subject: row.subject || "Zajęcia", type: [...types].join(" + "),
-      teacher: row.instructor || "", audience: [...audience].map(([faculty, groups]) => [faculty, [...groups].join(", ")].filter(Boolean).join(" ")).join("; ") });
+    list.push({ id: String(row.id), start, end: start + (Number(row.duration_min) || 90), subject: row.subject || "Zajęcia", type: [...types].join(" + "),
+      teacher: row.instructor || "", room: cleanRoom(row.room), plan: [...audience.keys()].join(", "),
+      groups: [...new Set([...audience.values()].flatMap(groups => [...groups]))],
+      audience: [...audience].map(([faculty, groups]) => [faculty, [...groups].join(", ")].filter(Boolean).join(" ")).join("; ") });
     byRoom.set(key, list);
   }
   byRoom.forEach(list => list.sort((a, b) => a.start - b.start));
   return byRoom;
+}
+
+// A class from the free-rooms grid in the shape of a calendar event, for the class details dialog.
+export function roomClassEvent(item) {
+  return { id: `room-${item.id}`, event_id: item.id, title: item.subject, type: item.type, start: minutesLabel(item.start),
+    end: minutesLabel(item.end), room: item.room, teacher: item.teacher, groups: item.groups, plan: item.plan };
 }
 
 // The browsed plan in the address, so it can be shared: ?prowadzacy=…, ?sala=…, ?wolne.

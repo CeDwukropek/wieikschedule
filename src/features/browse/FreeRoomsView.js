@@ -3,7 +3,8 @@ import { toIsoDate } from "../../utils/date";
 import { useNow } from "../schedule/hooks/useNow";
 import { minutesOfDay } from "../schedule/logic/timeMarks";
 import { timeToMinutes } from "../../utils/time";
-import { freeRooms, isRoom, minutesLabel, roomDay, roomKey, cleanRoom } from "./browseLogic";
+import { freeRooms, isRoom, minutesLabel, roomClassEvent, roomDay, roomKey, cleanRoom } from "./browseLogic";
+import EventDetailsDialog from "../schedule/components/EventDetailsDialog";
 import { catalogKey, groupRooms } from "../rooms/roomCatalog";
 import { useRoomCatalog } from "../rooms/useRoomCatalog";
 import FreeRoomsGrid from "./FreeRoomsGrid";
@@ -30,13 +31,15 @@ function RoomCard({ room, minute, onOpenRoom }) {
 
 // Rooms free at a chosen day and time, from the classes of all plans in the app: as a list or a grid,
 // for all buildings or one.
-export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, loading, error, onRetry, onOpenRoom }) {
+export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, loading, error, onRetry, onOpenRoom, onBrowse }) {
   const now = useNow();
   const catalog = useRoomCatalog();
   const [day, setDay] = useState(initialDay);
   const [layout, setLayoutState] = useState(readLayout);
   const setLayout = value => { setLayoutState(value); try { localStorage.setItem(LAYOUT_KEY, value); } catch { /* this visit only */ } };
   const [building, setBuilding] = useState("all");
+  // A class chosen in the grid: who teaches it and for which plan and groups, read-only.
+  const [openClass, setOpenClass] = useState(null);
   const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + day);
   const iso = toIsoDate(date);
   const isToday = iso === toIsoDate(now);
@@ -88,7 +91,8 @@ export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, load
         {buildings.some(item => !item.confirmed) && " Podział na budynki jest wstępny."}</p>
       {error ? <p role="alert">{error} <button type="button" className="underline" onClick={onRetry}>Spróbuj ponownie</button></p>
         : loading ? <p role="status">Wczytywanie zajęć wszystkich planów…</p>
-        : layout === "grid" ? <FreeRoomsGrid rooms={shown} classesByRoom={classesByRoom} minute={minute} freeNow={freeNow} onOpenRoom={onOpenRoom} />
+        : layout === "grid" ? <FreeRoomsGrid rooms={shown} classesByRoom={classesByRoom} minute={minute} freeNow={freeNow} onOpenRoom={onOpenRoom}
+          onOpenClass={item => setOpenClass(roomClassEvent(item))} />
         : <div className="free-rooms-lists">
           <div>
             <h3>Wolne o {shownTime} <span>({free.length})</span></h3>
@@ -99,6 +103,7 @@ export default function FreeRoomsView({ rows, rooms, weekStart, initialDay, load
             <ul>{taken.map(room => <RoomCard key={room.key} room={room} minute={minute} onOpenRoom={onOpenRoom} />)}</ul>
           </div>
         </div>}
+      {openClass && <EventDetailsDialog ev={openClass} date={date} onClose={() => setOpenClass(null)} onBrowse={onBrowse} />}
     </section>
   );
 }

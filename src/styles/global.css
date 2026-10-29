@@ -54,3 +54,20 @@
     animation: none;
   }
 }
+
+/* Scrollbars everywhere (page, grids, pop-ups): thin and dark instead of the light system default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(115, 115, 115, 0.6) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(115, 115, 115, 0.55);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(163, 163, 163, 0.75); }
+/* The app is dark: native controls (time picker, selects) and system scrollbars follow. */
+:root { color-scheme: dark; }

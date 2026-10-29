@@ -421,7 +421,7 @@ export default function App() {
           weekStart={view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart}
           initialDay={view.viewMode==='day'?parseDaySelection(navigation.daySelection.selection,(today.getDay()+6)%7).dayIndex
             :toIsoDate(getWeekStart(today))===toIsoDate(navigation.viewedWeekStart)?(today.getDay()+6)%7:0}
-          onOpenRoom={room=>setBrowse({mode:'room',key:room.key,label:room.label})}/>
+          onOpenRoom={room=>setBrowse({mode:'room',key:room.key,label:room.label})} onBrowse={browseFrom}/>
       ):browsing?(view.viewMode==='week'?(
         <WeekView {...browseProps} days={browseDays} viewedWeekStart={navigation.viewedWeekStart}/>
       ):(

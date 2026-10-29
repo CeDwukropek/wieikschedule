@@ -5,7 +5,7 @@ const at = minute => `${((minute - FROM) / SPAN) * 100}%`;
 
 // Rooms side by side (grouped by building) with their classes on a day; empty space is free time.
 // The line marks the chosen time; rooms free then have a green name.
-export default function FreeRoomsGrid({ rooms, classesByRoom, minute, freeNow, onOpenRoom }) {
+export default function FreeRoomsGrid({ rooms, classesByRoom, minute, freeNow, onOpenRoom, onOpenClass }) {
   const groups = [];
   rooms.forEach((room, index) => {
     const last = groups[groups.length - 1];
@@ -29,12 +29,13 @@ export default function FreeRoomsGrid({ rooms, classesByRoom, minute, freeNow, o
         </div>
         {rooms.map((room, index) => <div key={room.key} className="rooms-grid-column" data-first={firstOfGroup.has(index) || undefined}
           style={{ gridColumn: index + 2, gridRow: 3 }}>
-          {(classesByRoom.get(room.key) || []).map(item => <div key={`${item.start}-${item.subject}`} className="rooms-grid-class"
+          {(classesByRoom.get(room.key) || []).map(item => <button key={`${item.start}-${item.subject}`} type="button" className="rooms-grid-class"
             style={{ top: at(Math.max(item.start, FROM)), height: `calc(${((Math.min(item.end, TO) - Math.max(item.start, FROM)) / SPAN) * 100}% - 2px)` }}
-            title={`${minutesLabel(item.start)}–${minutesLabel(item.end)} ${item.subject}${item.type ? `, ${item.type}` : ""}${item.audience ? `, ${item.audience}` : ""}${item.teacher ? `, ${item.teacher}` : ""}`}>
+            aria-haspopup="dialog" onClick={() => onOpenClass?.(item)}
+            aria-label={`${room.label}, ${minutesLabel(item.start)}–${minutesLabel(item.end)}: ${item.subject}${item.audience ? `, ${item.audience}` : ""}. Pokaż szczegóły`}>
             <span>{minutesLabel(item.start)}–{minutesLabel(item.end)}</span>
             <strong>{item.subject}</strong>
-          </div>)}
+          </button>)}
           {line && <i className="rooms-grid-line" style={{ top: line }} />}
         </div>)}
       </div>
