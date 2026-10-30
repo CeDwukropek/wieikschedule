@@ -122,3 +122,19 @@ test("a failed initial server read cannot enable destructive cloud writes", () =
   expect(setDoc).not.toHaveBeenCalled();
   log.mockRestore();
 });
+
+test("while the session is restored, the last account's saved settings are used, not a guest's", () => {
+  localStorage.clear();
+  localStorage.setItem("wieikschedule.lastAccount", "user-a");
+  localStorage.setItem("wieikschedule.user-a.settings", JSON.stringify({ currentSchedule: "EiAs3" }));
+  localStorage.setItem("wieikschedule.guest.settings", JSON.stringify({ currentSchedule: "AwP4.0s2" }));
+  mockAuth = { user: null, isLoading: true, isConfigured: true };
+  const { result, rerender } = renderHook(() => useSettings());
+  expect(result.current.savedSettings.currentSchedule).toBe("EiAs3");
+  expect(result.current.isLoading).toBe(true);
+  // Signed out meanwhile: the guest's settings, and the device forgets the account.
+  mockAuth = { user: null, isLoading: false, isConfigured: true };
+  rerender();
+  expect(result.current.savedSettings.currentSchedule).toBe("AwP4.0s2");
+  expect(localStorage.getItem("wieikschedule.lastAccount")).toBeNull();
+});

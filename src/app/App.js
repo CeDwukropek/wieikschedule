@@ -46,7 +46,7 @@ export default function App() {
   const guestId = useGuestId();
   const { savedSettings, isLoading: settingsLoading } = useSettings();
   const view = useViewSettings(savedSettings);
-  const schedule = useScheduleManager(savedSettings);
+  const schedule = useScheduleManager(savedSettings, { settingsLoading });
   const personalEnabled=process.env.REACT_APP_PERSONAL_SCHEDULE==='true';
   const [planOpen,setPlanOpen]=useState(false);
   const [shownItem,setShownItem]=useState(null);
@@ -299,7 +299,7 @@ export default function App() {
     onCreateAt: itemActions?term=>setDraft({term,faculty:schedule.currentSchedule}):undefined,
     onBrowse: browseFrom,
   };
-  const dockActions=itemsOn&&planItems.ready?{
+  const dockActions=itemsOn&&planItems.available?{
     upcoming:{count:upcomingCount,onOpen:()=>setUpcomingOpen(true)},
     starosta:itemActions&&planItems.roles.length>0?{count:reviewCount,onOpen:()=>setStarostaOpen(true)}:undefined,
     add:itemActions?{onOpen:newDraft}:undefined,

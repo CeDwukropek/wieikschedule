@@ -37,11 +37,23 @@ function storeCloudSignature(uid, signature) {
   try { localStorage.setItem(cloudKey(uid), signature); } catch { /* the next save simply writes again */ }
 }
 
+// The account last signed in on this device. Firebase takes a moment to restore the session; until then the
+// app shows that account's saved settings (its plan and groups) instead of a guest's first plan.
+const LAST_ACCOUNT_KEY = "wieikschedule.lastAccount";
+function readLastAccount() {
+  try { return localStorage.getItem(LAST_ACCOUNT_KEY) || ""; } catch { return ""; }
+}
+function storeLastAccount(uid) {
+  try { if (uid) localStorage.setItem(LAST_ACCOUNT_KEY, uid); else localStorage.removeItem(LAST_ACCOUNT_KEY); }
+  catch { /* the next start just waits for the session */ }
+}
+
 export function useSettings() {
   const guestId = useGuestId();
   const { user, isLoading: authLoading, isConfigured } = useFirebaseAuth();
-  const uid = user?.uid;
+  const uid = authLoading ? readLastAccount() : user?.uid;
   const settingsKey = `wieikschedule.${uid || guestId}.settings`;
+  useEffect(() => { if (!authLoading) storeLastAccount(user?.uid); }, [authLoading, user?.uid]);
   const [hydration, setHydration] = useState(() => ({
     key: settingsKey, settings: readSettings(settingsKey) || {}, ready: false,
   }));
