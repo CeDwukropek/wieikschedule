@@ -2,8 +2,8 @@ import { useCallback, useEffect } from "react";
 import { useTimetableData } from "./useTimetableData";
 import { useGroupSets } from "./useGroupSets";
 
-export function useScheduleManager(savedSettings) {
-  const data = useTimetableData(savedSettings);
+export function useScheduleManager(savedSettings, { settingsLoading = false } = {}) {
+  const data = useTimetableData(savedSettings, { settingsLoading });
   const groups = useGroupSets({
     savedSettings,
     currentSchedule: data.currentSchedule,

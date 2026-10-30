@@ -16,7 +16,8 @@ const SCHEDULE_REFRESH_CHECK_INTERVAL_MS = Math.min(
   TIMETABLE_REFRESH_INTERVAL_MS,
 );
 
-export function useTimetableData(savedSettings) {
+// settingsLoading: the saved plan may still arrive (account settings); the first plan is not loaded meanwhile.
+export function useTimetableData(savedSettings, { settingsLoading = false } = {}) {
   const [timetableOptions, setTimetableOptions] = useState(() =>
     getCachedTimetableOptions(),
   );
@@ -27,12 +28,12 @@ export function useTimetableData(savedSettings) {
   );
 
   const [currentSchedule, setCurrentSchedule] = useState(
-    savedSettings?.currentSchedule ?? defaultScheduleId,
+    savedSettings?.currentSchedule ?? (settingsLoading ? "" : defaultScheduleId),
   );
 
   const [loadedTimetables, setLoadedTimetables] = useState(() => {
     const initial = {};
-    const initialId = savedSettings?.currentSchedule ?? defaultScheduleId;
+    const initialId = savedSettings?.currentSchedule ?? (settingsLoading ? "" : defaultScheduleId);
     if (initialId) {
       const cached = getCachedTimetableById(initialId);
       if (cached) initial[initialId] = cached;
@@ -110,7 +111,8 @@ export function useTimetableData(savedSettings) {
             (option) => option.id === current,
           );
           if (exists) return current;
-          return normalizedOptions[0].id;
+          // No choice yet: the default is picked once the settings are known (below).
+          return current ? normalizedOptions[0].id : current;
         });
       })
       .catch((err) => {
@@ -153,10 +155,18 @@ export function useTimetableData(savedSettings) {
   useEffect(() => {
     if (savedSettings?.currentSchedule != null) setCurrentSchedule(savedSettings.currentSchedule);
   }, [savedSettings]);
+  // Someone without a saved plan sees the first one, but only once their settings are known.
+  useEffect(() => {
+    if (!settingsLoading && !currentSchedule && savedSettings?.currentSchedule == null && defaultScheduleId) {
+      setCurrentSchedule(defaultScheduleId);
+    }
+  }, [settingsLoading, currentSchedule, defaultScheduleId, savedSettings]);
 
   useEffect(() => {
     let active = true;
-    const targetId = currentSchedule || defaultScheduleId;
+    // The saved plan is about to be set (or the settings are still loading): never the first plan meanwhile.
+    const waiting = settingsLoading || savedSettings?.currentSchedule != null;
+    const targetId = currentSchedule || (waiting ? "" : defaultScheduleId);
     if (!targetId) return () => {};
 
     const hasLoadedTarget = Boolean(loadedTimetables[targetId]);
@@ -209,7 +219,7 @@ export function useTimetableData(savedSettings) {
     return () => {
       active = false;
     };
-  }, [currentSchedule, defaultScheduleId, loadedTimetables, scheduleRefreshTick]);
+  }, [currentSchedule, defaultScheduleId, loadedTimetables, scheduleRefreshTick, settingsLoading, savedSettings]);
 
   const currentTimetable = useMemo(
     () =>

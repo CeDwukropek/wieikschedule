@@ -14,6 +14,7 @@ import {
   googleProvider,
   isFirebaseConfigured,
 } from "../../lib/firebaseClient";
+import { clearAccountCache } from "../../lib/deviceCache";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -99,8 +100,10 @@ export function AuthProvider({ children }) {
     if (!auth) return;
 
     setAuthError("");
+    const uid = auth.currentUser?.uid;
     try {
       await signOut(auth);
+      if (uid) clearAccountCache(uid);
     } catch (error) {
       setAuthError(error?.message || "Wylogowanie nie powiodło się.");
     }

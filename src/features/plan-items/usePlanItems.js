@@ -1,21 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
 import { planItemsRequest } from './planItemsApi';
+import { readCache, writeCache } from '../../lib/deviceCache';
 
 const EMPTY = [];
 // Entries of the shown plans in one date window; reloaded when the account, the plans or the window change.
 export function usePlanItems({ enabled, uid, faculties, window }) {
   const key = enabled && faculties.length ? JSON.stringify([uid || null, faculties, window.from, window.to]) : null;
-  const [state, setState] = useState({ key: null, items: EMPTY, roles: EMPTY, error: null });
+  // The device's copy for the same plans shows at once (also from a day-shifted window); fresh data replaces it.
+  const [state, setState] = useState({ key: null, items: EMPTY, roles: EMPTY, error: null, fresh: false });
   const [version, setVersion] = useState(0);
   useEffect(() => {
     if (!key) return undefined;
     let active = true;
-    const [, list, from, to] = JSON.parse(key);
-    planItemsRequest('list', { query: { faculties: list.join(','), from, to } }).then(
-      data => { if (active) setState({ key, items: data.items, roles: data.roles, error: null }); },
+    const [account, list, from, to] = JSON.parse(key);
+    const plans = list.join(',');
+    setState(previous => {
+      if (previous.key === key) return previous;
+      const cached = readCache('planItems', account);
+      return cached?.plans === plans ? { key, ...cached.data, error: null, fresh: false } : previous;
+    });
+    planItemsRequest('list', { query: { faculties: plans, from, to } }).then(
+      data => {
+        if (!active) return;
+        const fresh = { items: data.items, roles: data.roles };
+        setState({ key, ...fresh, error: null, fresh: true });
+        writeCache('planItems', account, fresh, { plans });
+      },
       // A failed reload keeps what was shown for the same plans; other plans show nothing stale.
       error => { if (active) setState(previous => previous.key === key ? { ...previous, error: error.message }
-        : { key, items: EMPTY, roles: EMPTY, error: error.message }); });
+        : { key, items: EMPTY, roles: EMPTY, error: error.message, fresh: false }); });
     return () => { active = false; };
   }, [key, version]);
   const refresh = useCallback(() => setVersion(value => value + 1), []);
@@ -44,5 +57,6 @@ export function usePlanItems({ enabled, uid, faculties, window }) {
   }, [refresh]);
   const current = key && state.key === key;
   return { items: current ? state.items : EMPTY, roles: current ? state.roles : EMPTY,
-    ready: Boolean(current && !state.error), error: current ? state.error : null, refresh, setItemState, save, remove };
+    // available: something to show (also the device's copy); ready: fresh, so it can be edited.
+    available: Boolean(current && !state.error), ready: Boolean(current && state.fresh && !state.error), error: current ? state.error : null, refresh, setItemState, save, remove };
 }

@@ -115,3 +115,27 @@ test("failed refresh retains the last plan and permits retry", async () => {
   await act(async () => { await result.current.handleRefreshSchedule(); });
   expect(result.current.isScheduleRefreshing).toBe(false);
 });
+
+test("while the account's settings load, the first plan is neither chosen nor downloaded", async () => {
+  getCachedTimetableOptions.mockReturnValue([{ id: "first" }, { id: "mine" }]);
+  loadAllTimetableOptions.mockResolvedValue([{ id: "first" }, { id: "mine" }]);
+  getCachedTimetableById.mockReturnValue(null);
+  loadTimetableById.mockImplementation(async id => ({ ...external, id }));
+  const { result, rerender } = renderHook(({ saved, loading }) => useScheduleManager(saved, { settingsLoading: loading }),
+    { initialProps: { saved: {}, loading: true } });
+  await waitFor(() => expect(loadAllTimetableOptions).toHaveBeenCalled());
+  await act(async () => {});
+  expect(result.current.currentSchedule).toBe("");
+  expect(loadTimetableById).not.toHaveBeenCalled();
+  rerender({ saved: { currentSchedule: "mine" }, loading: false });
+  await waitFor(() => expect(result.current.currentSchedule).toBe("mine"));
+  expect(loadTimetableById.mock.calls.map(([id]) => id)).not.toContain("first");
+});
+
+test("without a saved plan the first one is shown once the settings are known", async () => {
+  getCachedTimetableOptions.mockReturnValue([{ id: "first" }, { id: "mine" }]);
+  loadAllTimetableOptions.mockResolvedValue([{ id: "first" }, { id: "mine" }]);
+  const saved = {};
+  const { result } = renderHook(() => useScheduleManager(saved, { settingsLoading: false }));
+  await waitFor(() => expect(result.current.currentSchedule).toBe("first"));
+});
