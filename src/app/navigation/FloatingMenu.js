@@ -44,7 +44,7 @@ export default function FloatingMenu({
   const { open: isSettingsOpen, setOpen: setIsSettingsOpen } = panelState || {};
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [browseOpen, setBrowseOpen] = useState(false);
-  const { browse = { mode: "mine" }, onBrowse, directory, directoryError, onWantDirectory } = browseState || {};
+  const { browse = { mode: "mine" }, onBrowse, directory, directoryError, onWantDirectory, currentPlan } = browseState || {};
   const {
     viewMode,
     setViewMode,
@@ -529,6 +529,7 @@ export default function FloatingMenu({
             onBrowse={onBrowse}
             directory={directory}
             directoryError={directoryError}
+            currentPlan={currentPlan}
             onClose={() => setBrowseOpen(false)}
           />}
 

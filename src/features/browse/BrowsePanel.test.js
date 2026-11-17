@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import BrowsePanel from "./BrowsePanel";
 
 const directory = { teachers: [{ key: "dr inż. M. Pawlik", label: "dr inż. M. Pawlik" }, { key: "mgr J. Firganek", label: "mgr J. Firganek" }],
-  rooms: [{ key: "A3", label: "A3" }], subjects: [{ key: "analiza", label: "Analiza" }] };
+  rooms: [{ key: "A3", label: "A3" }], subjects: [{ key: "analiza", label: "Analiza", plans: ["EiAs3"] }, { key: "analiza matematyczna", label: "Analiza matematyczna", plans: ["IwIKs3"] }] };
 
 test("an instructor is found by part of the name and opens their plan", () => {
   const onBrowse = jest.fn(), onClose = jest.fn(), onLayout = jest.fn();
@@ -31,11 +31,18 @@ test("Enter picks the first room; own plan and free rooms apply at once", () => 
   expect(onBrowse).toHaveBeenLastCalledWith({ mode: "free" });
 });
 
-test("a subject is found by part of its name and opens its classes in all plans", () => {
+test("a subject is searched in one's own plan unless all plans are ticked", () => {
   const onBrowse = jest.fn();
-  render(<BrowsePanel open isWeek onLayout={() => {}} browse={{ mode: "mine" }} onBrowse={onBrowse} directory={directory} onClose={() => {}}/>);
+  render(<BrowsePanel open isWeek onLayout={() => {}} browse={{ mode: "mine" }} onBrowse={onBrowse} directory={directory} currentPlan="EiAs3" onClose={() => {}}/>);
   fireEvent.click(screen.getByRole("button", { name: "Przedmiot" }));
-  fireEvent.change(screen.getByRole("searchbox", { name: "Szukaj przedmiotu" }), { target: { value: "anal" } });
+  const search = screen.getByRole("searchbox", { name: "Szukaj przedmiotu" });
+  fireEvent.change(search, { target: { value: "anal" } });
+  expect(screen.queryByRole("button", { name: "Analiza matematyczna" })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Analiza" }));
-  expect(onBrowse).toHaveBeenCalledWith({ mode: "subject", key: "analiza", label: "Analiza" });
+  expect(onBrowse).toHaveBeenLastCalledWith({ mode: "subject", key: "analiza", label: "Analiza", plan: "EiAs3" });
+  const all = screen.getByRole("checkbox", { name: "Szukaj we wszystkich planach" });
+  expect(all).not.toBeChecked();
+  fireEvent.click(all);
+  fireEvent.click(screen.getByRole("button", { name: "Analiza matematyczna" }));
+  expect(onBrowse).toHaveBeenLastCalledWith({ mode: "subject", key: "analiza matematyczna", label: "Analiza matematyczna", plan: null });
 });

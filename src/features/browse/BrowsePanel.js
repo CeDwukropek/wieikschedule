@@ -16,12 +16,14 @@ export function browseIcon(browse, isWeek) {
 }
 
 // What the plan shows (own plan, an instructor, a room, a subject, free rooms) and the week/day layout, in one place.
-export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, directory, directoryError, onClose }) {
+// A subject is searched in the person's plan (currentPlan) unless they tick all plans.
+export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, directory, directoryError, currentPlan, onClose }) {
   const [picking, setPicking] = useState(null);
   const [query, setQuery] = useState("");
+  const [allPlans, setAllPlans] = useState(false);
   const inputRef = useRef(null);
   const listId = useId();
-  useEffect(() => { if (!open) { setPicking(null); setQuery(""); } }, [open]);
+  useEffect(() => { if (!open) { setPicking(null); setQuery(""); setAllPlans(false); } }, [open]);
   useEffect(() => { if (picking) inputRef.current?.focus(); }, [picking]);
 
   const choose = mode => {
@@ -29,9 +31,14 @@ export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, 
     onBrowse({ mode });
     onClose();
   };
-  const list = picking ? directory?.[PICKERS[picking].list] : null;
+  const onePlan = picking === "subject" && currentPlan && !allPlans ? currentPlan : null;
+  const all = picking ? directory?.[PICKERS[picking].list] : null;
+  const list = all && onePlan ? all.filter(entry => entry.plans?.includes(onePlan)) : all;
   const matches = picking && list ? searchDirectory(list, query) : [];
-  const pick = entry => { onBrowse({ mode: picking, key: entry.key, label: entry.label }); onClose(); };
+  const pick = entry => {
+    onBrowse({ mode: picking, key: entry.key, label: entry.label, ...(picking === "subject" ? { plan: onePlan } : {}) });
+    onClose();
+  };
 
   return (
     <div className={`dock-selection-reveal ${open ? "is-open" : ""}`} inert={!open ? true : undefined} aria-hidden={!open}>
@@ -63,6 +70,10 @@ export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, 
             <input ref={inputRef} value={query} onChange={event => setQuery(event.target.value)} type="search" autoComplete="off"
               aria-label={PICKERS[picking].label} aria-controls={listId} placeholder={PICKERS[picking].placeholder}
               onKeyDown={event => { if (event.key === "Enter" && matches[0]) { event.preventDefault(); pick(matches[0]); } }} />
+            {picking === "subject" && currentPlan && <label className="browse-all-plans">
+              <input type="checkbox" checked={allPlans} onChange={event => setAllPlans(event.target.checked)} />
+              Szukaj we wszystkich planach
+            </label>}
             <ul id={listId} aria-label="Wyniki">
               {!directory && !directoryError && <li className="browse-hint">Wczytywanie listy…</li>}
               {directoryError && <li className="browse-hint" role="alert">{directoryError}</li>}

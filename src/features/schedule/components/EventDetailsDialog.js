@@ -53,7 +53,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
             <h2 id={titleId}>{subject.name}</h2>
             {/* The subject opens all its classes across plans and groups. */}
             {onBrowse && (ev.title || subject.name) && <button type="button" className="event-details-browse event-details-subject"
-              onClick={() => { onClose(); onBrowse({ subject: ev.title || subject.name }); }}>Pokaż wszystkie zajęcia z przedmiotu</button>}
+              onClick={() => { onClose(); onBrowse({ subject: ev.title || subject.name, plan: ev.plan || ev._sourceScheduleId }); }}>Pokaż wszystkie zajęcia z przedmiotu</button>}
           </div>
           <button type="button" className="event-details-close" aria-label="Zamknij szczegóły zajęć" disabled={busy} onClick={onClose}><X size={20}/></button>
         </header>
