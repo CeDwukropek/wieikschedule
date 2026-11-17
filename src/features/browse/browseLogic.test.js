@@ -81,3 +81,15 @@ test("days off are listed by date and never become classes of a room or an instr
   expect(browseTimetable([{ ...holiday, room: "A3" }], { mode: "room", key: "A3" }).schedule).toEqual([]);
   expect(freeRooms(rows, [{ key: "A3", label: "A3" }], "2026-11-11", 600)[0].now).toBeNull();
 });
+
+test("a subject's plan spans plans and groups and tells where, with whom and for whom", () => {
+  const rows = [row(1), row(2, { faculty: "IwIKs3", group: "Lk2", room: "108D", start_time: "11:00:00", subject: " analiza  " }),
+    row(3, { subject: "Fizyka" })];
+  const directory = buildDirectory(rows);
+  expect(directory.subjects).toEqual([{ key: "analiza", label: "Analiza", count: 2 }, { key: "fizyka", label: "Fizyka", count: 1 }]);
+  const plan = browseTimetable(rows, { mode: "subject", key: "analiza" }).schedule;
+  expect(plan.map(ev => [ev.start, ev.plan, ev.note])).toEqual([
+    ["09:15", "EiAs3", "A3 · dr inż. M. Pawlik · EiAs3 L5"], ["11:00", "IwIKs3", "108D · dr inż. M. Pawlik · IwIKs3 Lk2"]]);
+  expect(browseFromSearch("?przedmiot=Analiza%20%20matematyczna")).toEqual({ mode: "subject", key: "analiza matematyczna", label: "Analiza matematyczna" });
+  expect(browseSearch("?sala=A3", { mode: "subject", label: "Analiza" })).toBe("?przedmiot=Analiza");
+});

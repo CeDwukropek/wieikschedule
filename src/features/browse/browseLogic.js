@@ -2,11 +2,12 @@ import { splitTeacherDisplay } from "../schedule/logic/teacherDisplay";
 import { normalizeTimetable } from "../schedule/data/normalizeTimetable";
 import { timeToMinutes } from "../../utils/time";
 
-// What is browsed instead of one's own plan: an instructor's or a room's plan, or rooms free at a time.
+// What is browsed instead of one's own plan: an instructor's, a room's or a subject's plan, or rooms free at a time.
 export const BROWSE_MODES = {
   mine: "Mój plan",
   teacher: "Prowadzący",
   room: "Sala",
+  subject: "Przedmiot",
   free: "Wolne sale",
 };
 
@@ -14,13 +15,15 @@ export const BROWSE_MODES = {
 export const cleanRoom = room => String(room || "").trim().replace(/\s*\/\s*/g, "/").replace(/_+$/, "").replace(/\s+/g, " ");
 export const roomKey = room => cleanRoom(room).toUpperCase();
 // A room one can sit in has a number; trainings and plan names ("Szkolenie biblioteczne", "BHP") do not.
+// One subject is spelled with different spacing or case in some plans.
+export const subjectKey = subject => String(subject || "").trim().replace(/\s+/g, " ").toLowerCase();
 export const isRoom = label => /\d/.test(label) && label.length <= 16 && !label.includes("_");
 
 const fold = value => String(value || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l");
 
-// Instructors and rooms of all plans, each with its most common spelling, alphabetically.
+// Instructors, rooms and subjects of all plans, each with its most common spelling, alphabetically.
 export function buildDirectory(rows) {
-  const teachers = new Map(), rooms = new Map();
+  const teachers = new Map(), rooms = new Map(), subjects = new Map();
   const count = (map, key, label) => {
     const entry = map.get(key) || { key, spellings: new Map(), count: 0 };
     entry.count += 1;
@@ -31,11 +34,13 @@ export function buildDirectory(rows) {
     for (const teacher of splitTeacherDisplay(row.instructor)) count(teachers, teacher, teacher);
     const room = cleanRoom(row.room);
     if (room) count(rooms, room.toUpperCase(), room);
+    const subject = String(row.subject || "").trim().replace(/\s+/g, " ");
+    if (subject) count(subjects, subjectKey(subject), subject);
   }
   const list = map => [...map.values()].map(({ key, spellings, count: n }) => ({
     key, label: [...spellings].sort((a, b) => b[1] - a[1])[0][0], count: n,
   })).sort((a, b) => a.label.localeCompare(b.label, "pl", { numeric: true }));
-  return { teachers: list(teachers), rooms: list(rooms) };
+  return { teachers: list(teachers), rooms: list(rooms), subjects: list(subjects) };
 }
 
 // Entries whose label contains every word of the query (letters without diacritics, any case).
@@ -51,6 +56,7 @@ export function matchesBrowse(row, { mode, key }) {
   if (isDayOff(row)) return false;
   if (mode === "teacher") return splitTeacherDisplay(row.instructor).includes(key);
   if (mode === "room") return roomKey(row.room) === key;
+  if (mode === "subject") return subjectKey(row.subject) === key;
   return false;
 }
 
@@ -70,8 +76,8 @@ export function sharedClasses(rows) {
   return [...classes.values()];
 }
 
-// Classes of the browsed instructor or room as calendar events, each with the plans and groups it is for.
-// The tile shows what the person cannot tell from the browsed plan itself (the room, or the plans and groups).
+// Classes of the browsed instructor, room or subject as calendar events, each with the plans and groups it is for.
+// The tile shows what the person cannot tell from the browsed plan itself (the room, the instructor, the plans and groups).
 export function browseTimetable(rows, browse) {
   const classes = sharedClasses(rows.filter(row => matchesBrowse(row, browse)));
   const byId = new Map(classes.map(shared => [String(shared.row.id), shared]));
@@ -84,7 +90,8 @@ export function browseTimetable(rows, browse) {
     const type = shared?.types.size > 1 ? [...shared.types].map(capital).join(" + ") : ev.type;
     const plan = audience.map(([faculty]) => faculty).join(", ");
     const who = audience.map(([faculty, groups]) => [faculty, [...groups].join(", ")].filter(Boolean).join(" ")).join("; ");
-    return { ...ev, type, plan, note: browse.mode === "teacher" ? [ev.room, who].filter(Boolean).join(" · ") : who };
+    const where = browse.mode === "teacher" ? [ev.room] : browse.mode === "subject" ? [ev.room, shared?.row.instructor] : [];
+    return { ...ev, type, plan, note: [...where, who].filter(Boolean).join(" · ") };
   });
   return { schedule, subjects: table.subjects };
 }
@@ -165,12 +172,16 @@ export function daysOff(rows) {
   return days;
 }
 
-// The browsed plan in the address, so it can be shared: ?prowadzacy=…, ?sala=…, ?wolne.
-const PARAMS = { teacher: "prowadzacy", room: "sala" };
+// The browsed plan in the address, so it can be shared: ?prowadzacy=…, ?sala=…, ?przedmiot=…, ?wolne.
+const PARAMS = { teacher: "prowadzacy", room: "sala", subject: "przedmiot" };
 export function browseFromSearch(search) {
   const params = new URLSearchParams(search);
   if (params.get(PARAMS.teacher)) return { mode: "teacher", key: params.get(PARAMS.teacher).trim(), label: params.get(PARAMS.teacher).trim() };
   if (params.get(PARAMS.room)) return { mode: "room", key: roomKey(params.get(PARAMS.room)), label: cleanRoom(params.get(PARAMS.room)) };
+  if (params.get(PARAMS.subject)?.trim()) {
+    const label = params.get(PARAMS.subject).trim().replace(/\s+/g, " ");
+    return { mode: "subject", key: subjectKey(label), label };
+  }
   if (params.has("wolne")) return { mode: "free" };
   return { mode: "mine" };
 }

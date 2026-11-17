@@ -1,15 +1,21 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Calendar, Check, DoorOpen, List, MapPin, UserRound } from "lucide-react";
+import { BookOpen, Calendar, Check, DoorOpen, List, MapPin, UserRound } from "lucide-react";
 import { BROWSE_MODES, searchDirectory } from "./browseLogic";
 import "./browse.css";
 
-const ICONS = { mine: Calendar, teacher: UserRound, room: MapPin, free: DoorOpen };
+const ICONS = { mine: Calendar, teacher: UserRound, room: MapPin, subject: BookOpen, free: DoorOpen };
+// Modes that pick one entry from the directory first: its list, the search's name and an example.
+const PICKERS = {
+  teacher: { list: "teachers", label: "Szukaj prowadzącego", placeholder: "Nazwisko, np. Pawlik" },
+  room: { list: "rooms", label: "Szukaj sali", placeholder: "Sala, np. A3" },
+  subject: { list: "subjects", label: "Szukaj przedmiotu", placeholder: "Nazwa, np. Analiza" },
+};
 export function browseIcon(browse, isWeek) {
   if (browse.mode === "mine") return isWeek ? Calendar : List;
   return ICONS[browse.mode];
 }
 
-// What the plan shows (own plan, an instructor, a room, free rooms) and the week/day layout, in one place.
+// What the plan shows (own plan, an instructor, a room, a subject, free rooms) and the week/day layout, in one place.
 export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, directory, directoryError, onClose }) {
   const [picking, setPicking] = useState(null);
   const [query, setQuery] = useState("");
@@ -19,11 +25,11 @@ export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, 
   useEffect(() => { if (picking) inputRef.current?.focus(); }, [picking]);
 
   const choose = mode => {
-    if (mode === "teacher" || mode === "room") { setPicking(mode); setQuery(""); return; }
+    if (PICKERS[mode]) { setPicking(mode); setQuery(""); return; }
     onBrowse({ mode });
     onClose();
   };
-  const list = picking === "teacher" ? directory?.teachers : directory?.rooms;
+  const list = picking ? directory?.[PICKERS[picking].list] : null;
   const matches = picking && list ? searchDirectory(list, query) : [];
   const pick = entry => { onBrowse({ mode: picking, key: entry.key, label: entry.label }); onClose(); };
 
@@ -41,7 +47,7 @@ export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, 
             const active = browse.mode === mode;
             return (
               <button key={mode} type="button" className={`dock-date-option ${active ? "is-selected" : ""}`} aria-pressed={active}
-                aria-expanded={mode === "teacher" || mode === "room" ? picking === mode : undefined} onClick={() => choose(mode)}>
+                aria-expanded={PICKERS[mode] ? picking === mode : undefined} onClick={() => choose(mode)}>
                 <span className="browse-option">
                   <Icon size={16} aria-hidden="true" />
                   <span>
@@ -55,13 +61,12 @@ export default function BrowsePanel({ open, isWeek, onLayout, browse, onBrowse, 
           })}
           {picking && <div className="browse-search">
             <input ref={inputRef} value={query} onChange={event => setQuery(event.target.value)} type="search" autoComplete="off"
-              aria-label={picking === "teacher" ? "Szukaj prowadzącego" : "Szukaj sali"} aria-controls={listId}
-              placeholder={picking === "teacher" ? "Nazwisko, np. Pawlik" : "Sala, np. A3"}
+              aria-label={PICKERS[picking].label} aria-controls={listId} placeholder={PICKERS[picking].placeholder}
               onKeyDown={event => { if (event.key === "Enter" && matches[0]) { event.preventDefault(); pick(matches[0]); } }} />
             <ul id={listId} aria-label="Wyniki">
               {!directory && !directoryError && <li className="browse-hint">Wczytywanie listy…</li>}
               {directoryError && <li className="browse-hint" role="alert">{directoryError}</li>}
-              {directory && query.trim() && !matches.length && <li className="browse-hint">Brak wyników.</li>}
+              {list && query.trim() && !matches.length && <li className="browse-hint">Brak wyników.</li>}
               {matches.map(entry => <li key={entry.key}>
                 <button type="button" className="dock-date-option" onClick={() => pick(entry)}>{entry.label}</button>
               </li>)}

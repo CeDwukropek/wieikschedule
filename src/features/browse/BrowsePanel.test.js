@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import BrowsePanel from "./BrowsePanel";
 
 const directory = { teachers: [{ key: "dr inż. M. Pawlik", label: "dr inż. M. Pawlik" }, { key: "mgr J. Firganek", label: "mgr J. Firganek" }],
-  rooms: [{ key: "A3", label: "A3" }] };
+  rooms: [{ key: "A3", label: "A3" }], subjects: [{ key: "analiza", label: "Analiza" }] };
 
 test("an instructor is found by part of the name and opens their plan", () => {
   const onBrowse = jest.fn(), onClose = jest.fn(), onLayout = jest.fn();
@@ -29,4 +29,13 @@ test("Enter picks the first room; own plan and free rooms apply at once", () => 
   expect(onBrowse).toHaveBeenLastCalledWith({ mode: "room", key: "A3", label: "A3" });
   fireEvent.click(screen.getByRole("button", { name: "Wolne sale" }));
   expect(onBrowse).toHaveBeenLastCalledWith({ mode: "free" });
+});
+
+test("a subject is found by part of its name and opens its classes in all plans", () => {
+  const onBrowse = jest.fn();
+  render(<BrowsePanel open isWeek onLayout={() => {}} browse={{ mode: "mine" }} onBrowse={onBrowse} directory={directory} onClose={() => {}}/>);
+  fireEvent.click(screen.getByRole("button", { name: "Przedmiot" }));
+  fireEvent.change(screen.getByRole("searchbox", { name: "Szukaj przedmiotu" }), { target: { value: "anal" } });
+  fireEvent.click(screen.getByRole("button", { name: "Analiza" }));
+  expect(onBrowse).toHaveBeenCalledWith({ mode: "subject", key: "analiza", label: "Analiza" });
 });

@@ -33,7 +33,7 @@ import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../featur
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
-import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey} from '../features/browse/browseLogic';
+import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey,subjectKey} from '../features/browse/browseLogic';
 import {useBrowse} from '../features/browse/useBrowse';
 import FreeRoomsView from '../features/browse/FreeRoomsView';
 
@@ -127,9 +127,10 @@ export default function App() {
   const browsing=browse.mode!=='mine';
   const browseData=useBrowse({browsing,weekStart:view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart,
     wantDirectory:wantDirectory||browse.mode==='free'});
-  const browsed=useMemo(()=>browse.mode==='teacher'||browse.mode==='room'?browseTimetable(browseData.rows,browse):null,[browseData.rows,browse]);
+  const browsed=useMemo(()=>['teacher','room','subject'].includes(browse.mode)?browseTimetable(browseData.rows,browse):null,[browseData.rows,browse]);
   const browsedSubjects=useMemo(()=>browsed?withSubjectColors(browsed.subjects,view.subjectColors):{},[browsed,view.subjectColors]);
-  const browseFrom=useCallback(({teacher,room})=>setBrowse(teacher?{mode:'teacher',key:teacher,label:teacher}
+  const browseFrom=useCallback(({teacher,room,subject})=>setBrowse(teacher?{mode:'teacher',key:teacher,label:teacher}
+    :subject?{mode:'subject',key:subjectKey(subject),label:subject.trim().replace(/\s+/g,' ')}
     :{mode:'room',key:roomKey(room),label:cleanRoom(room)}),[setBrowse]);
   const myPlan = useMyPlanEvents({
     scheduleName: schedule.currentSchedule,
