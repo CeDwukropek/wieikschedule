@@ -33,7 +33,7 @@ import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../featur
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
-import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey} from '../features/browse/browseLogic';
+import {BROWSE_MODES,browseFromSearch,browseSearch,browseTimetable,cleanRoom,roomKey,subjectKey} from '../features/browse/browseLogic';
 import {useBrowse} from '../features/browse/useBrowse';
 import FreeRoomsView from '../features/browse/FreeRoomsView';
 
@@ -127,10 +127,14 @@ export default function App() {
   const browsing=browse.mode!=='mine';
   const browseData=useBrowse({browsing,weekStart:view.viewMode==='week'?navigation.viewedWeekStart:navigation.selectedDayWeekStart,
     wantDirectory:wantDirectory||browse.mode==='free'});
-  const browsed=useMemo(()=>browse.mode==='teacher'||browse.mode==='room'?browseTimetable(browseData.rows,browse):null,[browseData.rows,browse]);
+  const browsed=useMemo(()=>['teacher','room','subject'].includes(browse.mode)?browseTimetable(browseData.rows,browse):null,[browseData.rows,browse]);
   const browsedSubjects=useMemo(()=>browsed?withSubjectColors(browsed.subjects,view.subjectColors):{},[browsed,view.subjectColors]);
-  const browseFrom=useCallback(({teacher,room})=>setBrowse(teacher?{mode:'teacher',key:teacher,label:teacher}
-    :{mode:'room',key:roomKey(room),label:cleanRoom(room)}),[setBrowse]);
+  // A subject opens in the plan of the class it was picked from (several plans: all of them), else in one's own plan.
+  const currentPlan=schedule.currentSchedule;
+  const browseFrom=useCallback(({teacher,room,subject,plan})=>setBrowse(teacher?{mode:'teacher',key:teacher,label:teacher}
+    :subject?{mode:'subject',key:subjectKey(subject),label:subject.trim().replace(/\s+/g,' '),
+      plan:plan===undefined?currentPlan||null:plan&&!plan.includes(',')?plan:null}
+    :{mode:'room',key:roomKey(room),label:cleanRoom(room)}),[setBrowse,currentPlan]);
   const myPlan = useMyPlanEvents({
     scheduleName: schedule.currentSchedule,
     scopeId: user?.uid || guestId,
@@ -355,7 +359,7 @@ export default function App() {
         exportState={{ exportRef, addedEvents, personalReady:personal.ready, planItems:items, reminders:planReminders.reminders }}
         actionsState={dockActions}
         browseState={{browse,onBrowse:setBrowse,directory:browseData.directory,directoryError:browseData.directoryError,
-          onWantDirectory:()=>setWantDirectory(true)}}
+          currentPlan:schedule.currentSchedule,onWantDirectory:()=>setWantDirectory(true)}}
         chatState={{
           enabled: process.env.REACT_APP_ENABLE_AI_CHAT !== "false",
           scheduleName: schedule.currentSchedule,
@@ -409,8 +413,14 @@ export default function App() {
       {browsing&&<section className="browse-banner" aria-live="polite">
         <p><span>{browse.mode==='free'?'Wolne sale':`Plan: ${BROWSE_MODES[browse.mode].toLowerCase()}`}</span>
           {browse.label&&<strong>{browse.label}</strong>}
-          {browsed&&!browseData.loading&&!browseData.error&&<small>{browsed.schedule.length?'zajęcia ze wszystkich planów':'brak zajęć w tym tygodniu we wszystkich planach'}</small>}
+          {browsed&&!browseData.loading&&!browseData.error&&<small>{browse.plan
+            ?(browsed.schedule.length?`zajęcia z planu ${browse.plan}`:`brak zajęć w tym tygodniu w planie ${browse.plan}`)
+            :(browsed.schedule.length?'zajęcia ze wszystkich planów':'brak zajęć w tym tygodniu we wszystkich planach')}</small>}
         </p>
+        {browse.mode==='subject'&&(browse.plan||schedule.currentSchedule)&&<label className="browse-all-plans">
+          <input type="checkbox" checked={!browse.plan} onChange={event=>setBrowse({...browse,plan:event.target.checked?null:schedule.currentSchedule||browse.plan})}/>
+          Wszystkie plany
+        </label>}
         <button type="button" onClick={()=>setBrowse({mode:'mine'})}>Wróć do mojego planu</button>
         {browsed&&browseData.loading&&<p role="status">Wczytywanie zajęć wszystkich planów…</p>}
         {browsed&&browseData.error&&<p role="alert">{browseData.error} <button type="button" className="underline" onClick={browseData.retry}>Spróbuj ponownie</button></p>}

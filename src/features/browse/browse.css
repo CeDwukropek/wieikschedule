@@ -23,11 +23,14 @@
 .browse-banner small { color: #a3a3a3; font-size: 12px; }
 .browse-banner > button { min-height: 36px; padding: 0 12px; border-radius: 8px; background: #262626; color: #e5e5e5; font-size: 13px; }
 .browse-banner > button:hover { background: #404040; }
+.browse-all-plans { display: flex; align-items: center; gap: 8px; min-height: 36px; color: #d4d4d4; font-size: 13px; cursor: pointer; }
+.browse-all-plans input { width: 16px; height: 16px; accent-color: #62f52b; }
 .browse-banner > p[role] { flex-basis: 100%; font-size: 13px; }
 
 /* An instructor or room in the class details opens their plan */
 .event-details-browse { display: block; text-align: left; color: #7dd3fc; text-decoration: underline; text-underline-offset: 2px; }
 .event-details-browse:hover { color: #bae6fd; }
+.event-details-subject { margin-top: 4px; font-size: 13px; }
 
 /* Free rooms */
 .free-rooms { display: flex; flex-direction: column; gap: 10px; }

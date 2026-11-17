@@ -5,7 +5,7 @@ const PAGE_SIZE = 1000;
 const FIELDS = "id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status";
 // Classes change once a night (the import); a week read in this session is reused for a while.
 const WEEK_REUSE_MS = 10 * 60 * 1000;
-const DIRECTORY_KEY = "wieikschedule.browseDirectory.v1";
+const DIRECTORY_KEY = "wieikschedule.browseDirectory.v2";
 const DIRECTORY_REUSE_MS = 12 * 60 * 60 * 1000;
 const weeks = new Map();
 let directoryRequest = null;
@@ -48,13 +48,13 @@ function readStoredDirectory() {
   } catch { return null; }
 }
 
-// Instructors and rooms of all plans for the search; kept on the device for half a day.
+// Instructors, rooms and subjects of all plans for the search; kept on the device for half a day.
 export function loadDirectory() {
   const stored = readStoredDirectory();
   if (stored) return Promise.resolve(stored);
-  if (!supabase) return Promise.reject(new Error("Lista prowadzących i sal jest chwilowo niedostępna."));
+  if (!supabase) return Promise.reject(new Error("Lista prowadzących, sal i przedmiotów jest chwilowo niedostępna."));
   if (!directoryRequest) {
-    directoryRequest = readPages(() => supabase.from("events").select("instructor,room")
+    directoryRequest = readPages(() => supabase.from("events").select("instructor,room,subject")
       .or("status.is.null,status.eq.aktywne").order("id"))
       .then(rows => {
         const directory = buildDirectory(rows);
