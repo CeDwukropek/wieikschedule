@@ -5,7 +5,7 @@ const PAGE_SIZE = 1000;
 const FIELDS = "id,faculty,date,start_time,duration_min,subject,instructor,room,group,type,status";
 // Classes change once a night (the import); a week read in this session is reused for a while.
 const WEEK_REUSE_MS = 10 * 60 * 1000;
-const DIRECTORY_KEY = "wieikschedule.browseDirectory.v2";
+const DIRECTORY_KEY = "wieikschedule.browseDirectory.v3";
 const DIRECTORY_REUSE_MS = 12 * 60 * 60 * 1000;
 const weeks = new Map();
 let directoryRequest = null;
@@ -54,7 +54,7 @@ export function loadDirectory() {
   if (stored) return Promise.resolve(stored);
   if (!supabase) return Promise.reject(new Error("Lista prowadzących, sal i przedmiotów jest chwilowo niedostępna."));
   if (!directoryRequest) {
-    directoryRequest = readPages(() => supabase.from("events").select("instructor,room,subject")
+    directoryRequest = readPages(() => supabase.from("events").select("faculty,instructor,room,subject")
       .or("status.is.null,status.eq.aktywne").order("id"))
       .then(rows => {
         const directory = buildDirectory(rows);
