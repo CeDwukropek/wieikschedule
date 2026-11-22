@@ -1,14 +1,41 @@
-import { useId, useRef } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
 
-// A small "i" next to a control; hovering it (or focusing it, also by a tap) explains what the control changes.
+// A small "i" next to a control; hovering it, focusing it or tapping it explains what the control changes.
+// The hint is placed against the screen, not the card (position: fixed): it never makes the card scroll down or
+// sideways, stays inside the window and opens above the "i" when there is no room below.
+const MARGIN = 8;
 export function InfoTip({ label, text }) {
   const id = useId();
-  return <span className="info-tip">
-    <button type="button" className="info-tip-button" aria-label={`Co zmienia: ${label}`} aria-describedby={id}>
+  const button = useRef(null), tip = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState(null);
+  useLayoutEffect(() => {
+    if (!open) { setPlace(null); return undefined; }
+    const measure = () => {
+      if (!button.current || !tip.current) return;
+      const anchor = button.current.getBoundingClientRect();
+      const width = Math.min(280, window.innerWidth - 2 * MARGIN);
+      tip.current.style.width = `${width}px`;
+      const height = tip.current.offsetHeight;
+      const left = Math.min(Math.max(MARGIN, anchor.left + anchor.width / 2 - width / 2), window.innerWidth - width - MARGIN);
+      const below = anchor.bottom + 6;
+      const top = below + height + MARGIN <= window.innerHeight ? below : Math.max(MARGIN, anchor.top - 6 - height);
+      setPlace({ top, left, width });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => { window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
+  }, [open]);
+  return <span className="info-tip" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <button ref={button} type="button" className="info-tip-button" aria-label={`Co zmienia: ${label}`} aria-describedby={id}
+      onFocus={() => setOpen(true)} onBlur={() => setOpen(false)} onClick={() => setOpen(true)}
+      onKeyDown={event => { if (event.key === 'Escape' && open) { event.stopPropagation(); setOpen(false); } }}>
       <Info size={14} aria-hidden="true"/>
     </button>
-    <span role="tooltip" id={id} className="info-tip-text">{text}</span>
+    <span ref={tip} role="tooltip" id={id} className="info-tip-text" data-shown={place ? true : undefined}
+      style={place ? { top: place.top, left: place.left, width: place.width } : undefined}>{text}</span>
   </span>;
 }
 

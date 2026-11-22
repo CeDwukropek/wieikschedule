@@ -587,16 +587,15 @@
 .choice-slider-track button.choice-slider-option:disabled { cursor: wait; }
 .choice-slider-option svg { flex: 0 0 auto; }
 .info-tip { display: inline-flex; }
-/* The hint spans the row it explains, so it never reaches past the dialog (hidden, it would still widen it). */
-.choice-slider-head, .plan-scope-note { position: relative; }
 .choice-slider-head button.info-tip-button, .info-tip button.info-tip-button { display: grid; place-items: center; width: 22px; height: 22px;
   padding: 0; border-radius: 999px; background: transparent; color: #a3a3a3; }
 .info-tip button.info-tip-button:hover { color: #e5e5e5; }
-.info-tip-text { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; right: 0;
+/* Placed against the screen by InfoTip (never part of the card's scrolling); hidden until placed. */
+.info-tip-text { position: fixed; z-index: 100; top: 0; left: 0; visibility: hidden;
   padding: 8px 10px; border-radius: 8px; background: #0a0a0a; border: 1px solid #404040; color: #e5e5e5; font-size: 12px; line-height: 1.45;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5); display: none; pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: none;
   white-space: pre-line; text-align: left; font-weight: 400; }
-.info-tip:hover .info-tip-text, .info-tip:focus-within .info-tip-text { display: block; }
+.info-tip-text[data-shown] { visibility: visible; }
 /* "Własny termin" closes the suggestions; its fields open below them. */
 .plan-item-suggestions .plan-item-custom-choice { background: transparent; border: 1px dashed #404040; }
 
@@ -604,6 +603,6 @@
 .event-details-actions.is-changing { margin-top: 18px; border-top: 0; padding-top: 0; }
 .plan-change-list > div { align-items: center; }
 .plan-change-list dt { padding-top: 0; }
-.plan-change-list dd input, .plan-change-list dd textarea { width: 100%; min-width: 0; }
+.plan-change-list dd input, .plan-change-list dd textarea, .plan-change-list dd select { width: 100%; min-width: 0; }
 .plan-change-hours { display: flex; align-items: center; gap: 6px; }
 .plan-change-hours input { flex: 1 1 0; }
