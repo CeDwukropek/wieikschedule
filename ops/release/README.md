@@ -150,3 +150,28 @@ raz w całości. Wpisy i przypomnienia pokaże Odysseus z gałęzi `feat/plan-it
 starszy Odysseus pomija `entries` i działa jak dotąd.
 
 Wycofanie: `DROP TABLE public.plan_item_preferences;` (po deployu bez E6.8).
+
+# E7 — zmiany zajęć dla grupy (20261031)
+
+Starosta może przenieść, zmienić (sala, prowadzący) albo odwołać zajęcia dla całej grupy. Migracja tylko dodaje
+obiekty: tabele `group_schedule_overrides` i `group_schedule_override_history`, wyzwalacz sprawdzający zmianę tak
+samo jak prywatną (`validate_schedule_patch`) oraz funkcję `apply_group_schedule_changes` (rola przez
+`plan_can_write`, jak przy wpisach grupowych; kontrola wersji; wszystko albo nic). Istniejące dane się nie
+zmieniają. Migrację nakłada się **przed** włączeniem flagi:
+
+```sh
+cd /home/cedwukropek/wieikschedule-release && ENV=~/.config/wieikschedule/ops.env
+docker run --rm --user "$(id -u):$(id -g)" --env-file "$ENV" \
+  -v /home/cedwukropek/wieikschedule-staging/.staging/backups/production:/out postgres:17-bookworm \
+  sh -c 'pg_dump "$SUPABASE_DB_URL" --schema=public -Fc -f /out/prod-before-20261031-$(date -u +%Y%m%dT%H%M%SZ).dump'
+docker run --rm --env-file "$ENV" -v "$PWD":/repo:ro postgres:17-bookworm \
+  sh -c 'DB_URL="$SUPABASE_DB_URL" sh /repo/ops/release/apply.sh migration 20261031_group_schedule_changes'
+```
+
+Potem w Vercelu (Production) `REACT_APP_GROUP_CHANGES=true` i redeploy. Bez flagi aplikacja nie pyta o zmiany
+grupy i działa jak dotąd, więc kod można wdrożyć przed migracją. Plan i eksport ICS w aplikacji pokazują zmiany
+grupy; kalendarz w Odysseusie i asystent (narzędzia planu po stronie serwera) jeszcze ich nie uwzględniają.
+
+Wycofanie: flaga na `false` (zmiany znikają z planu, zostają w bazie). Pełne:
+`DROP FUNCTION public.apply_group_schedule_changes(uuid,jsonb); DROP TABLE public.group_schedule_override_history,
+public.group_schedule_overrides; DROP FUNCTION public.guard_group_schedule_override();`

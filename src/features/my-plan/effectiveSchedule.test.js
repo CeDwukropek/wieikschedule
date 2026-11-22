@@ -1,4 +1,5 @@
 import {applyPersonalOverrides,effectiveTimetables,effectiveAddedEvents} from './effectiveSchedule';
+import {ghostEvents,groupChangeItems} from './planEditing';
 import {normalizeTimetable} from '../schedule/data/normalizeTimetable';
 import {mapAddedEvent} from './eventMappers';
 import {selectExportEvents} from '../schedule/export/selectExportEvents';
@@ -26,4 +27,21 @@ test('ICS UID survives moving and UI reindexing',()=>{
  const moved=normalizeTimetable('TEST',applyPersonalOverrides([source],[{event_id:source.id,action:'modify',patch:{date:'2026-10-19'}}])).schedule;
  expect(buildICS(base).match(/UID:.+/)[0]).toBe(buildICS(moved).match(/UID:.+/)[0]);
  expect(buildICS(moved)).toContain('SUMMARY:Math');
+});
+test('a starosta\'s change shows for the whole group, under one\'s own change; cancelled or moved ones are faded for that group only',()=>{
+ const lab={...source,id:'uuid-lab',type:'laboratorium',group:'L1',date:'2026-10-13'};
+ const moved={event_id:lab.id,faculty:'TEST',action:'modify',patch:{date:'2026-10-14',room:'B2'}};
+ const cancelled={event_id:source.id,faculty:'TEST',action:'cancel',patch:{}};
+ const [row]=applyPersonalOverrides([lab],[],[moved]);
+ expect([row.date,row.room,row.group_override,row.personal_override]).toEqual(['2026-10-14','B2',true,undefined]);
+ // One's own change wins over the group's: here another room, and a class the group cancelled kept privately.
+ expect(applyPersonalOverrides([lab],[{event_id:lab.id,action:'modify',patch:{room:'C3'}}],[moved])[0]).toMatchObject({date:'2026-10-14',room:'C3'});
+ expect(applyPersonalOverrides([source],[],[cancelled])).toEqual([]);
+ expect(applyPersonalOverrides([source],[{event_id:source.id,action:'modify',patch:{room:'D4'}}],[cancelled])[0].room).toBe('D4');
+ const items=groupChangeItems([moved,cancelled,{...moved,faculty:'OTHER'}],[source,lab],'TEST');
+ expect(items.map(item=>[item.kind,item.original.date,item.current?.date??null])).toEqual([['modified','2026-10-13','2026-10-14'],['cancelled','2026-10-12',null]]);
+ const week=new Date(2026,9,12);
+ const forGroup=groups=>ghostEvents(items,{faculties:['TEST'],weekStart:week,forGroup:true,groups,showAll:false}).map(tile=>[tile.ghost,tile.ghostFor]);
+ expect(forGroup({L:'L1'})).toEqual([['moved-from','group'],['cancelled','group']]);
+ expect(forGroup({L:'L2'})).toEqual([['cancelled','group']]);
 });

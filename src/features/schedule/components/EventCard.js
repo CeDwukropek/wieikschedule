@@ -9,6 +9,9 @@ function movedToLabel(ev) {
   return ev?.movedTo ? `→ ${shortDate(ev.movedTo.date)} ${String(ev.movedTo.start_time).slice(0, 5)}` : "";
 }
 const GHOST_LABELS = { cancelled: "Odwołane u mnie", "moved-from": "Przeniesione" };
+// Cancelled or moved by a starosta for the whole group.
+const GROUP_GHOST_LABELS = { cancelled: "Odwołane dla grupy", "moved-from": "Przeniesione dla grupy" };
+const ghostLabel = ev => (ev.ghostFor === "group" ? GROUP_GHOST_LABELS : GHOST_LABELS)[ev.ghost];
 
 const EVENT_TINT_BY_BG_CLASS = {
   "bg-indigo-900": "rgba(49, 46, 129, 0.1)",
@@ -114,10 +117,10 @@ export default function EventCard({
       className={`week-event-card ${ev.__optimistic === 'adding' ? 'event-card-optimistic' : ''}`}
       style={{ backgroundColor: eventTint }}
       onClick={() => onOpenDetails?.(ev)}
-      aria-label={`${ev.ghost ? GHOST_LABELS[ev.ghost] + ': ' : ''}${subj.name}, ${ev.type || 'zajęcia'}, ${ev.start}–${ev.end}${ev.ghost === 'moved-from' ? ' ' + movedToLabel(ev) : ''}${ev.groups?.length ? ', ' + ev.groups.join(', ') : ''}${entriesLabel(ev)}. Pokaż szczegóły`}
+      aria-label={`${ev.ghost ? ghostLabel(ev) + ': ' : ''}${subj.name}, ${ev.type || 'zajęcia'}, ${ev.start}–${ev.end}${ev.ghost === 'moved-from' ? ' ' + movedToLabel(ev) : ''}${ev.groups?.length ? ', ' + ev.groups.join(', ') : ''}${entriesLabel(ev)}. Pokaż szczegóły`}
       aria-haspopup="dialog"
       data-added={isAdded || undefined}
-      data-modified={(!ev.ghost && ev.personal_override) || undefined}
+      data-modified={(!ev.ghost && (ev.personal_override || ev.group_override)) || undefined}
       data-ghost={ev.ghost || undefined}
     >
       <span className={`week-event-color ${colorClass}`} style={customColor ? { backgroundColor: customColor } : undefined} aria-hidden="true" />
@@ -177,7 +180,7 @@ export default function EventCard({
 
         {ev?.ghost ? (
           <div className="mt-1 inline-flex w-fit items-center rounded bg-neutral-700/60 px-1.5 py-0.5 text-[10px] font-medium text-neutral-200">
-            {GHOST_LABELS[ev.ghost]}{ev.ghost === "moved-from" ? ` ${movedToLabel(ev)}` : ""}
+            {ghostLabel(ev)}{ev.ghost === "moved-from" ? ` ${movedToLabel(ev)}` : ""}
           </div>
         ) : null}
 

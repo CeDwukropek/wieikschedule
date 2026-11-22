@@ -311,6 +311,7 @@ export function normalizeTimetable(scheduleId, rows) {
         end,
         room,
         personal_override: Boolean(item.personal_override),
+        group_override: Boolean(item.group_override),
         series: seriesOf(item?.source_key),
         _dates: new Set(eventDateIso ? [eventDateIso] : []),
       });

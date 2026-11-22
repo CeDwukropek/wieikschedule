@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, CalendarPlus, Clock, MapPin, UserRound, MessageSquare } from 'lucide-react';
+import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, CalendarPlus, Clock, MapPin, UserRound, MessageSquare, User, Users } from 'lucide-react';
 import ChoiceSlider, { InfoTip } from '../schedule/components/ChoiceSlider';
 import { addMinutes, normalizeTime, timeToMinutes } from '../../utils/time';
 import { describeSlot, mergePatch, moveChanges, shortDate, startTimeOptions, validateMove } from './planEditing';
@@ -19,8 +19,13 @@ export function EntriesNotice({ entries }) {
 // Private changes of a class occurrence, made from its details dialog; with a series, also of the following
 // occurrences or all of them, saved together. "Zmień" makes the date, hours, room and instructor editable in place
 // (onEditingChange lets the dialog hide its read-only rows meanwhile); whom a change concerns is asked only then.
-const SCOPE_INFO = 'Tylko te zajęcia: zmiana dotyczy tego jednego terminu. Te i następne: także późniejszych zajęć z tej serii. '
-  + 'Wszystkie: całej serii, również wcześniejszych terminów. Zmiany widzisz tylko Ty, w swoim planie.';
+const scopeInfo = forGroup => 'Tylko te zajęcia: zmiana dotyczy tego jednego terminu. Te i następne: także późniejszych zajęć z tej serii. '
+  + `Wszystkie: całej serii, również wcześniejszych terminów. ${forGroup ? 'Zmiana trafi do planu całej grupy.' : 'Zmiany widzisz tylko Ty, w swoim planie.'}`;
+const AUDIENCE_INFO = 'Dla siebie: zmiana tylko w Twoim planie. Dla grupy: zmiana w planie każdego, kto ma te zajęcia (także bez '
+  + 'logowania). Czyjaś prywatna zmiana tych zajęć ma u niej pierwszeństwo. Dla grupy mogą zmieniać tylko starości.';
+// The class's fields a change starts from, from a row of the plan.
+const shapeOf = row => ({ date: row.date, start_time: row.start_time, duration_min: row.duration_min, room: row.room || '',
+  instructor: row.instructor || '' });
 
 // onAddEntry: adding a kolokwium or deadline on this class, shown with the other actions.
 export default function ClassPlanActions({ ev, current, planActions, onDone, onBusyChange, onEditingChange, onAddEntry, entries = [] }) {
@@ -32,8 +37,11 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
   const [mode, setModeState] = useState('view');
   const [busy, setBusyState] = useState(false), [error, setError] = useState('');
   const start0 = normalizeTime(current.start_time);
-  const initial = () => ({ date: current.date, start: start0, end: addMinutes(start0, current.duration_min),
-    room: current.room || '', instructor: current.instructor || '', reason: override?.reason || '' });
+  const initialFrom = (from, reason) => {
+    const start = normalizeTime(from.start_time);
+    return { date: from.date, start, end: addMinutes(start, from.duration_min), room: from.room || '', instructor: from.instructor || '', reason };
+  };
+  const initial = () => initialFrom(current, override?.reason || '');
   const [form, setForm] = useState(initial);
   const times = useMemo(() => startTimeOptions(planActions.startTimes.map(time => ({ start_time: time })), start0),
     [planActions.startTimes, start0]);
@@ -41,19 +49,38 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
   const members = useMemo(() => (isAdded || !planActions.seriesFor ? [] : planActions.seriesFor(ev)), [isAdded, planActions, ev]);
   const hasSeries = members.length > 1;
   const [which, setWhich] = useState('one');
-  const chosen = which === 'one' ? [] : chooseMembers(members, ev.event_id, which);
   const series = which !== 'one';
+  // A starosta may make the change for the whole group instead (planActions.group): the same form, started from the
+  // class as the group has it (university plan and the group's change), saved for everyone.
+  const groupActions = !isAdded && planActions.group?.canChange(ev) ? planActions.group : null;
+  const [audience, setAudienceState] = useState('personal');
+  const forGroup = Boolean(groupActions) && audience === 'group';
+  const groupChange = groupActions?.changeFor(ev.event_id) || null;
+  const groupRow = groupActions?.rowFor(ev) || null;
+  const groupNow = groupRow && shapeOf({ ...groupRow, ...(groupChange?.action === 'modify' ? groupChange.patch : {}) });
+  const base = forGroup && groupNow ? groupNow : current;
+  const chosen = forGroup
+    ? (series ? chooseMembers(members.map(member => ({ row: member.row, override: groupActions.changeFor(member.row.id) })), ev.event_id, which)
+      : groupRow ? [{ row: groupRow, override: groupChange }] : [])
+    : series ? chooseMembers(members, ev.event_id, which) : [];
+  // Several classes, or any change for the group, are saved as a list of changes; one private change on its own.
+  const batch = forGroup || series;
   const edited = { ...form, room: form.room.trim() };
-  const plan = kind => seriesChanges(kind, chosen, { current, form: edited, reason: form.reason.trim() });
-  const conflicts = mode === 'change' && !series && !validateMove(form, planActions.bounds)
+  const plan = kind => seriesChanges(kind, chosen, { current: base, form: edited, reason: form.reason.trim() })
+    .map(change => (forGroup ? { ...change, revision: groupActions.changeFor(change.event_id)?.revision ?? null } : change));
+  const conflicts = mode === 'change' && !batch && !validateMove(form, planActions.bounds)
     ? planActions.conflictsFor(ev.event_id, form) : [];
-  const moves = mode === 'change' && series ? plan('move') : [];
+  const moves = mode === 'change' && batch ? plan('move') : [];
   const targets = resultsOf(moves, chosen);
   const seriesMoveError = targets.map(target => validateMove(target, planActions.bounds) && `${shortDate(target.date)}: ${validateMove(target, planActions.bounds)}`).find(Boolean) || '';
-  const seriesConflicts = mode === 'change' && series && !seriesMoveError
+  const seriesConflicts = mode === 'change' && series && !forGroup && !seriesMoveError
     ? targets.filter(target => planActions.conflictsFor(target.event_id, target).length).map(target => shortDate(target.date)) : [];
+  const setAudience = value => {
+    setAudienceState(value);
+    setForm(value === 'group' && groupNow ? initialFrom(groupNow, groupChange?.reason || '') : initial());
+  };
 
-  const setMode = next => { setModeState(next); setError(''); if (next === 'view') { setWhich('one'); setForm(initial()); } };
+  const setMode = next => { setModeState(next); setError(''); if (next === 'view') { setWhich('one'); setAudienceState('personal'); setForm(initial()); } };
   useEffect(() => { onEditingChange?.(mode === 'change'); }, [mode, onEditingChange]);
   const setBusy = value => { setBusyState(value); onBusyChange?.(value); };
   const run = async action => {
@@ -66,7 +93,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
     const changes = kind === 'move' ? moves : plan(kind);
     if (!changes.length) { setError('W wybranych zajęciach nie ma czego zmienić.'); return; }
     if (changes.length > MAX_SERIES_CHANGES) { setError(`Naraz można zmienić najwyżej ${MAX_SERIES_CHANGES} zajęć.`); return; }
-    run(() => planActions.applyBatch(changes, message(changes.length)));
+    run(() => (forGroup ? groupActions.apply(changes, message(changes.length)) : planActions.applyBatch(changes, message(changes.length))));
   };
   const cancelOne = () => run(() => planActions.apply({ event_id: ev.event_id, operation: 'upsert', action: 'cancel', patch: {} }));
   const restoreOne = () => run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }));
@@ -76,11 +103,22 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
 
   const moveError = validateMove(form, planActions.bounds) || seriesMoveError;
   const changes = { ...moveChanges(current, form), ...(edited.room !== (current.room || '') ? { room: edited.room || null } : {}) };
-  const scope = hasSeries && <ChoiceSlider label="Dotyczy" info={SCOPE_INFO} value={which} onChange={setWhich} disabled={busy} options={
+  const who = groupActions && <ChoiceSlider label="Dla kogo" info={AUDIENCE_INFO} value={audience} onChange={setAudience} disabled={busy}
+    options={[{ value: 'personal', label: 'Dla siebie', icon: User }, { value: 'group', label: 'Dla grupy', icon: Users }]}/>;
+  const scope = hasSeries && <ChoiceSlider label="Dotyczy" info={scopeInfo(forGroup)} value={which} onChange={setWhich} disabled={busy} options={
     Object.entries(SERIES_SCOPES).map(([value, label]) => ({ value,
       label: value === 'one' ? label : `${label} (${chooseMembers(members, ev.event_id, value).length})` }))}/>;
+  const forWhom = forGroup ? 'dla grupy' : 'w Twoim planie';
   const back = <button type="button" className="plan-action" disabled={busy} onClick={() => setMode('view')}>Anuluj</button>;
 
+  // Cancelled or moved by a starosta for the whole group: a starosta can bring it back for everyone.
+  if (ev.ghost && ev.ghostFor === 'group') return <div className="event-details-actions">
+    <p>{ev.ghost === 'cancelled' ? 'Starosta odwołał te zajęcia dla całej grupy.' : `Starosta przeniósł te zajęcia dla grupy na ${describeSlot(ev.movedTo)}.`}</p>
+    {groupActions && groupChange && <button type="button" className="event-details-edit" disabled={busy}
+      onClick={() => run(() => groupActions.apply([{ event_id: ev.event_id, operation: 'delete', revision: groupChange.revision }],
+        'Przywrócono zajęcia dla grupy.'))}><RotateCcw size={16}/>Przywróć dla grupy</button>}
+    {error && <p role="alert" className="event-details-error">{error}</p>}
+  </div>;
   if (ev.ghost) return <div className="event-details-actions">
     <EntriesNotice entries={entries}/>
     <p>{ev.ghost === 'cancelled' ? 'Te zajęcia są odwołane tylko w Twoim planie.' : `Zajęcia przeniesiono na ${describeSlot(ev.movedTo)}.`}</p>
@@ -94,7 +132,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
     {original && <p className="plan-original">Oryginalnie: {describeSlot(original)}</p>}
     <EntriesNotice entries={entries}/>
     {mode === 'view' && <>
-      <p className="plan-scope-note">Zmiany dotyczą tylko Twojego planu.
+      <p className="plan-scope-note">{groupActions ? 'Zmienisz zajęcia dla siebie albo dla całej grupy.' : 'Zmiany dotyczą tylko Twojego planu.'}
         <InfoTip label="przyciski" text={[
           isAdded ? 'Usuń z mojego planu: dopisane zajęcia znikają z Twojego planu.' : 'Odwołaj u mnie: zajęcia znikają tylko z Twojego planu.',
           onAddEntry && 'Dodaj kolokwium lub termin: wpis na tych zajęciach, dla siebie albo (starosta) dla grupy.',
@@ -106,7 +144,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
           ? <button type="button" className="event-details-remove" disabled={busy} aria-label="Usuń z mojego planu" title="Usuń z mojego planu"
             onClick={() => run(() => planActions.removeAdded(ev.added_event_id))}><Trash2 size={18}/></button>
           : <button type="button" className="event-details-remove" disabled={busy} aria-label="Odwołaj u mnie" title="Odwołaj u mnie"
-            onClick={() => hasSeries ? setMode('cancel') : cancelOne()}><Ban size={18}/></button>}
+            onClick={() => hasSeries || groupActions ? setMode('cancel') : cancelOne()}><Ban size={18}/></button>}
         {onAddEntry && <button type="button" className="plan-icon-add" disabled={busy} aria-label="Dodaj kolokwium lub termin"
           title="Dodaj kolokwium lub termin" onClick={onAddEntry}><CalendarPlus size={18}/></button>}
         <button type="button" className="event-details-edit" disabled={busy} aria-label="Zmień" title="Zmień" onClick={() => setMode('change')}>
@@ -114,19 +152,22 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
       </div>
     </>}
     {mode === 'cancel' && <>
+      {who}
       {scope}
-      <p>{series ? `Odwołasz ${classes(chosen.length)} z tej serii, tylko w Twoim planie.` : 'Odwołasz tylko te zajęcia, tylko w Twoim planie.'}</p>
+      <p>{forGroup ? `Zajęcia (${series ? classes(chosen.length) : 'tylko te'}) znikną z planu całej grupy.`
+        : series ? `Odwołasz ${classes(chosen.length)} z tej serii, tylko w Twoim planie.` : 'Odwołasz tylko te zajęcia, tylko w Twoim planie.'}</p>
       <div className="plan-form-buttons">
-        <button type="button" className="event-details-remove" disabled={busy} onClick={() => series
-          ? saveSeries('cancel', n => `Odwołano ${classes(n)} w Twoim planie.`) : cancelOne()}>
-          <Ban size={16}/>Odwołaj u mnie{series ? ` (${chosen.length})` : ''}</button>
+        <button type="button" className="event-details-remove" disabled={busy} onClick={() => batch
+          ? saveSeries('cancel', n => (n === 1 ? `Odwołano zajęcia ${forWhom}.` : `Odwołano ${classes(n)} ${forWhom}.`)) : cancelOne()}>
+          <Ban size={16}/>{forGroup ? 'Odwołaj dla grupy' : 'Odwołaj u mnie'}{series ? ` (${chosen.length})` : ''}</button>
         {back}
       </div>
     </>}
     {mode === 'change' && <form className="plan-form" aria-label="Zmiana zajęć" onSubmit={event => { event.preventDefault();
       if (moveError) return;
-      if (series) saveSeries('move', n => `Zmieniono ${classes(n)} w Twoim planie.`);
+      if (batch) saveSeries('move', n => (n === 1 ? `Zapisano zmianę zajęć ${forWhom}.` : `Zmieniono ${classes(n)} ${forWhom}.`));
       else if (Object.keys(changes).length) save(changes); }}>
+      {who}
       <dl className="event-details-list plan-change-list">
         <div><dt title="Data"><CalendarDays size={17} aria-hidden="true"/><span className="sr-only">Data</span></dt><dd><input type="date" aria-label="Data" value={form.date}
           min={planActions.bounds.min || undefined} max={planActions.bounds.max || undefined}
@@ -155,8 +196,8 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
           <strong>Kolizje w {seriesConflicts.length} {seriesConflicts.length === 1 ? 'terminie' : 'terminach'}:</strong> {seriesConflicts.join(', ')}
         </div>}
       <div className="plan-form-buttons">
-        <button type="submit" className="event-details-edit" disabled={busy || Boolean(moveError) || (series ? !moves.length : !Object.keys(changes).length)}>
-          {busy ? 'Zapisywanie…' : series ? `Zapisz (${moves.length})` : 'Zapisz'}</button>
+        <button type="submit" className="event-details-edit" disabled={busy || Boolean(moveError) || (batch ? !moves.length : !Object.keys(changes).length)}>
+          {busy ? 'Zapisywanie…' : `Zapisz${forGroup ? ' dla grupy' : ''}${series ? ` (${moves.length})` : ''}`}</button>
         {back}
       </div>
     </form>}

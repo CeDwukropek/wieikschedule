@@ -6,6 +6,8 @@ module.exports=route({
   'chat':require('../_routes/schedule/chat'),
   'confirm':require('../_routes/schedule/confirm'),
   'context':require('../_routes/schedule/context'),
+  'group-apply':require('../_routes/schedule/group-apply'),
+  'group-changes':require('../_routes/schedule/group-changes'),
   'models':require('../_routes/schedule/models'),
   'overrides':require('../_routes/schedule/overrides'),
   'pending':require('../_routes/schedule/pending'),

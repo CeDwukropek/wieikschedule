@@ -74,3 +74,52 @@ test('a class with a kolokwium warns before a private change and offers makeup a
   await waitFor(() => expect(makeUp).toHaveBeenCalledWith(items[0], other));
   expect(makeupCandidates(items, items[0]).map(item => item.id)).toEqual(['q2']);
 });
+
+const groupActions = (extra = {}) => ({ canChange: () => true, changeFor: () => null, rowFor: ev => rows.find(row => row.id === ev.event_id),
+  apply: jest.fn().mockResolvedValue(), ...extra });
+
+test('a starosta cancels the whole series for the group; students are not asked whom it is for', async () => {
+  const group = groupActions();
+  const { unmount } = render(<WeekView events={[tile]} viewedWeekStart={monday} planActions={planActions({ group })}/>);
+  open();
+  fireEvent.click(screen.getByRole('button', { name: 'Odwołaj u mnie' }));
+  const who = screen.getByRole('radiogroup', { name: 'Dla kogo' });
+  expect(within(who).getByRole('radio', { name: 'Dla siebie' })).toBeChecked();
+  fireEvent.click(within(who).getByRole('radio', { name: 'Dla grupy' }));
+  fireEvent.click(screen.getByRole('radio', { name: /Wszystkie/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Odwołaj dla grupy (3)' }));
+  await waitFor(() => expect(group.apply).toHaveBeenCalledWith(['e1', 'e2', 'e3'].map(event_id =>
+    ({ event_id, operation: 'upsert', action: 'cancel', patch: {}, reason: null, revision: null })), 'Odwołano 3 zajęcia dla grupy.'));
+  unmount();
+
+  render(<WeekView events={[tile]} viewedWeekStart={monday} planActions={planActions({ group: groupActions({ canChange: () => false }) })}/>);
+  open();
+  fireEvent.click(screen.getByRole('button', { name: 'Zmień' }));
+  expect(screen.queryByRole('radiogroup', { name: 'Dla kogo' })).not.toBeInTheDocument();
+});
+
+test('a change for the group starts from the group\'s class and keeps the revision it was made on', async () => {
+  const moved = { event_id: 'e1', faculty: 'EiAs3', action: 'modify', patch: { date: '2026-11-04' }, reason: null, revision: 2 };
+  const group = groupActions({ changeFor: id => (id === 'e1' ? moved : null) });
+  render(<WeekView events={[tile]} viewedWeekStart={monday} planActions={planActions({ group })}/>);
+  open();
+  fireEvent.click(screen.getByRole('button', { name: 'Zmień' }));
+  expect(screen.getByLabelText('Data')).toHaveValue('2026-11-03');
+  fireEvent.click(screen.getByRole('radio', { name: 'Dla grupy' }));
+  expect(screen.getByLabelText('Data')).toHaveValue('2026-11-04');
+  fireEvent.change(screen.getByLabelText('Sala'), { target: { value: 'C1' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Zapisz dla grupy' }));
+  await waitFor(() => expect(group.apply).toHaveBeenCalledWith([{ event_id: 'e1', operation: 'upsert', action: 'modify',
+    patch: { date: '2026-11-04', room: 'C1' }, reason: null, revision: 2 }], 'Zapisano zmianę zajęć dla grupy.'));
+});
+
+test('a class cancelled for the group is faded; a starosta can bring it back for everyone', async () => {
+  const cancelled = { event_id: 'e1', faculty: 'EiAs3', action: 'cancel', patch: {}, reason: null, revision: 5 };
+  const group = groupActions({ changeFor: () => cancelled });
+  render(<WeekView events={[{ ...tile, ghost: 'cancelled', ghostFor: 'group', origin: 'ghost' }]} viewedWeekStart={monday}
+    planActions={planActions({ group })}/>);
+  fireEvent.click(screen.getByRole('button', { name: /^Odwołane dla grupy: Fizyka/ }));
+  expect(screen.getByRole('dialog')).toHaveTextContent('Starosta odwołał te zajęcia dla całej grupy.');
+  fireEvent.click(screen.getByRole('button', { name: 'Przywróć dla grupy' }));
+  await waitFor(() => expect(group.apply).toHaveBeenCalledWith([{ event_id: 'e1', operation: 'delete', revision: 5 }], 'Przywrócono zajęcia dla grupy.'));
+});
