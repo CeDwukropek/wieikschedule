@@ -129,21 +129,21 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
       if (series) saveSeries('move', n => `Zmieniono ${classes(n)} w Twoim planie.`);
       else if (Object.keys(changes).length) save(changes); }}>
       <dl className="event-details-list plan-change-list">
-        <div><dt><CalendarDays size={17}/>Data</dt><dd><input type="date" aria-label="Data" value={form.date}
+        <div><dt title="Data"><CalendarDays size={17} aria-hidden="true"/><span className="sr-only">Data</span></dt><dd><input type="date" aria-label="Data" value={form.date}
           min={planActions.bounds.min || undefined} max={planActions.bounds.max || undefined}
           onChange={event => setForm({ ...form, date: event.target.value })}/></dd></div>
-        <div><dt><Clock size={17}/>Godzina</dt><dd className="plan-change-hours">
+        <div><dt title="Godzina"><Clock size={17} aria-hidden="true"/><span className="sr-only">Godzina</span></dt><dd className="plan-change-hours">
           <input type="time" aria-label="Początek" step="300" list={`${id}-times`} value={form.start}
             onChange={event => event.target.value && setStart(event.target.value)}/>
           <span aria-hidden="true">–</span>
           <input type="time" aria-label="Koniec" step="300" value={form.end} onChange={event => setForm({ ...form, end: event.target.value })}/>
           <datalist id={`${id}-times`}>{times.map(time => <option key={time} value={time}/>)}</datalist>
         </dd></div>
-        <div><dt><MapPin size={17}/>Sala</dt><dd><input aria-label="Sala" value={form.room} maxLength={256} placeholder="Puste pole usuwa salę"
+        <div><dt title="Sala"><MapPin size={17} aria-hidden="true"/><span className="sr-only">Sala</span></dt><dd><input aria-label="Sala" value={form.room} maxLength={256} placeholder="Puste pole usuwa salę"
           onChange={event => setForm({ ...form, room: event.target.value })}/></dd></div>
-        <div><dt><UserRound size={17}/>Prowadzący</dt><dd><input aria-label="Prowadzący" value={form.instructor} maxLength={256}
+        <div><dt title="Prowadzący"><UserRound size={17} aria-hidden="true"/><span className="sr-only">Prowadzący</span></dt><dd><input aria-label="Prowadzący" value={form.instructor} maxLength={256}
           onChange={event => setForm({ ...form, instructor: event.target.value })}/></dd></div>
-        <div><dt><MessageSquare size={17}/>Powód</dt><dd><textarea aria-label="Powód (opcjonalnie)" placeholder="Opcjonalnie" rows={2}
+        <div><dt title="Powód"><MessageSquare size={17} aria-hidden="true"/><span className="sr-only">Powód</span></dt><dd><textarea aria-label="Powód (opcjonalnie)" placeholder="Opcjonalnie" rows={2}
           value={form.reason} maxLength={1000} onChange={event => setForm({ ...form, reason: event.target.value })}/></dd></div>
       </dl>
       {scope}
