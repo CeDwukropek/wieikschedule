@@ -218,7 +218,9 @@
 .event-details-badges span { border-radius: 6px; padding: 4px 8px; background: #262626; font-size: 12px; }
 .event-details-badges .event-details-personal { background: #082f49; color: #7dd3fc; }
 .event-details-list { display: grid; gap: 18px; font-size: 14px; }
-.event-details-list > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; }
+/* Each detail is marked by its icon only; the name is there for screen readers and as a hover hint. */
+.event-details-list > div { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 14px; align-items: start; }
+.event-details-list dt { padding-top: 1px; }
 .event-details-list dt { display: flex; align-items: center; gap: 8px; color: #a3a3a3; }
 .event-details-list dd { overflow-wrap: anywhere; }
 .event-details-list dd span { display: block; }
@@ -591,7 +593,7 @@
 /* "Zmień": the date, hours, room and instructor become fields, in the same list as the other details. */
 .event-details-actions.is-changing { margin-top: 18px; border-top: 0; padding-top: 0; }
 .plan-change-list > div { align-items: center; }
+.plan-change-list dt { padding-top: 0; }
 .plan-change-list dd input, .plan-change-list dd textarea { width: 100%; min-width: 0; }
 .plan-change-hours { display: flex; align-items: center; gap: 6px; }
 .plan-change-hours input { flex: 1 1 0; }
-@media (max-width: 420px) { .plan-change-list > div { grid-template-columns: 104px minmax(0, 1fr); gap: 10px; } }

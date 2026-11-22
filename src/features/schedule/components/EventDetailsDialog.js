@@ -69,21 +69,21 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
         </div>}
         <dl className="event-details-list">
-          {ev.type && <div><dt><Tag size={17}/>Rodzaj</dt><dd>{ev.type}</dd></div>}
+          {ev.type && <div><dt title="Rodzaj"><Tag size={17} aria-hidden="true"/><span className="sr-only">Rodzaj</span></dt><dd>{ev.type}</dd></div>}
           {!changing && <>
-          <div><dt><CalendarDays size={17}/>Data</dt><dd>{date.toLocaleDateString('pl-PL', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}</dd></div>
-          <div><dt><Clock size={17}/>Godzina</dt><dd>{ev.start}–{ev.end}</dd></div>
+          <div><dt title="Data"><CalendarDays size={17} aria-hidden="true"/><span className="sr-only">Data</span></dt><dd>{date.toLocaleDateString('pl-PL', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}</dd></div>
+          <div><dt title="Godzina"><Clock size={17} aria-hidden="true"/><span className="sr-only">Godzina</span></dt><dd>{ev.start}–{ev.end}</dd></div>
           {/* An instructor or a room opens their plan across all plans. */}
-          <div><dt><MapPin size={17}/>Sala</dt><dd>{ev.room ? (onBrowse ? <button type="button" className="event-details-browse"
+          <div><dt title="Sala"><MapPin size={17} aria-hidden="true"/><span className="sr-only">Sala</span></dt><dd>{ev.room ? (onBrowse ? <button type="button" className="event-details-browse"
             onClick={() => { onClose(); onBrowse({ room: ev.room }); }} aria-label={`Sala ${ev.room}: pokaż plan sali`}>{ev.room}</button> : ev.room) : 'Nie podano'}</dd></div>
-          <div><dt><UserRound size={17}/>Prowadzący</dt><dd>{teachers.length ? teachers.map(teacher => onBrowse
+          <div><dt title="Prowadzący"><UserRound size={17} aria-hidden="true"/><span className="sr-only">Prowadzący</span></dt><dd>{teachers.length ? teachers.map(teacher => onBrowse
             ? <button key={teacher} type="button" className="event-details-browse" onClick={() => { onClose(); onBrowse({ teacher }); }}
               aria-label={`${teacher}: pokaż plan prowadzącego`}>{teacher}</button>
             : <span key={teacher}>{teacher}</span>) : 'Nie podano'}</dd></div>
           </>}
           {/* Classes seen in an instructor's, a room's or the free-rooms view come from other plans. */}
-          {ev.plan && <div><dt><GraduationCap size={17}/>Kierunek</dt><dd>{ev.plan}</dd></div>}
-          <div><dt><Users size={17}/>Grupa</dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
+          {ev.plan && <div><dt title="Kierunek"><GraduationCap size={17} aria-hidden="true"/><span className="sr-only">Kierunek</span></dt><dd>{ev.plan}</dd></div>}
+          <div><dt title="Grupa"><Users size={17} aria-hidden="true"/><span className="sr-only">Grupa</span></dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
         </dl>
         {entryForm ? <section className="event-details-actions" aria-label={entryForm.type === 'edit' ? 'Edycja terminu' : 'Nowy termin na tych zajęciach'}>
           <h3 className="plan-item-form-title">{entryForm.type === 'edit' ? `Edycja: ${entryForm.item.title}` : 'Nowy termin'}</h3>
