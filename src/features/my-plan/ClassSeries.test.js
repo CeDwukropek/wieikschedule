@@ -111,7 +111,6 @@ test('a change for the group starts from the group\'s class and keeps the revisi
   expect(screen.getByLabelText('Data')).toHaveValue('2026-11-03');
   fireEvent.click(screen.getByRole('radio', { name: 'Dla grupy' }));
   expect(screen.getByLabelText('Data')).toHaveValue('2026-11-04');
-  await screen.findByRole('option', { name: 'C1' });
   fireEvent.change(screen.getByRole('combobox', { name: 'Sala' }), { target: { value: 'C1' } });
   fireEvent.click(screen.getByRole('button', { name: 'Zapisz dla grupy' }));
   await waitFor(() => expect(group.apply).toHaveBeenCalledWith([{ event_id: 'e1', operation: 'upsert', action: 'modify',
