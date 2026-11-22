@@ -14,7 +14,8 @@ export function InfoTip({ label, text }) {
 
 // A switch between two or three choices: the chosen one sits under a sliding thumb. Arrow keys move it too.
 // options: [{ value, label, icon? }]; info: what the choice changes, behind an "i".
-export default function ChoiceSlider({ label, options, value, onChange, info, disabled }) {
+// hideLabel: the label is only read out (the slider explains itself, e.g. next to a date).
+export default function ChoiceSlider({ label, options, value, onChange, info, disabled, hideLabel }) {
   const labelId = useId();
   const track = useRef(null);
   const index = Math.max(0, options.findIndex(option => option.value === value));
@@ -30,7 +31,7 @@ export default function ChoiceSlider({ label, options, value, onChange, info, di
     move(step);
   };
   return <div className="choice-slider">
-    <div className="choice-slider-head">
+    <div className={hideLabel ? 'sr-only' : 'choice-slider-head'}>
       <span id={labelId}>{label}</span>
       {info && <InfoTip label={label} text={info}/>}
     </div>

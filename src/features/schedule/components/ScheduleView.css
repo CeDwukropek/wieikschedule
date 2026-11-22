@@ -219,7 +219,7 @@
 .event-details-badges .event-details-personal { background: #082f49; color: #7dd3fc; }
 .event-details-list { display: grid; gap: 18px; font-size: 14px; }
 /* Each detail is marked by its icon only; the name is there for screen readers and as a hover hint. */
-.event-details-list > div { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 14px; align-items: start; }
+.event-details-list > div { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; align-items: start; }
 .event-details-list dt { padding-top: 1px; }
 .event-details-list dt { display: flex; align-items: center; gap: 8px; color: #a3a3a3; }
 .event-details-list dd { overflow-wrap: anywhere; }
@@ -237,6 +237,11 @@
 .plan-original { color: #fcd34d !important; }
 .plan-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .plan-action-grid > button:first-child { grid-column: 1 / -1; }
+/* The class's actions side by side, as icons; the "i" next to the note says what each one does. */
+.plan-icon-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.event-details-actions .plan-icon-add { background: #3b0764; color: #f3e8ff; }
+.event-details-actions .plan-icon-add:hover { background: #4c1d95; }
+.plan-scope-note { display: flex; align-items: center; gap: 4px; }
 .plan-action { background: #262626; color: #e5e7eb; }
 .plan-form { display: grid; gap: 12px; font-size: 13px; }
 .plan-form label { display: grid; gap: 4px; color: #a3a3a3; }
@@ -290,7 +295,7 @@
   .week-event-title { font-size: 9px; font-weight: 500; -webkit-line-clamp: 2; }
   .week-overview-hint { font-size: 10px; }
   .event-details-content { padding: 20px; }
-  .event-details-list > div { grid-template-columns: 105px minmax(0,1fr); gap: 10px; }
+  .event-details-list > div { gap: 10px; }
   .event-details-header h2 { font-size: 19px; }
   .plan-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .plan-form-row label:first-child { grid-column: 1 / -1; }
@@ -419,12 +424,17 @@
 .plan-item-scope-fixed { color: #d8b4fe; }
 .plan-item-suggestions { display: grid; gap: 4px; }
 .plan-item-suggestions li { padding: 6px 8px; border-radius: 8px; background: #1f1f1f; }
-/* Two lines in the narrow dialog: kind and date, then the hours (or the hand-in time) and the remove button. */
+/* An own date in the narrow dialog: at a time or by a date (and the remove button), the date, then the hours or the
+   hand-in time. Every field may shrink, so the dialog never scrolls sideways. */
 .plan-item-custom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center;
-  padding-bottom: 6px; border-bottom: 1px solid #262626; }
-.plan-item-custom > input[type="date"] { grid-column: 2 / 4; }
-.plan-item-custom select, .plan-item-custom input { min-width: 0; padding: 8px 6px !important; }
-.plan-item-form .plan-item-custom-remove { grid-column: 3; padding: 8px; background: #262626; color: #a3a3a3; }
+  padding-bottom: 6px; border-bottom: 1px solid #262626; min-width: 0; }
+.plan-item-custom > .choice-slider { grid-column: 1 / 3; }
+.plan-item-custom > input[type="date"] { grid-column: 1 / -1; }
+.plan-item-custom > input[aria-label="Koniec"] { grid-column: 2 / -1; }
+.plan-item-custom > input[aria-label^="Godzina oddania"] { grid-column: 1 / -1; }
+.plan-item-custom input { width: 100%; min-width: 0; padding: 8px 6px !important; }
+.plan-item-form .plan-item-custom-remove { grid-row: 1; grid-column: 3; padding: 8px; background: #262626; color: #a3a3a3; }
+.plan-item-form, .plan-item-form > * { min-width: 0; }
 .plan-item-problem { font-size: 13px; color: #fbbf24; }
 .plan-item-form .plan-item-add-term { justify-self: start; padding: 8px 12px; }
 .plan-item-hint { font-size: 12px; color: #a3a3a3; }
@@ -577,18 +587,19 @@
 .choice-slider-track button.choice-slider-option[aria-checked="true"] { color: #fff; }
 .choice-slider-track button.choice-slider-option:disabled { cursor: wait; }
 .choice-slider-option svg { flex: 0 0 auto; }
-.info-tip { position: relative; display: inline-flex; }
+.info-tip { display: inline-flex; }
+/* The hint spans the row it explains, so it never reaches past the dialog (hidden, it would still widen it). */
+.choice-slider-head, .plan-scope-note { position: relative; }
 .choice-slider-head button.info-tip-button, .info-tip button.info-tip-button { display: grid; place-items: center; width: 22px; height: 22px;
   padding: 0; border-radius: 999px; background: transparent; color: #a3a3a3; }
 .info-tip button.info-tip-button:hover { color: #e5e5e5; }
-.info-tip-text { position: absolute; z-index: 5; top: calc(100% + 6px); left: -8px; width: max-content; max-width: min(280px, calc(100vw - 72px));
+.info-tip-text { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; right: 0;
   padding: 8px 10px; border-radius: 8px; background: #0a0a0a; border: 1px solid #404040; color: #e5e5e5; font-size: 12px; line-height: 1.45;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5); visibility: hidden; opacity: 0; transition: opacity .15s; pointer-events: none; }
-.info-tip:hover .info-tip-text, .info-tip:focus-within .info-tip-text { visibility: visible; opacity: 1; }
-/* One term: the own date is a choice next to the suggested classes. */
-.plan-item-custom[data-single] { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); }
-.plan-item-custom[data-single] > input[type="radio"] { grid-row: span 2; }
-.plan-item-custom[data-single] > input[type="date"] { grid-column: auto; }
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); display: none; pointer-events: none;
+  white-space: pre-line; text-align: left; font-weight: 400; }
+.info-tip:hover .info-tip-text, .info-tip:focus-within .info-tip-text { display: block; }
+/* "Własny termin" closes the suggestions; its fields open below them. */
+.plan-item-suggestions .plan-item-custom-choice { background: transparent; border: 1px dashed #404040; }
 
 /* "Zmień": the date, hours, room and instructor become fields, in the same list as the other details. */
 .event-details-actions.is-changing { margin-top: 18px; border-top: 0; padding-top: 0; }
