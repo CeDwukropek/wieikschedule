@@ -82,9 +82,24 @@ export function dialogEventFromItem(item) {
   return { ...event, origin: item.kind === 'added' ? 'added' : 'base', personal_override: Boolean(item.override) };
 }
 
+// The classes of one plan a starosta cancelled or moved for the group, in the shape ghostEvents reads.
+export function groupChangeItems(changes, rows, faculty) {
+  const byId = new Map((rows || []).map(row => [String(row.id), row]));
+  const pick = row => row && { date: row.date, start_time: row.start_time, duration_min: row.duration_min, room: row.room ?? null,
+    instructor: row.instructor ?? null };
+  return changes.filter(change => change.faculty === faculty).flatMap(change => {
+    const row = byId.get(String(change.event_id));
+    if (!row) return [];
+    return [{ faculty, event_id: row.id, subject: row.subject, type: row.type, group: row.group, original: pick(row),
+      kind: change.action === 'cancel' ? 'cancelled' : 'modified', current: change.action === 'cancel' ? null : pick({ ...row, ...change.patch }) }];
+  });
+}
+
 // Display-only tiles: privately cancelled classes and the slot a class was moved from.
+// With forGroup, those a starosta cancelled or moved for the group, only for the person's groups (unless the whole
+// plan is shown).
 // They never enter the effective plan, so export, collisions and agents ignore them.
-export function ghostEvents(items, { faculties, weekStart, hideLectures = false }) {
+export function ghostEvents(items, { faculties, weekStart, hideLectures = false, forGroup = false, groups = {}, showAll = true }) {
   return items.flatMap(item => {
     if (!faculties.includes(item.faculty)) return [];
     const moved = item.kind === 'modified' && item.current &&
@@ -93,8 +108,8 @@ export function ghostEvents(items, { faculties, weekStart, hideLectures = false 
     if (!ghost) return [];
     const event = mapAddedEvent({ ...item.original, event_id: item.event_id, subject: item.subject, type: item.type, group: item.group });
     if (!event) return [];
-    const tile = { ...event, id: `ghost-${ghost}-${item.event_id}`, origin: 'ghost', ghost, added_event_id: undefined,
-      movedTo: item.current, personal_override: true };
-    return filterEvents([tile], {}, hideLectures, true, weekStart).length ? [tile] : [];
+    const tile = { ...event, id: `${forGroup ? 'group-ghost' : 'ghost'}-${ghost}-${item.event_id}`, origin: 'ghost', ghost,
+      added_event_id: undefined, movedTo: item.current, ...(forGroup ? { ghostFor: 'group', group_override: true } : { personal_override: true }) };
+    return filterEvents([tile], forGroup ? groups : {}, hideLectures, forGroup ? showAll : true, weekStart).length ? [tile] : [];
   });
 }

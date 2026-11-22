@@ -18,10 +18,11 @@ import {usePersonalPlan} from '../features/my-plan/usePersonalPlan';
 import UndoToast from '../features/my-plan/UndoToast';
 import {addEventToMyPlan} from '../features/my-plan/myPlanApi';
 import {effectiveTimetables,effectiveAddedEvents} from '../features/my-plan/effectiveSchedule';
+import {groupChangesEnabled,useGroupChanges} from '../features/my-plan/useGroupChanges';
 import MyPlanPanel from '../features/my-plan/MyPlanPanel';
 import {seriesMembers} from '../features/my-plan/seriesChanges';
 import EventDetailsDialog from '../features/schedule/components/EventDetailsDialog';
-import {dialogEventFromItem,ghostEvents,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
+import {dialogEventFromItem,ghostEvents,groupChangeItems,overlaps,parseDate,startTimeOptions} from '../features/my-plan/planEditing';
 import {getWeekStart,parseDaySelection,toIsoDate} from '../utils/date';
 import {usePlanItems} from '../features/plan-items/usePlanItems';
 import {filterItems,isDayOff,itemsWindow,placeItems,planItemsEnabled,upcomingItems,visibleItems,weekendWeeks} from '../features/plan-items/planItemLogic';
@@ -29,7 +30,7 @@ import PlanItemDialog from '../features/plan-items/PlanItemDialog';
 import UpcomingPanel from '../features/plan-items/UpcomingPanel';
 import StarostaPanel from '../features/plan-items/StarostaPanel';
 import {planItemsRequest} from '../features/plan-items/planItemsApi';
-import {makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
+import {canWriteGroup,classGroup,facultyOf,makeupItem,slotTerm,subjectsOf,termsLabel,withRevisions} from '../features/plan-items/planItemEditing';
 import {usePlanReminders} from '../features/plan-items/usePlanReminders';
 import {reviewItems} from '../features/plan-items/planRoles';
 import {subjectNames,withSubjectColors} from '../features/schedule/logic/subjectColors';
@@ -58,7 +59,13 @@ export default function App() {
   useEffect(()=>{setPlanOpen(false);setShownItem(null);setToast(null);setDraft(null);},[user?.uid,schedule.currentSchedule]);
   const dismissToast=useCallback(()=>setToast(null),[]);
   const personal=usePersonalPlan(user,personalEnabled);
-  const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows),[schedule.loadedTimetables,personal.rows]);
+  const faculties=useMemo(()=>[...new Set([schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)].filter(Boolean))],
+    [schedule.currentSchedule,schedule.activeExternalSelections]);
+  // Starostas' changes of classes for the whole group, for everyone (guests too); one's own change wins.
+  const groupOn=groupChangesEnabled();
+  const group=useGroupChanges({enabled:groupOn,faculties});
+  const tables=useMemo(()=>effectiveTimetables(schedule.loadedTimetables,personal.rows,group.changes),
+    [schedule.loadedTimetables,personal.rows,group.changes]);
   const effectiveTable=tables[schedule.currentSchedule]||schedule.currentTimetable;
   const eventOptions = useMemo(
     () => ({
@@ -84,8 +91,6 @@ export default function App() {
   const itemsOn=planItemsEnabled();
   const [today]=useState(()=>new Date());
   const itemsRange=useMemo(()=>itemsWindow(today),[today]);
-  const faculties=useMemo(()=>[...new Set([schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)].filter(Boolean))],
-    [schedule.currentSchedule,schedule.activeExternalSelections]);
   const planItems=usePlanItems({enabled:itemsOn,uid:user?.uid,faculties,window:itemsRange});
   const planReminders=usePlanReminders({enabled:itemsOn,uid:user?.uid});
   // Every occurrence of the plan (lectures included, so an entry on a hidden lecture still shows).
@@ -145,7 +150,7 @@ export default function App() {
     selectedDayWeekStart: navigation.selectedDayWeekStart,
   });
 
-  const addedEvents=useMemo(()=>effectiveAddedEvents(myPlan.allAddedEvents,personal.rows),[myPlan.allAddedEvents,personal.rows]);
+  const addedEvents=useMemo(()=>effectiveAddedEvents(myPlan.allAddedEvents,personal.rows,group.changes),[myPlan.allAddedEvents,personal.rows,group.changes]);
   const proposals=personal.proposals;
 
   // Own edits are saved at once; the toast offers to restore the previous state.
@@ -159,6 +164,11 @@ export default function App() {
     const undo=await personal.applyBatch(changes);
     myPlan.refresh();
     setToast({message,undo:async()=>{await personal.applyBatch(undo);myPlan.refresh();}});
+  };
+  // A starosta's change for the whole group; everyone sees it, so the toast can undo it at once.
+  const applyGroupChange=async(changes,message)=>{
+    const undo=await group.apply(changes);
+    setToast({message,undo:async()=>{await group.apply(undo);}});
   };
   // Makeup at another group: the class joins the plan (as added classes do) with a private entry on it.
   const makeUp=async(entry,candidate)=>{
@@ -191,6 +201,12 @@ export default function App() {
   const showGhosts=Boolean(user&&personalEnabled&&personal.ready);
   const ghostFaculties=useMemo(()=>[schedule.currentSchedule,...schedule.activeExternalSelections.map(item=>item.scheduleId)],
     [schedule.currentSchedule,schedule.activeExternalSelections]);
+  // Classes of the shown plan a starosta cancelled or moved for the group, faded like one's own (guests see them too).
+  const groupGhostItems=useMemo(()=>groupOn?groupChangeItems(group.changes,schedule.loadedTimetables[schedule.currentSchedule]?.rawRows,
+    schedule.currentSchedule):[],[groupOn,group.changes,schedule.loadedTimetables,schedule.currentSchedule]);
+  const groupGhosts=useCallback(weekStart=>ghostEvents(groupGhostItems,{faculties:[schedule.currentSchedule],weekStart,
+    hideLectures:view.hideLectures,forGroup:true,groups:schedule.studentGroups,showAll:view.showAll}),
+    [groupGhostItems,schedule.currentSchedule,view.hideLectures,schedule.studentGroups,view.showAll]);
   const weekEvents = useMemo(
     () => [
       ...mergeEvents({
@@ -199,8 +215,9 @@ export default function App() {
         addedEvents,
       }),
       ...(showGhosts?ghostEvents(personal.items,{faculties:ghostFaculties,weekStart:navigation.viewedWeekStart,hideLectures:view.hideLectures}):[]),
+      ...groupGhosts(navigation.viewedWeekStart),
     ],
-    [eventOptions, navigation.viewedWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
+    [eventOptions, navigation.viewedWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures, groupGhosts],
   );
   const dayEvents = useMemo(
     () => [
@@ -210,8 +227,9 @@ export default function App() {
         addedEvents,
       }),
       ...(showGhosts?ghostEvents(personal.items,{faculties:ghostFaculties,weekStart:navigation.selectedDayWeekStart,hideLectures:view.hideLectures}):[]),
+      ...groupGhosts(navigation.selectedDayWeekStart),
     ],
-    [eventOptions, navigation.selectedDayWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures],
+    [eventOptions, navigation.selectedDayWeekStart, addedEvents, showGhosts, personal.items, ghostFaculties, view.hideLectures, groupGhosts],
   );
   const weekPlaced=useMemo(()=>placeItems(placedItems,navigation.viewedWeekStart,weekEvents),[placedItems,navigation.viewedWeekStart,weekEvents]);
   const dayPlaced=useMemo(()=>placeItems(placedItems,navigation.selectedDayWeekStart,dayEvents),[placedItems,navigation.selectedDayWeekStart,dayEvents]);
@@ -249,6 +267,15 @@ export default function App() {
     seriesFor:ev=>seriesMembers(schedule.loadedTimetables[ev._sourceScheduleId||schedule.currentSchedule]?.rawRows||[],ev.event_id,
       id=>personal.rows.find(row=>row.event_id===id)),
     removeAdded:removeAddedEvent,
+    // Changes for the whole group: only for starostas (as for group entries); the database checks it again.
+    group:groupOn&&itemsOn&&planItems.ready?{
+      canChange:ev=>Boolean(ev.event_id)&&canWriteGroup(planItems.roles,facultyOf(ev,schedule.currentSchedule),classGroup(ev)),
+      changeFor:id=>group.changes.find(change=>String(change.event_id)===String(id))||null,
+      // The class as in the university plan (the base of a change for the group).
+      rowFor:ev=>(schedule.loadedTimetables[ev._sourceScheduleId||schedule.currentSchedule]?.rawRows||[])
+        .find(row=>String(row.id)===String(ev.event_id))||null,
+      apply:applyGroupChange,
+    }:undefined,
     startTimes,
     bounds:{min:effectiveTable.minDate,max:effectiveTable.maxDate},
     conflictsFor:(eventId,{date,start,end})=>{

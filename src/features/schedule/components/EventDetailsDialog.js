@@ -62,10 +62,11 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
           </div>
           <button type="button" className="event-details-close" aria-label="Zamknij szczegóły zajęć" disabled={busy} onClick={onClose}><X size={20}/></button>
         </header>
-        {(ev.origin === 'added' || ev.ghost || ev.personal_override || ev._isExternal) && <div className="event-details-badges">
+        {(ev.origin === 'added' || ev.ghost || ev.personal_override || ev.group_override || ev._isExternal) && <div className="event-details-badges">
           {ev.origin === 'added' && <span className="event-details-personal">Odrobienie</span>}
-          {ev.ghost === 'cancelled' && <span className="event-details-ghost">Odwołane u mnie</span>}
-          {ev.ghost === 'moved-from' && <span className="event-details-ghost">Przeniesione</span>}
+          {ev.ghost === 'cancelled' && <span className="event-details-ghost">{ev.ghostFor === 'group' ? 'Odwołane dla grupy' : 'Odwołane u mnie'}</span>}
+          {ev.ghost === 'moved-from' && <span className="event-details-ghost">{ev.ghostFor === 'group' ? 'Przeniesione dla grupy' : 'Przeniesione'}</span>}
+          {ev.group_override && !ev.ghost && <span className="event-details-personal">Zmienione dla grupy</span>}
           {ev.personal_override && !ev.ghost && <span className="event-details-personal">Zmienione u mnie</span>}
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
         </div>}
