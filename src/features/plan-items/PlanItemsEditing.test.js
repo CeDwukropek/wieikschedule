@@ -66,13 +66,19 @@ test('a free slot asks for the subject, offers a week later and only the groups 
   fireEvent.click(within(form).getByRole('radio', { name: 'Kilka terminów' }));
   fireEvent.click(within(form).getByRole('checkbox', { name: /31\.10/ }));
   fireEvent.click(within(form).getByRole('checkbox', { name: 'Własny termin' }));
-  fireEvent.click(within(within(form).getByRole('radiogroup', { name: 'Rodzaj terminu' })).getByRole('radio', { name: 'Do oddania' }));
   fireEvent.change(within(form).getByLabelText('Data'), { target: { value: '2026-11-14' } });
+  expect(within(form).getByLabelText('Początek')).toHaveValue('09:00');
+  // "Do oddania" sits on top of the terms and applies to all of them: only dates remain.
+  const timing = within(form).getByRole('radiogroup', { name: 'Rodzaj terminu' });
+  expect(within(timing).getByRole('radio', { name: 'O godzinie' })).toBeChecked();
+  fireEvent.click(within(timing).getByRole('radio', { name: 'Do oddania' }));
+  expect(within(form).queryByLabelText('Początek')).not.toBeInTheDocument();
+  expect(within(form).getByRole('checkbox', { name: /31\.10, cały dzień/ })).toBeChecked();
   fireEvent.click(within(form).getByRole('button', { name: 'Dodaj 3 terminy' }));
   await waitFor(() => expect(itemActions.create).toHaveBeenCalled());
   const items = itemActions.create.mock.calls[0][0];
   expect(items.map(item => [item.subject, item.group, item.timing, item.date, item.start_time ?? item.due_time])).toEqual([
-    ['Fizyka', 'Lk1', 'slot', '2026-10-24', '09:00'], ['Fizyka', 'Lk1', 'slot', '2026-10-31', '09:00'], ['Fizyka', 'Lk1', 'due', '2026-11-14', null]]);
+    ['Fizyka', 'Lk1', 'due', '2026-10-24', null], ['Fizyka', 'Lk1', 'due', '2026-10-31', null], ['Fizyka', 'Lk1', 'due', '2026-11-14', null]]);
 });
 
 test('students without a role add private entries; a click on free time opens a 90-minute slot', () => {

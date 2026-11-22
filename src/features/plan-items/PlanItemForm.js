@@ -49,6 +49,9 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     : editing?.timing === 'class' ? [`class:${editing.event_id}`] : []));
   // A new entry's own date (its fields) shows only once "Własny termin" is chosen.
   const [customOpen, setCustomOpen] = useState(false);
+  // At a time or by a date: for the suggestions and the own date alike. Until chosen, it follows the kind (reports and
+  // projects are handed in by a date).
+  const [timingChoice, setTimingChoice] = useState(() => (editing ? (editing.timing === 'due' ? 'due' : 'slot') : null));
   const [customs, setCustoms] = useState(() => source.type === 'slot' ? [{ ...source.term, key: 'custom-0' }]
     : editing && editing.timing !== 'class' ? [{ ...termOfItem(editing), key: 'custom-0' }] : []);
   const [which, setWhich] = useState('one');
@@ -87,6 +90,17 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
       : { suggestionsLabel: 'Ten termin, tydzień i dwa tygodnie później',
         suggestions: [{ ...source.term, key: hereKey(source.term) }, ...laterTerms(source.term)].slice(0, count) };
   }, [host, planEvents, scheduleId, editing, today, source, form.scope, form.subject, group, events, own]);
+  const timing = timingChoice || defaultTiming(form.kind);
+  // By a date: each suggested day once, without hours; the own dates keep their hours for a switch back.
+  const offers = useMemo(() => {
+    if (timing !== 'due') return suggestions;
+    const days = new Set();
+    return suggestions.filter(term => !days.has(term.date) && days.add(term.date))
+      .map(term => ({ key: term.key, timing: 'due', date: term.date, due_time: '' }));
+  }, [timing, suggestions]);
+  // A new entry by a date has no hour; an edited one keeps the hour it was given before.
+  const mine = useMemo(() => customs.map(term => (timing === 'due' ? { ...term, timing: 'due', due_time: editing ? term.due_time || '' : '' }
+    : { ...term, timing: 'slot', start: term.start || '08:00', end: term.end || '09:30' })), [customs, timing, editing]);
   // How long the subject's classes last, for the group if it has its own (lectures often take longer).
   const duration = form.subject ? (form.scope === 'group' && !onClass
     ? subjectDuration(events, form.subject, group) ?? subjectDuration(own, form.subject)
@@ -94,21 +108,21 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   // A new subject or group gives own hours the length of its classes, unless the end was set by hand.
   useEffect(() => {
     if (editing || !duration) return;
-    setCustoms(previous => previous.map(term => term.timing === 'slot' && !term.manualEnd && term.start
+    setCustoms(previous => previous.map(term => !term.manualEnd && term.start
       && timeToMinutes(term.end) - timeToMinutes(term.start) !== duration ? { ...term, end: addMinutes(term.start, duration) } : term));
   }, [editing, duration]);
 
   // Terms that already have such an entry cannot be added again; a hidden one can be shown instead.
   const values = { ...form, group };
   const takenBy = term => existingFor(actions.items, term, values, editing?.id);
-  const chosen = suggestions.filter(term => picked.has(term.key) && !takenBy(term));
+  const chosen = offers.filter(term => picked.has(term.key) && !takenBy(term));
   // Editing: one term, a suggestion or the own date. A new entry: the own date counts once "Własny termin" is chosen;
   // with one term, a suggestion that went away (another subject or group) gives way to the first free one.
-  const ownTerms = editing || customOpen ? customs : [];
-  const terms = editing ? [...chosen, ...customs]
-    : single ? (customOpen ? customs.slice(0, 1) : (chosen.length ? chosen : suggestions.filter(term => !takenBy(term))).slice(0, 1))
+  const ownTerms = editing || customOpen ? mine : [];
+  const terms = editing ? [...chosen, ...mine]
+    : single ? (customOpen ? mine.slice(0, 1) : (chosen.length ? chosen : offers.filter(term => !takenBy(term))).slice(0, 1))
     : [...chosen, ...ownTerms];
-  const takenCustom = customs.filter(term => terms.includes(term)).map(takenBy).find(Boolean);
+  const takenCustom = mine.filter(term => terms.includes(term)).map(takenBy).find(Boolean);
   const members = editing ? seriesOf(actions.items, editing, which) : [];
   const seriesSize = editing?.series_id ? actions.items.filter(item => item.series_id === editing.series_id).length : 1;
   const problem = !terms.length ? 'Wybierz co najmniej jeden termin.'
@@ -128,12 +142,11 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     // A week after the latest term chosen so far, at the same time.
     const last = [...terms].sort((a, b) => a.date.localeCompare(b.date)).pop();
     // Dates already on the list (ticked or not) are skipped.
-    const listed = new Set([...suggestions, ...customs].map(term => term.date));
+    const listed = new Set([...offers, ...mine].map(term => term.date));
     let date = last ? addDays(last.date, 7) : today;
     while (last && listed.has(date)) date = addDays(date, 7);
     const base = last ? { ...last, date } : { date, start: '08:00', end: '09:30' };
-    const timing = last?.timing === 'due' || (!last && defaultTiming(form.kind) === 'due') ? 'due' : 'slot';
-    const term = { timing, date: base.date, start: base.start || '08:00', end: base.end || '09:30', due_time: base.due_time || '', key: `custom-${Date.now()}` };
+    const term = { date: base.date, start: base.start || '08:00', end: base.end || '09:30', key: `custom-${Date.now()}` };
     if (editing) setPicked(new Set());
     setCustoms(previous => editing ? [term] : [...previous, term]);
   };
@@ -148,7 +161,7 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   // A new start keeps the class length of the subject (or the term's own length); an end set by hand stays.
   const setCustom = (key, change) => setCustoms(previous => previous.map(term => {
     if (term.key !== key) return term;
-    if (change.start && term.timing === 'slot') {
+    if (change.start) {
       const length = duration || timeToMinutes(term.end) - timeToMinutes(term.start);
       return { ...term, ...change, end: addMinutes(change.start, length > 0 ? length : 90), manualEnd: false };
     }
@@ -158,7 +171,7 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   const chooseCount = value => {
     setCount(value);
     if (value !== 'one') return;
-    const first = suggestions.find(term => picked.has(term.key));
+    const first = offers.find(term => picked.has(term.key));
     setPicked(new Set(first ? [first.key] : []));
     if (first) setCustomOpen(false);
     setCustoms(previous => previous.slice(0, 1));
@@ -215,8 +228,10 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
       { value: 'one', label: 'Jeden termin', icon: Calendar1 }, { value: 'many', label: 'Kilka terminów', icon: CalendarRange }]}/>}
     <fieldset className="plan-item-terms">
       <legend>{editing || single ? 'Termin' : 'Terminy'}</legend>
-      {suggestions.length > 0 && <ul className="plan-item-suggestions" aria-label={suggestionsLabel}>
-        {suggestions.map(term => {
+      <ChoiceSlider label="Rodzaj terminu" hideLabel value={timing} onChange={setTimingChoice}
+        options={[{ value: 'slot', label: 'O godzinie', icon: Clock }, { value: 'due', label: 'Do oddania', icon: CalendarCheck }]}/>
+      {offers.length > 0 && <ul className="plan-item-suggestions" aria-label={suggestionsLabel}>
+        {offers.map(term => {
           const taken = takenBy(term);
           return <li key={term.key} data-taken={taken ? true : undefined}><label>
             <input type={editing || single ? 'radio' : 'checkbox'} name={`${id}-term`} disabled={Boolean(taken)}
@@ -231,18 +246,16 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
           <input type={single ? 'radio' : 'checkbox'} name={`${id}-term`} checked={customOpen}
             onChange={single ? openCustom : toggleCustom}/>Własny termin</label></li>}
       </ul>}
-      {!editing && !suggestions.length && !customOpen && <button type="button" className="plan-action plan-item-add-term" onClick={openCustom}>
+      {!editing && !offers.length && !customOpen && <button type="button" className="plan-action plan-item-add-term" onClick={openCustom}>
         <Plus size={15}/>Własny termin</button>}
-      {(editing ? customs : !customOpen ? [] : single ? customs.slice(0, 1) : customs).map(term => <div key={term.key} className="plan-item-custom">
-        <ChoiceSlider label="Rodzaj terminu" hideLabel value={term.timing} onChange={timing => setCustom(term.key, { timing })}
-          options={[{ value: 'slot', label: 'O godzinie', icon: Clock }, { value: 'due', label: 'Do oddania', icon: CalendarCheck }]}/>
+      {(editing ? mine : !customOpen ? [] : single ? mine.slice(0, 1) : mine).map(term => <div key={term.key} className="plan-item-custom"
+        data-due={term.timing === 'due' ? true : undefined}>
         <input type="date" aria-label="Data" value={term.date} onChange={event => setCustom(term.key, { date: event.target.value })}/>
         {term.timing === 'slot' ? <>
           <input type="time" aria-label="Początek" step="300" value={term.start} onChange={event => setCustom(term.key, { start: event.target.value })}/>
           <input type="time" aria-label="Koniec" step="300" value={term.end} onChange={event => setCustom(term.key, { end: event.target.value })}/>
-        </> : <input type="time" aria-label="Godzina oddania (opcjonalnie)" step="300" value={term.due_time || ''}
-          onChange={event => setCustom(term.key, { due_time: event.target.value })}/>}
-        {!single && (!editing || suggestions.length > 0) && <button type="button" className="plan-item-custom-remove" aria-label={`Usuń termin ${describeTerm(term)}`}
+        </> : null}
+        {!single && (!editing || offers.length > 0) && <button type="button" className="plan-item-custom-remove" aria-label={`Usuń termin ${describeTerm(term)}`}
           onClick={() => {
             const rest = customs.filter(other => other.key !== term.key);
             setCustoms(rest);
