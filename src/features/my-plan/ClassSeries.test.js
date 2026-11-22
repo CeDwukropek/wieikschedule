@@ -3,6 +3,10 @@ import WeekView from '../schedule/components/WeekView';
 import { seriesMembers } from './seriesChanges';
 import { seriesOf } from '../schedule/data/normalizeTimetable';
 import { makeupCandidates } from '../plan-items/planItemEditing';
+// Rooms and instructors to choose from (the search's list of all plans).
+jest.mock('../browse/browseApi', () => ({ loadDirectory: () => Promise.resolve({
+  rooms: [{ key: 'C1', label: 'C1' }, { key: 'C3', label: 'C3' }, { key: 'BHP', label: 'BHP' }],
+  teachers: [{ key: 'dr A. Nowak', label: 'dr A. Nowak' }] }) }));
 
 const monday = new Date(2026, 10, 2);
 const key = date => JSON.stringify(['stac', 's1', date, 'Lk1']);
@@ -107,7 +111,8 @@ test('a change for the group starts from the group\'s class and keeps the revisi
   expect(screen.getByLabelText('Data')).toHaveValue('2026-11-03');
   fireEvent.click(screen.getByRole('radio', { name: 'Dla grupy' }));
   expect(screen.getByLabelText('Data')).toHaveValue('2026-11-04');
-  fireEvent.change(screen.getByLabelText('Sala'), { target: { value: 'C1' } });
+  await screen.findByRole('option', { name: 'C1' });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Sala' }), { target: { value: 'C1' } });
   fireEvent.click(screen.getByRole('button', { name: 'Zapisz dla grupy' }));
   await waitFor(() => expect(group.apply).toHaveBeenCalledWith([{ event_id: 'e1', operation: 'upsert', action: 'modify',
     patch: { date: '2026-11-04', room: 'C1' }, reason: null, revision: 2 }], 'Zapisano zmianę zajęć dla grupy.'));
