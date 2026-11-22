@@ -28,7 +28,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
   const override = planActions.overrideFor(ev.event_id);
   const original = override?.action === 'modify' ? override.events : null;
   const isAdded = ev.origin === 'added' && ev.added_event_id;
-  // view | change | cancel | restore
+  // view | change | cancel (going back to the university plan is done in "Mój plan")
   const [mode, setModeState] = useState('view');
   const [busy, setBusyState] = useState(false), [error, setError] = useState('');
   const start0 = normalizeTime(current.start_time);
@@ -90,7 +90,6 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
     {error && <p role="alert" className="event-details-error">{error}</p>}
   </div>;
 
-  const restorable = override || members.some(member => member.override);
   return <div className={`event-details-actions ${mode === 'change' ? 'is-changing' : ''}`}>
     {original && <p className="plan-original">Oryginalnie: {describeSlot(original)}</p>}
     <EntriesNotice entries={entries}/>
@@ -100,7 +99,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
           isAdded ? 'Usuń z mojego planu: dopisane zajęcia znikają z Twojego planu.' : 'Odwołaj u mnie: zajęcia znikają tylko z Twojego planu.',
           onAddEntry && 'Dodaj kolokwium lub termin: wpis na tych zajęciach, dla siebie albo (starosta) dla grupy.',
           'Zmień: inna data, godziny, sala lub prowadzący, tylko u Ciebie.',
-          restorable && 'Przywróć plan uczelni: cofa Twoje zmiany tych zajęć.',
+          'Twoje zmiany cofniesz w „Mój plan” w ustawieniach.',
         ].filter(Boolean).join('\n')}/></p>
       <div className="plan-icon-actions">
         {isAdded
@@ -112,8 +111,6 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
           title="Dodaj kolokwium lub termin" onClick={onAddEntry}><CalendarPlus size={18}/></button>}
         <button type="button" className="event-details-edit" disabled={busy} aria-label="Zmień" title="Zmień" onClick={() => setMode('change')}>
           <Pencil size={18}/></button>
-        {restorable && <button type="button" className="plan-action" disabled={busy} aria-label="Przywróć plan uczelni" title="Przywróć plan uczelni"
-          onClick={() => hasSeries ? setMode('restore') : restoreOne()}><RotateCcw size={18}/></button>}
       </div>
     </>}
     {mode === 'cancel' && <>
@@ -123,16 +120,6 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
         <button type="button" className="event-details-remove" disabled={busy} onClick={() => series
           ? saveSeries('cancel', n => `Odwołano ${classes(n)} w Twoim planie.`) : cancelOne()}>
           <Ban size={16}/>Odwołaj u mnie{series ? ` (${chosen.length})` : ''}</button>
-        {back}
-      </div>
-    </>}
-    {mode === 'restore' && <>
-      {scope}
-      <p>Wybrane zajęcia wrócą do planu uczelni.</p>
-      <div className="plan-form-buttons">
-        <button type="button" className="event-details-edit" disabled={busy || (!series && !override)} onClick={() => series
-          ? saveSeries('restore', n => `Przywrócono plan uczelni dla ${n} zajęć.`) : restoreOne()}>
-          <RotateCcw size={16}/>Przywróć plan uczelni{series ? ` (${chosen.filter(member => member.override).length})` : ''}</button>
         {back}
       </div>
     </>}
