@@ -41,7 +41,8 @@ test('moving keeps an earlier private room change and shows collisions', async (
   render(<WeekView events={[{...event,personal_override:true}]} viewedWeekStart={monday} planActions={actions}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
   expect(screen.getByRole('dialog')).toHaveTextContent('Oryginalnie: pon 19.10 · 07:30–09:00 · B2');
-  expect(screen.getByRole('button', {name: 'Przywróć plan uczelni'})).toBeInTheDocument();
+  // Going back to the university plan is done in "Mój plan", not here.
+  expect(screen.queryByRole('button', {name: 'Przywróć plan uczelni'})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', {name: 'Zmień'}));
   expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
   fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-22'}});
