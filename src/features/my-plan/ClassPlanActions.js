@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, Clock, MapPin, UserRound, MessageSquare } from 'lucide-react';
-import ChoiceSlider from '../schedule/components/ChoiceSlider';
+import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, CalendarPlus, Clock, MapPin, UserRound, MessageSquare } from 'lucide-react';
+import ChoiceSlider, { InfoTip } from '../schedule/components/ChoiceSlider';
 import { addMinutes, normalizeTime, timeToMinutes } from '../../utils/time';
 import { describeSlot, mergePatch, moveChanges, shortDate, startTimeOptions, validateMove } from './planEditing';
 import { chooseMembers, MAX_SERIES_CHANGES, resultsOf, seriesChanges, SERIES_SCOPES } from './seriesChanges';
@@ -22,7 +22,8 @@ export function EntriesNotice({ entries }) {
 const SCOPE_INFO = 'Tylko te zajęcia: zmiana dotyczy tego jednego terminu. Te i następne: także późniejszych zajęć z tej serii. '
   + 'Wszystkie: całej serii, również wcześniejszych terminów. Zmiany widzisz tylko Ty, w swoim planie.';
 
-export default function ClassPlanActions({ ev, current, planActions, onDone, onBusyChange, onEditingChange, entries = [] }) {
+// onAddEntry: adding a kolokwium or deadline on this class, shown with the other actions.
+export default function ClassPlanActions({ ev, current, planActions, onDone, onBusyChange, onEditingChange, onAddEntry, entries = [] }) {
   const id = useId();
   const override = planActions.overrideFor(ev.event_id);
   const original = override?.action === 'modify' ? override.events : null;
@@ -94,14 +95,25 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
     {original && <p className="plan-original">Oryginalnie: {describeSlot(original)}</p>}
     <EntriesNotice entries={entries}/>
     {mode === 'view' && <>
-      <p>Zmiany dotyczą tylko Twojego planu.</p>
-      <div className="plan-action-grid">
-        <button type="button" className="event-details-edit" disabled={busy} onClick={() => setMode('change')}><Pencil size={16}/>Zmień</button>
+      <p className="plan-scope-note">Zmiany dotyczą tylko Twojego planu.
+        <InfoTip label="przyciski" text={[
+          isAdded ? 'Usuń z mojego planu: dopisane zajęcia znikają z Twojego planu.' : 'Odwołaj u mnie: zajęcia znikają tylko z Twojego planu.',
+          onAddEntry && 'Dodaj kolokwium lub termin: wpis na tych zajęciach, dla siebie albo (starosta) dla grupy.',
+          'Zmień: inna data, godziny, sala lub prowadzący, tylko u Ciebie.',
+          restorable && 'Przywróć plan uczelni: cofa Twoje zmiany tych zajęć.',
+        ].filter(Boolean).join('\n')}/></p>
+      <div className="plan-icon-actions">
         {isAdded
-          ? <button type="button" className="event-details-remove" disabled={busy} onClick={() => run(() => planActions.removeAdded(ev.added_event_id))}><Trash2 size={16}/>Usuń z mojego planu</button>
-          : <button type="button" className="event-details-remove" disabled={busy} onClick={() => hasSeries ? setMode('cancel') : cancelOne()}><Ban size={16}/>Odwołaj u mnie</button>}
-        {restorable && <button type="button" className="plan-action" disabled={busy}
-          onClick={() => hasSeries ? setMode('restore') : restoreOne()}><RotateCcw size={16}/>Przywróć plan uczelni</button>}
+          ? <button type="button" className="event-details-remove" disabled={busy} aria-label="Usuń z mojego planu" title="Usuń z mojego planu"
+            onClick={() => run(() => planActions.removeAdded(ev.added_event_id))}><Trash2 size={18}/></button>
+          : <button type="button" className="event-details-remove" disabled={busy} aria-label="Odwołaj u mnie" title="Odwołaj u mnie"
+            onClick={() => hasSeries ? setMode('cancel') : cancelOne()}><Ban size={18}/></button>}
+        {onAddEntry && <button type="button" className="plan-icon-add" disabled={busy} aria-label="Dodaj kolokwium lub termin"
+          title="Dodaj kolokwium lub termin" onClick={onAddEntry}><CalendarPlus size={18}/></button>}
+        <button type="button" className="event-details-edit" disabled={busy} aria-label="Zmień" title="Zmień" onClick={() => setMode('change')}>
+          <Pencil size={18}/></button>
+        {restorable && <button type="button" className="plan-action" disabled={busy} aria-label="Przywróć plan uczelni" title="Przywróć plan uczelni"
+          onClick={() => hasSeries ? setMode('restore') : restoreOne()}><RotateCcw size={18}/></button>}
       </div>
     </>}
     {mode === 'cancel' && <>

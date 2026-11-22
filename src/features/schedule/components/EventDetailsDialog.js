@@ -22,6 +22,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
   // Group entries on this class (also when the person moved or cancelled it, or hid the entry).
   const classEntries = (itemActions?.items || []).filter(item => item.scope === 'group' && item.timing === 'class'
     && ev.event_id && String(item.event_id) === String(ev.event_id));
+  const addEntry = itemActions && ev.event_id && !ev.ghost ? () => setEntryForm({ type: 'class', ev, date: isoDate(date) }) : undefined;
   const changedHere = Boolean(ev.ghost || planActions?.overrideFor?.(ev.event_id));
   const subject = eventSubject(ev, subjects);
   const teachers = splitTeacherDisplay(ev.teacher);
@@ -94,11 +95,11 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
             {ev.entries.filter(item => !item.draft).map(item => <PlanItemSummary key={item.id} item={item} onState={onItemState} actions={itemActions}
               onEdit={entry => setEntryForm({ type: 'edit', item: entry })}/>)}
           </section>}
-          {itemActions && ev.event_id && !ev.ghost && <button type="button" className="event-details-add-entry"
-            onClick={() => setEntryForm({ type: 'class', ev, date: isoDate(date) })}>
+          {/* With private changes available, adding sits among the class's actions; otherwise on its own. */}
+          {addEntry && !(planActions && ev.event_id) && <button type="button" className="event-details-add-entry" onClick={addEntry}>
             <CalendarPlus size={16}/>Dodaj kolokwium lub termin</button>}
           {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}
-            onEditingChange={setChanging}
+            onEditingChange={setChanging} onAddEntry={addEntry}
             entries={classEntries}/>}
           {planActions?.makeUp && classEntries.length > 0 && changedHere && <MakeupOptions entries={classEntries} items={itemActions.items}
             onMakeUp={planActions.makeUp}/>}

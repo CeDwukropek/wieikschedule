@@ -32,12 +32,14 @@ test('a starosta adds a kolokwium on this and the next class from the class dial
   expect(within(form).getByRole('radio', { name: 'Dla grupy Lk1' })).toBeChecked();
   // One term by default: the class clicked.
   expect(within(form).getByRole('radio', { name: 'Jeden termin' })).toBeChecked();
+  // The group's next classes, then "Własny termin".
   expect(within(within(form).getByRole('list', { name: 'Najbliższe zajęcia grupy' })).getAllByRole('radio').map(radio => radio.checked))
-    .toEqual([true, false, false]);
+    .toEqual([true, false, false, false]);
+  expect(within(form).queryByLabelText('Data')).not.toBeInTheDocument();
   fireEvent.click(within(form).getByRole('radio', { name: 'Kilka terminów' }));
   // The group's next classes; the class clicked is chosen already.
   const next = within(form).getByRole('list', { name: 'Najbliższe zajęcia grupy' });
-  expect(within(next).getAllByRole('checkbox').map(box => box.checked)).toEqual([true, false, false]);
+  expect(within(next).getAllByRole('checkbox').map(box => box.checked)).toEqual([true, false, false, false]);
   fireEvent.click(within(next).getAllByRole('checkbox')[1]);
   fireEvent.change(within(form).getByLabelText('Zakres materiału (opcjonalnie)'), { target: { value: 'Rozdziały 1–3' } });
   fireEvent.click(within(form).getByRole('button', { name: 'Dodaj 2 terminy' }));
@@ -56,15 +58,21 @@ test('a free slot asks for the subject, offers a week later and only the groups 
   expect(within(form).getByRole('button', { name: 'Dodaj' })).toBeDisabled();
   fireEvent.change(within(form).getByLabelText('Przedmiot'), { target: { value: 'Fizyka' } });
   expect(within(form).getAllByRole('option', { name: /^Lk/ }).map(option => option.textContent)).toEqual(['Lk1']);
+  // Three terms (the slot clicked, a week and two weeks later), then "Własny termin", whose fields open only when chosen.
+  const offered = within(form).getByRole('list', { name: 'Ten termin, tydzień i dwa tygodnie później' });
+  expect(within(offered).getAllByRole('radio').map(radio => [radio.parentElement.textContent, radio.checked])).toEqual([
+    [expect.stringMatching(/24\.10/), true], [expect.stringMatching(/31\.10/), false], [expect.stringMatching(/7\.11/), false], ['Własny termin', false]]);
+  expect(within(form).queryByLabelText('Data')).not.toBeInTheDocument();
   fireEvent.click(within(form).getByRole('radio', { name: 'Kilka terminów' }));
   fireEvent.click(within(form).getByRole('checkbox', { name: /31\.10/ }));
-  fireEvent.click(within(form).getByRole('button', { name: 'Kolejny termin' }));
-  fireEvent.change(within(form).getAllByLabelText('Rodzaj terminu')[1], { target: { value: 'due' } });
+  fireEvent.click(within(form).getByRole('checkbox', { name: 'Własny termin' }));
+  fireEvent.click(within(within(form).getByRole('radiogroup', { name: 'Rodzaj terminu' })).getByRole('radio', { name: 'Do oddania' }));
+  fireEvent.change(within(form).getByLabelText('Data'), { target: { value: '2026-11-14' } });
   fireEvent.click(within(form).getByRole('button', { name: 'Dodaj 3 terminy' }));
   await waitFor(() => expect(itemActions.create).toHaveBeenCalled());
   const items = itemActions.create.mock.calls[0][0];
   expect(items.map(item => [item.subject, item.group, item.timing, item.date, item.start_time ?? item.due_time])).toEqual([
-    ['Fizyka', 'Lk1', 'slot', '2026-10-31', '09:00'], ['Fizyka', 'Lk1', 'slot', '2026-10-24', '09:00'], ['Fizyka', 'Lk1', 'due', '2026-11-14', null]]);
+    ['Fizyka', 'Lk1', 'slot', '2026-10-24', '09:00'], ['Fizyka', 'Lk1', 'slot', '2026-10-31', '09:00'], ['Fizyka', 'Lk1', 'due', '2026-11-14', null]]);
 });
 
 test('students without a role add private entries; a click on free time opens a 90-minute slot', () => {
@@ -145,8 +153,9 @@ test('a free slot suggests the subject\'s next classes of the chosen group and k
   fireEvent.change(within(form).getByLabelText('Przedmiot'), { target: { value: 'Fizyka' } });
   // The subject in the colour it has in the plan.
   expect(within(form).getByLabelText('Przedmiot')).toHaveStyle({ color: '#38bdf8' });
-  // All groups at once: the lecture, which lasts 2 h 15 min.
-  expect(within(within(form).getByRole('list', { name: 'Najbliższe zajęcia przedmiotu' })).getAllByRole('radio')).toHaveLength(1);
+  // All groups at once: the lecture (and "Własny termin"); it lasts 2 h 15 min.
+  expect(within(within(form).getByRole('list', { name: 'Najbliższe zajęcia przedmiotu' })).getAllByRole('radio')).toHaveLength(2);
+  fireEvent.click(within(form).getByRole('radio', { name: 'Własny termin' }));
   expect(within(form).getByLabelText('Koniec')).toHaveValue('11:15');
   fireEvent.change(within(form).getByLabelText('Grupa'), { target: { value: 'Lk2' } });
   const next = within(form).getByRole('list', { name: 'Najbliższe zajęcia przedmiotu' });
@@ -156,6 +165,7 @@ test('a free slot suggests the subject\'s next classes of the chosen group and k
   fireEvent.change(within(form).getByLabelText('Początek'), { target: { value: '12:00' } });
   expect(within(form).getByLabelText('Koniec')).toHaveValue('13:30');
   fireEvent.click(within(next).getByRole('radio', { name: /27\.10/ }));
+  expect(within(form).queryByLabelText('Koniec')).not.toBeInTheDocument();
   fireEvent.click(within(form).getByRole('button', { name: 'Dodaj' }));
   await waitFor(() => expect(itemActions.create).toHaveBeenCalledWith([
     { scope: 'group', faculty: 'EiAs3', kind: 'kolokwium', title: 'Kolokwium', details: null, timing: 'class', event_id: 'ev-2' }]));
