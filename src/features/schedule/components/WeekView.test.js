@@ -72,13 +72,22 @@ test('a date outside the plan is refused before saving and a failed save keeps t
   // Cancelling forgets the edit; the room is changed in the same form.
   fireEvent.click(screen.getByRole('button', {name: 'Zmień'}));
   expect(screen.getByLabelText('Data')).toHaveValue('2026-10-19');
-  // Rooms and instructors are chosen from the list of all plans (places without a number, like BHP, are not rooms).
+  // Rooms and instructors are typed in with suggestions from all plans (places without a number, like BHP, are not rooms).
   const room = screen.getByRole('combobox', {name: 'Sala'});
+  expect(room).toHaveValue('A-101');
+  fireEvent.change(room, {target: {value: 'c'}});
   await screen.findByRole('option', {name: 'C3'});
-  expect(within(room).getAllByRole('option').map(option => option.textContent)).toEqual(['Bez sali', 'A-101', 'C1', 'C3']);
-  expect(within(screen.getByRole('combobox', {name: 'Prowadzący'})).getAllByRole('option').map(option => option.textContent))
-    .toEqual(['Nie podano', 'Jan Kowalski', 'dr A. Nowak']);
-  fireEvent.change(room, {target: {value: 'C3'}});
+  expect(within(screen.getByRole('listbox', {name: 'Podpowiedzi: Sala'})).getAllByRole('option').map(option => option.textContent))
+    .toEqual(['C1', 'C3']);
+  fireEvent.click(screen.getByRole('option', {name: 'C3'}));
+  expect(room).toHaveValue('C3');
+  expect(screen.queryByRole('listbox', {name: 'Podpowiedzi: Sala'})).not.toBeInTheDocument();
+  // The arrows and Enter choose a suggestion without sending the form.
+  const teacher = screen.getByRole('combobox', {name: 'Prowadzący'});
+  fireEvent.change(teacher, {target: {value: 'nowak'}});
+  fireEvent.keyDown(teacher, {key: 'Enter'});
+  expect(teacher).toHaveValue('dr A. Nowak');
+  fireEvent.change(teacher, {target: {value: 'Jan Kowalski'}});
   fireEvent.click(screen.getByRole('button', {name: 'Zapisz'}));
   await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id:'occurrence-a',operation:'upsert',action:'modify',
     patch:{room:'C3'},reason:null}));

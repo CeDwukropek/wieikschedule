@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, CalendarPlus, Clock, MapPin, UserRound, MessageSquare, User, Users } from 'lucide-react';
 import ChoiceSlider, { InfoTip } from '../schedule/components/ChoiceSlider';
 import { useDirectory } from '../browse/useDirectory';
+import DirectoryInput from '../browse/DirectoryInput';
 import { isRoom } from '../browse/browseLogic';
 import { addMinutes, normalizeTime, timeToMinutes } from '../../utils/time';
 import { describeSlot, mergePatch, moveChanges, shortDate, startTimeOptions, validateMove } from './planEditing';
@@ -25,17 +26,6 @@ const scopeInfo = forGroup => 'Tylko te zajęcia: zmiana dotyczy tego jednego te
   + `Wszystkie: całej serii, również wcześniejszych terminów. ${forGroup ? 'Zmiana trafi do planu całej grupy.' : 'Zmiany widzisz tylko Ty, w swoim planie.'}`;
 const AUDIENCE_INFO = 'Dla siebie: zmiana tylko w Twoim planie. Dla grupy: zmiana w planie każdego, kto ma te zajęcia (także bez '
   + 'logowania). Czyjaś prywatna zmiana tych zajęć ma u niej pierwszeństwo. Dla grupy mogą zmieniać tylko starości.';
-// A room or instructor is chosen from the list of all plans (no typing); the class's own value is always there, also
-// while the list loads or when it is missing from it.
-function PickList({ label, value, names, empty, directory, onChange }) {
-  const options = [...new Set([value, ...names].filter(Boolean))];
-  return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>
-    <option value="">{empty}</option>
-    {options.map(name => <option key={name} value={name}>{name}</option>)}
-    {!directory.data && <option disabled value="\u0000">{directory.error ? 'Lista jest chwilowo niedostępna' : 'Wczytywanie listy…'}</option>}
-  </select>;
-}
-
 // The class's fields a change starts from, from a row of the plan.
 const shapeOf = row => ({ date: row.date, start_time: row.start_time, duration_min: row.duration_min, room: row.room || '',
   instructor: row.instructor || '' });
@@ -195,10 +185,10 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
           <input type="time" aria-label="Koniec" step="300" value={form.end} onChange={event => setForm({ ...form, end: event.target.value })}/>
           <datalist id={`${id}-times`}>{times.map(time => <option key={time} value={time}/>)}</datalist>
         </dd></div>
-        <div><dt title="Sala"><MapPin size={17} aria-hidden="true"/><span className="sr-only">Sala</span></dt><dd><PickList label="Sala" value={form.room} names={roomNames} empty="Bez sali"
-          directory={directory} onChange={room => setForm({ ...form, room })}/></dd></div>
-        <div><dt title="Prowadzący"><UserRound size={17} aria-hidden="true"/><span className="sr-only">Prowadzący</span></dt><dd><PickList label="Prowadzący" value={form.instructor} names={teacherNames} empty="Nie podano"
-          directory={directory} onChange={instructor => setForm({ ...form, instructor })}/></dd></div>
+        <div><dt title="Sala"><MapPin size={17} aria-hidden="true"/><span className="sr-only">Sala</span></dt><dd><DirectoryInput label="Sala" value={form.room} names={roomNames} placeholder="Sala, np. A3 (puste: bez sali)"
+          loading={!directory.data} error={directory.error} onChange={room => setForm(previous => ({ ...previous, room }))}/></dd></div>
+        <div><dt title="Prowadzący"><UserRound size={17} aria-hidden="true"/><span className="sr-only">Prowadzący</span></dt><dd><DirectoryInput label="Prowadzący" value={form.instructor} names={teacherNames} placeholder="Nazwisko, np. Pawlik"
+          loading={!directory.data} error={directory.error} onChange={instructor => setForm(previous => ({ ...previous, instructor }))}/></dd></div>
         <div><dt title="Powód"><MessageSquare size={17} aria-hidden="true"/><span className="sr-only">Powód</span></dt><dd><textarea aria-label="Powód (opcjonalnie)" placeholder="Opcjonalnie" rows={2}
           value={form.reason} maxLength={1000} onChange={event => setForm({ ...form, reason: event.target.value })}/></dd></div>
       </dl>
