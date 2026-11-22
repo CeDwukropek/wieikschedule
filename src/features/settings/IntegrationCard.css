@@ -1,5 +1,7 @@
 /* Integrations tab: one card per integration, its state in the header */
 .integration-cards { display: flex; flex-direction: column; gap: 8px; }
+/* The cards belong to the integrations tab only; display: flex would otherwise show them under the plan tab too. */
+.integration-cards[hidden] { display: none; }
 .integration-card { border: 1px solid #2f2f2f; border-radius: 10px; background: #1b1b1b; }
 .integration-card[open] { border-color: #404040; }
 .integration-card > summary { display: flex; flex-direction: column; gap: 2px; padding: 12px 36px 12px 14px; cursor: pointer;

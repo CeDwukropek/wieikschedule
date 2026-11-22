@@ -30,7 +30,6 @@
 /* An instructor or room in the class details opens their plan */
 .event-details-browse { display: block; text-align: left; color: #7dd3fc; text-decoration: underline; text-underline-offset: 2px; }
 .event-details-browse:hover { color: #bae6fd; }
-.event-details-subject { margin-top: 4px; font-size: 13px; }
 
 /* Free rooms */
 .free-rooms { display: flex; flex-direction: column; gap: 10px; }

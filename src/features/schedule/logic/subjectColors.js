@@ -36,3 +36,12 @@ export function subjectNames(subjects = {}, events = []) {
   return [...new Set(Object.entries(subjects || {}).filter(([code]) => taught.has(code)).map(([, subject]) => subject.name)
     .filter(Boolean))].sort((a, b) => a.localeCompare(b, "pl"));
 }
+
+// A subject's colour as text on the dark background: the light (400) shade of its Tailwind colour, or the person's own hex.
+const TEXT_SHADES = { red: "#f87171", orange: "#fb923c", amber: "#fbbf24", yellow: "#facc15", green: "#4ade80", emerald: "#34d399",
+  teal: "#2dd4bf", cyan: "#22d3ee", sky: "#38bdf8", blue: "#60a5fa", indigo: "#818cf8", violet: "#a78bfa", purple: "#c084fc",
+  fuchsia: "#e879f9", pink: "#f472b6", rose: "#fb7185", gray: "#9ca3af" };
+export function subjectTextColor(color) {
+  if (isCustomColor(color)) return color.toLowerCase();
+  return TEXT_SHADES[String(color || "").match(/^bg-([a-z]+)-\d+$/)?.[1]] || null;
+}

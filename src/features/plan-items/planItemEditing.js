@@ -63,6 +63,31 @@ function classOn(planEvents, ev, date, scheduleId) {
   return found ? classTerm(found) : null;
 }
 
+// The next classes of a subject from a date on: of one group (null: the classes for all its groups at once, such as
+// lectures), or of any group when anyGroup is set (one's own plan has only one's own groups). No group (undefined): none.
+export function subjectTerms(events, { subject, group, anyGroup = false, from, count = 6 }) {
+  if (!subject || (!anyGroup && group === undefined)) return [];
+  const seen = new Set();
+  return events.filter(ev => ev.event_id && !ev.ghost && !ev.planItem && ev.dates?.length && isActive(ev) && ev.title === subject
+      && ev.dates[0] >= from && (anyGroup || classGroup(ev) === group))
+    .map(classTerm).sort((a, b) => `${a.date} ${a.start}`.localeCompare(`${b.date} ${b.start}`))
+    .filter(term => !seen.has(term.event_id) && seen.add(term.event_id)).slice(0, count);
+}
+
+// How long a subject's classes usually last (minutes): those of the group if it has any (lectures often last longer
+// than labs), else of the whole subject. group undefined: any classes of the subject.
+export function subjectDuration(events, subject, group) {
+  if (!subject) return null;
+  const all = events.filter(ev => ev.title === subject && !ev.planItem && !ev.ghost && isActive(ev) && ev.start && ev.end);
+  const own = group === undefined ? all : all.filter(ev => classGroup(ev) === group);
+  const counts = new Map();
+  for (const ev of own.length ? own : all) {
+    const minutes = timeToMinutes(ev.end) - timeToMinutes(ev.start);
+    if (minutes > 0) counts.set(minutes, (counts.get(minutes) || 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0]?.[0] ?? null;
+}
+
 // Exactly one and two weeks later, same time.
 export const laterTerms = (term, weeks = [1, 2]) => weeks.map(week => ({ ...term, key: `${term.timing}:${addDays(term.date, 7 * week)}:${term.start || term.due_time || ""}`,
   date: addDays(term.date, 7 * week), custom: false }));

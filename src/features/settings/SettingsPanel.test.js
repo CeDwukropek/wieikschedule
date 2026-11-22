@@ -33,7 +33,7 @@ describe("AI and integrations live in their own tab", () => {
   beforeEach(() => { process.env.REACT_APP_PERSONAL_SCHEDULE = "true"; localStorage.clear(); });
   afterEach(() => { process.env.REACT_APP_PERSONAL_SCHEDULE = flags.personal; });
 
-  test("the plan tab is the default and the chosen tab is remembered", () => {
+  test("the plan tab opens every time, also after the integrations tab was used", () => {
     const props = { panelState: panel, filterState: filters,
       scheduleState: { currentSchedule: "EiAs3", timetableOptions: [{ id: "EiAs3", name: "EiAs3" }] } };
     const { unmount } = render(<SettingsPanel {...props} />);
@@ -46,7 +46,18 @@ describe("AI and integrations live in their own tab", () => {
     expect(screen.getByRole("tabpanel", { name: "Integracje" })).toBeVisible();
     unmount();
     render(<SettingsPanel {...props} />);
-    expect(screen.getByRole("tab", { name: "Integracje" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Plan" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  test("\"Mój plan\" opens from the plan tab with the number of changes", () => {
+    const onOpen = jest.fn();
+    render(<SettingsPanel panelState={panel} filterState={filters} viewState={{ myPlan: { count: 3, proposals: 1, onOpen } }}
+      scheduleState={{ currentSchedule: "EiAs3", timetableOptions: [] }} />);
+    const button = screen.getByRole("button", { name: /Moje zmiany w planie/ });
+    expect(button).toHaveTextContent("3");
+    expect(button).toHaveTextContent("1 do zatwierdzenia");
+    fireEvent.click(button);
+    expect(onOpen).toHaveBeenCalled();
   });
 
   test("without AI features there are no tabs", () => {

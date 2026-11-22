@@ -3,7 +3,7 @@ import { toIsoDate } from '../../utils/date';
 import { seriesOf } from '../schedule/data/normalizeTimetable';
 import { mergePatch, moveChanges } from './planEditing';
 
-export const SERIES_SCOPES = { one: 'Tylko te zajęcia', following: 'Te i następne', all: 'Wszystkie w serii' };
+export const SERIES_SCOPES = { one: 'Tylko te zajęcia', following: 'Te i następne', all: 'Wszystkie' };
 export const MAX_SERIES_CHANGES = 40;
 
 const addDays = (iso, days) => {
@@ -38,7 +38,7 @@ function memberChange({ row, override }, patch, reason) {
 }
 
 // One private change applied to the chosen occurrences. A move shifts each occurrence by the same number of days
-// from where it is now, and takes the new hours or instructor only if they were changed by hand.
+// from where it is now, and takes the new hours, room or instructor only if they were changed by hand.
 export function seriesChanges(kind, members, { current, form = {}, reason } = {}) {
   if (kind === 'cancel') return members.filter(member => member.override?.action !== 'cancel')
     .map(member => ({ event_id: member.row.id, operation: 'upsert', action: 'cancel', patch: {}, reason: reason || null }));
@@ -49,10 +49,12 @@ export function seriesChanges(kind, members, { current, form = {}, reason } = {}
   const shift = daysBetween(current.date, form.date);
   const hours = form.start !== normalizeTime(current.start_time) || form.end !== addMinutes(normalizeTime(current.start_time), current.duration_min);
   const teacher = form.instructor !== undefined && form.instructor.trim() !== (current.instructor || '');
+  const room = form.room !== undefined && (form.room || '') !== (current.room || '');
   return active.map(member => {
     const now = effectiveOf(member), start = hours ? form.start : normalizeTime(now.start_time);
-    const changes = moveChanges(now, { date: addDays(now.date, shift), start, end: hours ? form.end : addMinutes(start, now.duration_min),
-      ...(teacher ? { instructor: form.instructor } : {}) });
+    const changes = { ...moveChanges(now, { date: addDays(now.date, shift), start, end: hours ? form.end : addMinutes(start, now.duration_min),
+      ...(teacher ? { instructor: form.instructor } : {}) }),
+      ...(room && (now.room || '') !== (form.room || '') ? { room: form.room || null } : {}) };
     return Object.keys(changes).length ? memberChange(member, mergePatch(member.override, changes), reason) : null;
   }).filter(Boolean);
 }
