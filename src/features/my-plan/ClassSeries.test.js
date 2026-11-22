@@ -28,9 +28,13 @@ test('a series of private changes: cancel this and the following ones at once', 
   const actions = planActions();
   render(<WeekView events={[tile]} viewedWeekStart={monday} planActions={actions}/>);
   open();
-  const scope = screen.getByRole('group', { name: 'Dotyczy' });
-  expect(within(scope).getAllByRole('radio').map(radio => radio.parentElement.textContent))
-    .toEqual(['Tylko te zajęcia', 'Te i następne (3)', 'Wszystkie w serii (3)']);
+  // Whom the change concerns is asked only once it is chosen.
+  expect(screen.queryByRole('radiogroup', { name: 'Dotyczy' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Odwołaj u mnie' }));
+  const scope = screen.getByRole('radiogroup', { name: 'Dotyczy' });
+  expect(within(scope).getAllByRole('radio').map(radio => [radio.textContent, radio.getAttribute('aria-checked')]))
+    .toEqual([['Tylko te zajęcia', 'true'], ['Te i następne (3)', 'false'], ['Wszystkie (3)', 'false']]);
+  expect(screen.getByRole('button', { name: 'Co zmienia: Dotyczy' })).toBeInTheDocument();
   fireEvent.click(within(scope).getByRole('radio', { name: /Te i następne/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Odwołaj u mnie (3)' }));
   await waitFor(() => expect(actions.applyBatch).toHaveBeenCalledWith(['e1', 'e2', 'e3'].map(event_id =>
@@ -42,8 +46,8 @@ test('moving a series shifts every class and names the dates with collisions', a
   const actions = planActions({ conflictsFor: (id, { date }) => (date === '2026-11-11' ? [{ title: 'Analiza', start: '09:00', end: '10:30' }] : []) });
   render(<WeekView events={[tile]} viewedWeekStart={monday} planActions={actions}/>);
   open();
-  fireEvent.click(screen.getByRole('button', { name: 'Przenieś' }));
-  fireEvent.click(screen.getByRole('radio', { name: /Wszystkie w serii/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Zmień' }));
+  fireEvent.click(screen.getByRole('radio', { name: /Wszystkie/ }));
   fireEvent.change(screen.getByLabelText('Data'), { target: { value: '2026-11-04' } });
   expect(screen.getByRole('status')).toHaveTextContent('Kolizje w 1 terminie: śr 11.11');
   fireEvent.click(screen.getByRole('button', { name: 'Zapisz (3)' }));

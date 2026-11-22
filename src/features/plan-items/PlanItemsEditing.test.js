@@ -29,7 +29,12 @@ test('a starosta adds a kolokwium on this and the next class from the class dial
   fireEvent.click(screen.getByRole('button', { name: /Modelowanie.*Pokaż szczegóły/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj kolokwium lub termin' }));
   const form = screen.getByRole('form', { name: 'Nowy termin' });
-  expect(within(form).getByRole('radio', { name: 'Grupa Lk1' })).toBeChecked();
+  expect(within(form).getByRole('radio', { name: 'Dla grupy Lk1' })).toBeChecked();
+  // One term by default: the class clicked.
+  expect(within(form).getByRole('radio', { name: 'Jeden termin' })).toBeChecked();
+  expect(within(within(form).getByRole('list', { name: 'Najbliższe zajęcia grupy' })).getAllByRole('radio').map(radio => radio.checked))
+    .toEqual([true, false, false]);
+  fireEvent.click(within(form).getByRole('radio', { name: 'Kilka terminów' }));
   // The group's next classes; the class clicked is chosen already.
   const next = within(form).getByRole('list', { name: 'Najbliższe zajęcia grupy' });
   expect(within(next).getAllByRole('checkbox').map(box => box.checked)).toEqual([true, false, false]);
@@ -51,6 +56,7 @@ test('a free slot asks for the subject, offers a week later and only the groups 
   expect(within(form).getByRole('button', { name: 'Dodaj' })).toBeDisabled();
   fireEvent.change(within(form).getByLabelText('Przedmiot'), { target: { value: 'Fizyka' } });
   expect(within(form).getAllByRole('option', { name: /^Lk/ }).map(option => option.textContent)).toEqual(['Lk1']);
+  fireEvent.click(within(form).getByRole('radio', { name: 'Kilka terminów' }));
   fireEvent.click(within(form).getByRole('checkbox', { name: /31\.10/ }));
   fireEvent.click(within(form).getByRole('button', { name: 'Kolejny termin' }));
   fireEvent.change(within(form).getAllByLabelText('Rodzaj terminu')[1], { target: { value: 'due' } });
@@ -78,6 +84,7 @@ test('students without a role add private entries; a click on free time opens a 
   render(<PlanItemDialog draft={{ term: { key: 's', timing: 'slot', date: '2026-10-20', start: '09:00', end: '10:30' }, faculty: 'EiAs3' }}
     actions={actions({ roles: [] })} onClose={() => {}}/>);
   expect(screen.queryByRole('radio', { name: 'Dla grupy' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('radiogroup', { name: 'Dla kogo' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Dodaj' })).toBeEnabled();
 });
 
@@ -110,6 +117,7 @@ test('a class that already has such an entry is marked, also when hidden, and a 
     itemActions={actions({ items: [hidden], show, create })}/>);
   fireEvent.click(screen.getByRole('button', { name: /Modelowanie.*Pokaż szczegóły/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj kolokwium lub termin' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Kilka terminów' }));
   const next = screen.getByRole('list', { name: 'Najbliższe zajęcia grupy' });
   const [taken, free] = within(next).getAllByRole('checkbox');
   expect([taken.disabled, taken.checked, free.checked]).toEqual([true, false, false]);
@@ -121,4 +129,47 @@ test('a class that already has such an entry is marked, also when hidden, and a 
   expect(within(next).getAllByRole('checkbox')[0]).toBeChecked();
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Ukryte u mnie');
+});
+
+test('a free slot suggests the subject\'s next classes of the chosen group and keeps the length of its classes', async () => {
+  const schedule = [lab(1, '2026-10-26', { title: 'Fizyka', groups: ['Lk1'], start: '10:00', end: '11:30' }),
+    lab(2, '2026-10-27', { title: 'Fizyka', groups: ['Lk2'], start: '12:00', end: '13:30' }),
+    lab(3, '2026-10-28', { title: 'Fizyka', groups: [], type: 'Wykład', start: '08:00', end: '10:15' })];
+  const itemActions = actions({ roles: [{ role: 'starosta', faculty: 'EiAs3' }], scheduleFor: () => schedule,
+    colorOf: name => (name === 'Fizyka' ? 'bg-sky-500' : undefined) });
+  const term = { key: 'slot', timing: 'slot', date: '2026-10-24', start: '09:00', end: '10:30' };
+  render(<PlanItemDialog draft={{ term, faculty: 'EiAs3' }} actions={itemActions} onClose={() => {}}/>);
+  const form = screen.getByRole('form', { name: 'Nowy termin' });
+  expect(within(form).getByRole('radio', { name: 'Dla grupy' })).toBeChecked();
+  expect(within(form).getByRole('button', { name: 'Co zmienia: Dla kogo' })).toBeInTheDocument();
+  fireEvent.change(within(form).getByLabelText('Przedmiot'), { target: { value: 'Fizyka' } });
+  // The subject in the colour it has in the plan.
+  expect(within(form).getByLabelText('Przedmiot')).toHaveStyle({ color: '#38bdf8' });
+  // All groups at once: the lecture, which lasts 2 h 15 min.
+  expect(within(within(form).getByRole('list', { name: 'Najbliższe zajęcia przedmiotu' })).getAllByRole('radio')).toHaveLength(1);
+  expect(within(form).getByLabelText('Koniec')).toHaveValue('11:15');
+  fireEvent.change(within(form).getByLabelText('Grupa'), { target: { value: 'Lk2' } });
+  const next = within(form).getByRole('list', { name: 'Najbliższe zajęcia przedmiotu' });
+  expect(next).toHaveTextContent('27.10');
+  expect(next).not.toHaveTextContent('28.10');
+  expect(within(form).getByLabelText('Koniec')).toHaveValue('10:30');
+  fireEvent.change(within(form).getByLabelText('Początek'), { target: { value: '12:00' } });
+  expect(within(form).getByLabelText('Koniec')).toHaveValue('13:30');
+  fireEvent.click(within(next).getByRole('radio', { name: /27\.10/ }));
+  fireEvent.click(within(form).getByRole('button', { name: 'Dodaj' }));
+  await waitFor(() => expect(itemActions.create).toHaveBeenCalledWith([
+    { scope: 'group', faculty: 'EiAs3', kind: 'kolokwium', title: 'Kolokwium', details: null, timing: 'class', event_id: 'ev-2' }]));
+});
+
+test('a group starosta is offered only subjects and groups they may write for', () => {
+  const itemActions = actions({ subjectsFor: () => [{ subject: 'Fizyka', groups: ['Lk2'] }, { subject: 'Modelowanie', groups: ['Lk1', 'Lk2'] }] });
+  const term = { key: 'slot', timing: 'slot', date: '2026-10-24', start: '09:00', end: '10:30' };
+  render(<PlanItemDialog draft={{ term, faculty: 'EiAs3' }} actions={itemActions} onClose={() => {}}/>);
+  const subjects = () => within(screen.getByLabelText('Przedmiot')).getAllByRole('option').map(option => option.textContent);
+  expect(subjects()).toEqual(['Wybierz przedmiot', 'Modelowanie']);
+  fireEvent.change(screen.getByLabelText('Przedmiot'), { target: { value: 'Modelowanie' } });
+  expect(within(screen.getByLabelText('Grupa')).getAllByRole('option').map(option => option.textContent)).toEqual(['Lk1']);
+  // A private entry can be about any subject.
+  fireEvent.click(screen.getByRole('radio', { name: 'Dla siebie' }));
+  expect(subjects()).toEqual(['Bez przedmiotu', 'Fizyka', 'Modelowanie']);
 });

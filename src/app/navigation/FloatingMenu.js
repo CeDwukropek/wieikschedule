@@ -66,6 +66,7 @@ export default function FloatingMenu({
     setDimPast,
     onRedeemInvite,
     entryReminders,
+    myPlan,
   } = viewState || {};
   const {
     studentGroups,
@@ -626,6 +627,7 @@ export default function FloatingMenu({
           } : undefined,
           onRedeemInvite,
           entryReminders,
+          myPlan: myPlan && { ...myPlan, onOpen: () => { setIsSettingsOpen(false); myPlan.onOpen(); } },
         }}
         filterState={{
           schedule,

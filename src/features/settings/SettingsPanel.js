@@ -1,6 +1,6 @@
 import { selectExportEvents } from "../schedule/export/selectExportEvents";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRight, Book, CalendarOff, CalendarRange, History, X } from "lucide-react";
+import { ChevronRight, Book, CalendarOff, CalendarRange, History, NotebookPen, X } from "lucide-react";
 import GroupFiltersPanel from "../schedule/components/GroupFiltersPanel";
 import GroupSetManager from "../schedule/components/GroupSetManager";
 import ViewModeSwitch from "./ViewModeSwitch";
@@ -18,8 +18,6 @@ import SubjectColors from './SubjectColors';
 import IntegrationCard from './IntegrationCard';
 import { KINDS } from '../plan-items/planItemLogic';
 
-const TAB_KEY = "wieikschedule.settingsTab";
-const readTab = () => { try { return localStorage.getItem(TAB_KEY) === "ai" ? "ai" : "plan"; } catch { return "plan"; } };
 const SECTION_TITLE = "text-xs font-semibold uppercase tracking-[0.12em] text-neutral-400";
 
 export default function SettingsPanel({
@@ -32,11 +30,11 @@ export default function SettingsPanel({
 }) {
   const { isOpen, onToggle, mobileFloatingClose = false } = panelState || {};
   const panelRef = useRef(null);
-  // AI and integrations are configured rarely; the plan tab is the everyday one.
+  // AI and integrations are configured rarely; the plan tab is the everyday one and opens every time, signed in or not.
   const aiAvailable = process.env.REACT_APP_PERSONAL_SCHEDULE === 'true' || process.env.REACT_APP_CALENDAR_SYNC === 'true';
-  const [tab, setTabState] = useState(readTab);
+  const [tab, setTab] = useState("plan");
   const activeTab = aiAvailable ? tab : "plan";
-  const setTab = value => { setTabState(value); try { localStorage.setItem(TAB_KEY, value); } catch { /* per-viewer convenience only */ } };
+  useEffect(() => { if (isOpen) setTab("plan"); }, [isOpen]);
   // A broken Odysseus connection marks the integrations tab.
   const [integrationTone, setIntegrationTone] = useState("idle");
   const onIntegrationStatus = useCallback(tone => setIntegrationTone(tone), []);
@@ -111,6 +109,7 @@ export default function SettingsPanel({
     entryFilter,
     onRedeemInvite,
     entryReminders,
+    myPlan,
   } = viewState || {};
   const {
     schedule,
@@ -226,8 +225,21 @@ export default function SettingsPanel({
 
             <div id="settings-panel-plan" role={aiAvailable ? "tabpanel" : undefined} aria-labelledby={aiAvailable ? "settings-tab-plan" : undefined}
               hidden={activeTab !== "plan"} className="space-y-6">
+            {/* One's private changes of the plan (moved, cancelled and added classes). */}
+            {myPlan && <section className="space-y-2">
+              <h3 className={SECTION_TITLE}>Mój plan</h3>
+              <button type="button" aria-haspopup="dialog" onClick={myPlan.onOpen}
+                className="flex w-full items-center gap-2 rounded bg-neutral-800 px-3 py-2 text-left text-sm text-neutral-100 hover:bg-neutral-700">
+                <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="flex-1">Moje zmiany w planie</span>
+                {myPlan.count > 0 && <span className="plan-panel-count">{myPlan.count}</span>}
+                {myPlan.proposals > 0 && <span className="plan-panel-count plan-panel-count-attention">{myPlan.proposals} do zatwierdzenia</span>}
+              </button>
+              <p className="text-xs text-neutral-400">Przeniesione, odwołane i dopisane zajęcia — widzisz je tylko Ty.</p>
+            </section>}
+
             {/* Schedule selector */}
-            <section className="space-y-2">
+            <section className={`space-y-2 ${myPlan ? "border-t border-neutral-800 pt-4" : ""}`}>
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="settings-schedule" className={SECTION_TITLE}>Plan zajęć</label>
                 {timetableDataSourceLabel ? (

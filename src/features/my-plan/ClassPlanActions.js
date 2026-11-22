@@ -1,5 +1,6 @@
-import { useId, useMemo, useState } from 'react';
-import { MoveRight, DoorOpen, Ban, RotateCcw, Trash2, AlertTriangle } from 'lucide-react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { Pencil, Ban, RotateCcw, Trash2, AlertTriangle, CalendarDays, Clock, MapPin, UserRound, MessageSquare } from 'lucide-react';
+import ChoiceSlider from '../schedule/components/ChoiceSlider';
 import { addMinutes, normalizeTime, timeToMinutes } from '../../utils/time';
 import { describeSlot, mergePatch, moveChanges, shortDate, startTimeOptions, validateMove } from './planEditing';
 import { chooseMembers, MAX_SERIES_CHANGES, resultsOf, seriesChanges, SERIES_SCOPES } from './seriesChanges';
@@ -16,33 +17,43 @@ export function EntriesNotice({ entries }) {
 }
 
 // Private changes of a class occurrence, made from its details dialog; with a series, also of the following
-// occurrences or all of them, saved together.
-export default function ClassPlanActions({ ev, current, planActions, onDone, onBusyChange, entries = [] }) {
+// occurrences or all of them, saved together. "Zmień" makes the date, hours, room and instructor editable in place
+// (onEditingChange lets the dialog hide its read-only rows meanwhile); whom a change concerns is asked only then.
+const SCOPE_INFO = 'Tylko te zajęcia: zmiana dotyczy tego jednego terminu. Te i następne: także późniejszych zajęć z tej serii. '
+  + 'Wszystkie: całej serii, również wcześniejszych terminów. Zmiany widzisz tylko Ty, w swoim planie.';
+
+export default function ClassPlanActions({ ev, current, planActions, onDone, onBusyChange, onEditingChange, entries = [] }) {
   const id = useId();
   const override = planActions.overrideFor(ev.event_id);
   const original = override?.action === 'modify' ? override.events : null;
   const isAdded = ev.origin === 'added' && ev.added_event_id;
-  const [mode, setMode] = useState('view');
+  // view | change | cancel | restore
+  const [mode, setModeState] = useState('view');
   const [busy, setBusyState] = useState(false), [error, setError] = useState('');
   const start0 = normalizeTime(current.start_time);
-  const [form, setForm] = useState({ date: current.date, start: start0, end: addMinutes(start0, current.duration_min),
+  const initial = () => ({ date: current.date, start: start0, end: addMinutes(start0, current.duration_min),
     room: current.room || '', instructor: current.instructor || '', reason: override?.reason || '' });
+  const [form, setForm] = useState(initial);
   const times = useMemo(() => startTimeOptions(planActions.startTimes.map(time => ({ start_time: time })), start0),
     [planActions.startTimes, start0]);
   // The university series of this class; a scope other than "Tylko te zajęcia" changes several occurrences at once.
   const members = useMemo(() => (isAdded || !planActions.seriesFor ? [] : planActions.seriesFor(ev)), [isAdded, planActions, ev]);
+  const hasSeries = members.length > 1;
   const [which, setWhich] = useState('one');
   const chosen = which === 'one' ? [] : chooseMembers(members, ev.event_id, which);
   const series = which !== 'one';
-  const plan = kind => seriesChanges(kind, chosen, { current, form: { ...form, room: form.room.trim() }, reason: form.reason.trim() });
-  const conflicts = mode === 'move' && !series && !validateMove(form, planActions.bounds)
+  const edited = { ...form, room: form.room.trim() };
+  const plan = kind => seriesChanges(kind, chosen, { current, form: edited, reason: form.reason.trim() });
+  const conflicts = mode === 'change' && !series && !validateMove(form, planActions.bounds)
     ? planActions.conflictsFor(ev.event_id, form) : [];
-  const moves = mode === 'move' && series ? plan('move') : [];
+  const moves = mode === 'change' && series ? plan('move') : [];
   const targets = resultsOf(moves, chosen);
   const seriesMoveError = targets.map(target => validateMove(target, planActions.bounds) && `${shortDate(target.date)}: ${validateMove(target, planActions.bounds)}`).find(Boolean) || '';
-  const seriesConflicts = mode === 'move' && series && !seriesMoveError
+  const seriesConflicts = mode === 'change' && series && !seriesMoveError
     ? targets.filter(target => planActions.conflictsFor(target.event_id, target).length).map(target => shortDate(target.date)) : [];
 
+  const setMode = next => { setModeState(next); setError(''); if (next === 'view') { setWhich('one'); setForm(initial()); } };
+  useEffect(() => { onEditingChange?.(mode === 'change'); }, [mode, onEditingChange]);
   const setBusy = value => { setBusyState(value); onBusyChange?.(value); };
   const run = async action => {
     setBusy(true); setError('');
@@ -56,72 +67,87 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
     if (changes.length > MAX_SERIES_CHANGES) { setError(`Naraz można zmienić najwyżej ${MAX_SERIES_CHANGES} zajęć.`); return; }
     run(() => planActions.applyBatch(changes, message(changes.length)));
   };
+  const cancelOne = () => run(() => planActions.apply({ event_id: ev.event_id, operation: 'upsert', action: 'cancel', patch: {} }));
+  const restoreOne = () => run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }));
   // Changing the start keeps the length; the end can still be adjusted.
   const setStart = start => setForm(previous => ({ ...previous, start,
     end: addMinutes(start, timeToMinutes(previous.end) - timeToMinutes(previous.start)) }));
 
   const moveError = validateMove(form, planActions.bounds) || seriesMoveError;
-  const changes = moveChanges(current, form);
-  const scope = members.length > 1 && <fieldset className="plan-series-scope">
-    <legend>Dotyczy</legend>
-    {Object.entries(SERIES_SCOPES).map(([value, label]) => {
-      const count = value === 'one' ? 1 : chooseMembers(members, ev.event_id, value).length;
-      return <label key={value}><input type="radio" name={`${id}-scope`} checked={which === value} onChange={() => setWhich(value)}/>
-        {label}{value !== 'one' && ` (${count})`}</label>;
-    })}
-  </fieldset>;
+  const changes = { ...moveChanges(current, form), ...(edited.room !== (current.room || '') ? { room: edited.room || null } : {}) };
+  const scope = hasSeries && <ChoiceSlider label="Dotyczy" info={SCOPE_INFO} value={which} onChange={setWhich} disabled={busy} options={
+    Object.entries(SERIES_SCOPES).map(([value, label]) => ({ value,
+      label: value === 'one' ? label : `${label} (${chooseMembers(members, ev.event_id, value).length})` }))}/>;
+  const back = <button type="button" className="plan-action" disabled={busy} onClick={() => setMode('view')}>Anuluj</button>;
 
   if (ev.ghost) return <div className="event-details-actions">
     <EntriesNotice entries={entries}/>
     <p>{ev.ghost === 'cancelled' ? 'Te zajęcia są odwołane tylko w Twoim planie.' : `Zajęcia przeniesiono na ${describeSlot(ev.movedTo)}.`}</p>
-    <button type="button" className="event-details-edit" disabled={busy} onClick={() => run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }))}>
+    <button type="button" className="event-details-edit" disabled={busy} onClick={restoreOne}>
       <RotateCcw size={16}/>{ev.ghost === 'cancelled' ? 'Przywróć zajęcia' : 'Przywróć ten termin'}
     </button>
     {error && <p role="alert" className="event-details-error">{error}</p>}
   </div>;
 
-  return <div className="event-details-actions">
+  const restorable = override || members.some(member => member.override);
+  return <div className={`event-details-actions ${mode === 'change' ? 'is-changing' : ''}`}>
     {original && <p className="plan-original">Oryginalnie: {describeSlot(original)}</p>}
     <EntriesNotice entries={entries}/>
     {mode === 'view' && <>
-      {scope}
-      <p>{series ? `Zmiany dotyczą ${chosen.length} zajęć z tej serii i tylko Twojego planu.` : 'Zmiany dotyczą tylko tego wystąpienia i tylko Twojego planu.'}</p>
+      <p>Zmiany dotyczą tylko Twojego planu.</p>
       <div className="plan-action-grid">
-        <button type="button" className="event-details-edit" disabled={busy} onClick={() => setMode('move')}><MoveRight size={16}/>Przenieś</button>
+        <button type="button" className="event-details-edit" disabled={busy} onClick={() => setMode('change')}><Pencil size={16}/>Zmień</button>
         {isAdded
           ? <button type="button" className="event-details-remove" disabled={busy} onClick={() => run(() => planActions.removeAdded(ev.added_event_id))}><Trash2 size={16}/>Usuń z mojego planu</button>
-          : <button type="button" className="event-details-remove" disabled={busy} onClick={() => series
-            ? saveSeries('cancel', n => `Odwołano ${classes(n)} w Twoim planie.`)
-            : run(() => planActions.apply({ event_id: ev.event_id, operation: 'upsert', action: 'cancel', patch: {} }))}><Ban size={16}/>Odwołaj u mnie{series ? ` (${chosen.length})` : ''}</button>}
-        {(series ? chosen.some(member => member.override) : override) && <button type="button" className="plan-action" disabled={busy}
-          onClick={() => series ? saveSeries('restore', n => `Przywrócono plan uczelni dla ${n} zajęć.`)
-            : run(() => planActions.apply({ event_id: ev.event_id, operation: 'delete' }))}><RotateCcw size={16}/>Przywróć plan uczelni</button>}
+          : <button type="button" className="event-details-remove" disabled={busy} onClick={() => hasSeries ? setMode('cancel') : cancelOne()}><Ban size={16}/>Odwołaj u mnie</button>}
+        {restorable && <button type="button" className="plan-action" disabled={busy}
+          onClick={() => hasSeries ? setMode('restore') : restoreOne()}><RotateCcw size={16}/>Przywróć plan uczelni</button>}
       </div>
-      <details className="plan-more">
-        <summary>Więcej</summary>
-        <button type="button" className="plan-action" disabled={busy} onClick={() => setMode('room')}><DoorOpen size={16}/>Zmień salę</button>
-      </details>
     </>}
-    {mode === 'move' && <form className="plan-form" onSubmit={event => { event.preventDefault();
-      if (moveError) return;
-      if (series) saveSeries('move', n => `Przeniesiono ${classes(n)} w Twoim planie.`);
-      else if (Object.keys(changes).length) save(changes); }}>
+    {mode === 'cancel' && <>
       {scope}
-      {series && <p>Każde z wybranych zajęć przesunie się o tyle samo dni; nowe godziny dotyczą wszystkich, jeśli je zmienisz.</p>}
-      <div className="plan-form-row">
-        <label>Data<input type="date" value={form.date} min={planActions.bounds.min || undefined} max={planActions.bounds.max || undefined}
-          onChange={event => setForm({ ...form, date: event.target.value })}/></label>
-        <label>Początek<select value={form.start} onChange={event => setStart(event.target.value)}>
-          {(times.includes(form.start) ? times : [...times, form.start]).map(time => <option key={time} value={time}>{time}</option>)}
-        </select></label>
-        <label>Koniec<input type="time" step="300" value={form.end} onChange={event => setForm({ ...form, end: event.target.value })}/></label>
+      <p>{series ? `Odwołasz ${classes(chosen.length)} z tej serii, tylko w Twoim planie.` : 'Odwołasz tylko te zajęcia, tylko w Twoim planie.'}</p>
+      <div className="plan-form-buttons">
+        <button type="button" className="event-details-remove" disabled={busy} onClick={() => series
+          ? saveSeries('cancel', n => `Odwołano ${classes(n)} w Twoim planie.`) : cancelOne()}>
+          <Ban size={16}/>Odwołaj u mnie{series ? ` (${chosen.length})` : ''}</button>
+        {back}
       </div>
-      <details className="plan-more">
-        <summary>Więcej</summary>
-        <label>Inna godzina rozpoczęcia<input type="time" step="300" value={form.start} onChange={event => event.target.value && setStart(event.target.value)}/></label>
-        <label>Prowadzący<input value={form.instructor} maxLength={256} onChange={event => setForm({ ...form, instructor: event.target.value })}/></label>
-        <label>Powód (opcjonalnie)<textarea value={form.reason} maxLength={1000} onChange={event => setForm({ ...form, reason: event.target.value })}/></label>
-      </details>
+    </>}
+    {mode === 'restore' && <>
+      {scope}
+      <p>Wybrane zajęcia wrócą do planu uczelni.</p>
+      <div className="plan-form-buttons">
+        <button type="button" className="event-details-edit" disabled={busy || (!series && !override)} onClick={() => series
+          ? saveSeries('restore', n => `Przywrócono plan uczelni dla ${n} zajęć.`) : restoreOne()}>
+          <RotateCcw size={16}/>Przywróć plan uczelni{series ? ` (${chosen.filter(member => member.override).length})` : ''}</button>
+        {back}
+      </div>
+    </>}
+    {mode === 'change' && <form className="plan-form" aria-label="Zmiana zajęć" onSubmit={event => { event.preventDefault();
+      if (moveError) return;
+      if (series) saveSeries('move', n => `Zmieniono ${classes(n)} w Twoim planie.`);
+      else if (Object.keys(changes).length) save(changes); }}>
+      <dl className="event-details-list plan-change-list">
+        <div><dt><CalendarDays size={17}/>Data</dt><dd><input type="date" aria-label="Data" value={form.date}
+          min={planActions.bounds.min || undefined} max={planActions.bounds.max || undefined}
+          onChange={event => setForm({ ...form, date: event.target.value })}/></dd></div>
+        <div><dt><Clock size={17}/>Godzina</dt><dd className="plan-change-hours">
+          <input type="time" aria-label="Początek" step="300" list={`${id}-times`} value={form.start}
+            onChange={event => event.target.value && setStart(event.target.value)}/>
+          <span aria-hidden="true">–</span>
+          <input type="time" aria-label="Koniec" step="300" value={form.end} onChange={event => setForm({ ...form, end: event.target.value })}/>
+          <datalist id={`${id}-times`}>{times.map(time => <option key={time} value={time}/>)}</datalist>
+        </dd></div>
+        <div><dt><MapPin size={17}/>Sala</dt><dd><input aria-label="Sala" value={form.room} maxLength={256} placeholder="Puste pole usuwa salę"
+          onChange={event => setForm({ ...form, room: event.target.value })}/></dd></div>
+        <div><dt><UserRound size={17}/>Prowadzący</dt><dd><input aria-label="Prowadzący" value={form.instructor} maxLength={256}
+          onChange={event => setForm({ ...form, instructor: event.target.value })}/></dd></div>
+        <div><dt><MessageSquare size={17}/>Powód</dt><dd><textarea aria-label="Powód (opcjonalnie)" placeholder="Opcjonalnie" rows={2}
+          value={form.reason} maxLength={1000} onChange={event => setForm({ ...form, reason: event.target.value })}/></dd></div>
+      </dl>
+      {scope}
+      {series && <p>Każde z wybranych zajęć przesunie się o tyle samo dni; nowe godziny, sala i prowadzący dotyczą wszystkich, jeśli je zmienisz.</p>}
       {moveError ? <p role="alert" className="event-details-error">{moveError}</p>
         : conflicts.length > 0 ? <div className="plan-conflicts" role="status">
           <strong>Koliduje z:</strong>
@@ -132,18 +158,7 @@ export default function ClassPlanActions({ ev, current, planActions, onDone, onB
       <div className="plan-form-buttons">
         <button type="submit" className="event-details-edit" disabled={busy || Boolean(moveError) || (series ? !moves.length : !Object.keys(changes).length)}>
           {busy ? 'Zapisywanie…' : series ? `Zapisz (${moves.length})` : 'Zapisz'}</button>
-        <button type="button" className="plan-action" disabled={busy} onClick={() => { setMode('view'); setError(''); }}>Anuluj</button>
-      </div>
-    </form>}
-    {mode === 'room' && <form className="plan-form" onSubmit={event => { event.preventDefault();
-      if (series) saveSeries('room', n => `Zmieniono salę w ${n} zajęciach Twojego planu.`);
-      else save({ room: form.room.trim() || null }); }}>
-      {scope}
-      <label>Sala<input value={form.room} maxLength={256} autoFocus placeholder="Puste pole usuwa salę"
-        onChange={event => setForm({ ...form, room: event.target.value })}/></label>
-      <div className="plan-form-buttons">
-        <button type="submit" className="event-details-edit" disabled={busy || (!series && form.room.trim() === (current.room || ''))}>{busy ? 'Zapisywanie…' : 'Zapisz'}</button>
-        <button type="button" className="plan-action" disabled={busy} onClick={() => { setMode('view'); setError(''); }}>Anuluj</button>
+        {back}
       </div>
     </form>}
     {error && <p role="alert" className="event-details-error">{error}</p>}

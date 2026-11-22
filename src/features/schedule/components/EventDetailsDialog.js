@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Clock, MapPin, Users, UserRound, CalendarDays, CalendarPlus, GraduationCap } from 'lucide-react';
+import { X, Clock, MapPin, Users, UserRound, CalendarDays, CalendarPlus, GraduationCap, Tag } from 'lucide-react';
 import { splitTeacherDisplay } from '../logic/teacherDisplay';
 import { eventSubject } from './EventCard';
 import ClassPlanActions from '../../my-plan/ClassPlanActions';
@@ -17,6 +17,8 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
   const [busy, setBusy] = useState(false);
   // Adding a kolokwium or deadline on this class, or editing one of its entries, replaces the actions below.
   const [entryForm, setEntryForm] = useState(null);
+  // While a private change is edited, its date, hours, room and instructor are fields of the change instead.
+  const [changing, setChanging] = useState(false);
   // Group entries on this class (also when the person moved or cancelled it, or hid the entry).
   const classEntries = (itemActions?.items || []).filter(item => item.scope === 'group' && item.timing === 'class'
     && ev.event_id && String(item.event_id) === String(ev.event_id));
@@ -49,23 +51,26 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
       <section className="event-details-content">
         <header className="event-details-header">
           <div>
-            <p className="event-details-eyebrow">{ev.ghost ? 'Oryginalny termin uczelni' : 'Szczegóły zajęć'}</p>
-            <h2 id={titleId}>{subject.name}</h2>
-            {/* The subject opens all its classes across plans and groups. */}
-            {onBrowse && (ev.title || subject.name) && <button type="button" className="event-details-browse event-details-subject"
-              onClick={() => { onClose(); onBrowse({ subject: ev.title || subject.name, plan: ev.plan || ev._sourceScheduleId }); }}>Pokaż wszystkie zajęcia z przedmiotu</button>}
+            {ev.ghost && <p className="event-details-eyebrow">Oryginalny termin uczelni</p>}
+            {/* The subject's name opens all its classes across groups. */}
+            <h2 id={titleId}>{onBrowse && (ev.title || subject.name) ? <button type="button" className="event-details-title-link"
+              title="Pokaż wszystkie zajęcia z przedmiotu" aria-describedby={`${titleId}-hint`}
+              onClick={() => { onClose(); onBrowse({ subject: ev.title || subject.name, plan: ev.plan || ev._sourceScheduleId }); }}>{subject.name}</button>
+              : subject.name}</h2>
+            {onBrowse && <span id={`${titleId}-hint`} hidden>Pokaż wszystkie zajęcia z przedmiotu</span>}
           </div>
           <button type="button" className="event-details-close" aria-label="Zamknij szczegóły zajęć" disabled={busy} onClick={onClose}><X size={20}/></button>
         </header>
-        <div className="event-details-badges">
-          {ev.type && <span>{ev.type}</span>}
+        {(ev.origin === 'added' || ev.ghost || ev.personal_override || ev._isExternal) && <div className="event-details-badges">
           {ev.origin === 'added' && <span className="event-details-personal">Odrobienie</span>}
           {ev.ghost === 'cancelled' && <span className="event-details-ghost">Odwołane u mnie</span>}
           {ev.ghost === 'moved-from' && <span className="event-details-ghost">Przeniesione</span>}
           {ev.personal_override && !ev.ghost && <span className="event-details-personal">Zmienione u mnie</span>}
           {ev._isExternal && <span>Plan {ev._sourceScheduleId}</span>}
-        </div>
+        </div>}
         <dl className="event-details-list">
+          {ev.type && <div><dt><Tag size={17}/>Rodzaj</dt><dd>{ev.type}</dd></div>}
+          {!changing && <>
           <div><dt><CalendarDays size={17}/>Data</dt><dd>{date.toLocaleDateString('pl-PL', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}</dd></div>
           <div><dt><Clock size={17}/>Godzina</dt><dd>{ev.start}–{ev.end}</dd></div>
           {/* An instructor or a room opens their plan across all plans. */}
@@ -75,6 +80,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
             ? <button key={teacher} type="button" className="event-details-browse" onClick={() => { onClose(); onBrowse({ teacher }); }}
               aria-label={`${teacher}: pokaż plan prowadzącego`}>{teacher}</button>
             : <span key={teacher}>{teacher}</span>) : 'Nie podano'}</dd></div>
+          </>}
           {/* Classes seen in an instructor's, a room's or the free-rooms view come from other plans. */}
           {ev.plan && <div><dt><GraduationCap size={17}/>Kierunek</dt><dd>{ev.plan}</dd></div>}
           <div><dt><Users size={17}/>Grupa</dt><dd>{ev.groups?.length ? ev.groups.join(', ') : 'Wszystkie grupy'}</dd></div>
@@ -92,6 +98,7 @@ export default function EventDetailsDialog({ ev, subjects, date, onClose, planAc
             onClick={() => setEntryForm({ type: 'class', ev, date: isoDate(date) })}>
             <CalendarPlus size={16}/>Dodaj kolokwium lub termin</button>}
           {planActions && ev.event_id && <ClassPlanActions ev={ev} current={current} planActions={planActions} onDone={onClose} onBusyChange={setBusy}
+            onEditingChange={setChanging}
             entries={classEntries}/>}
           {planActions?.makeUp && classEntries.length > 0 && changedHere && <MakeupOptions entries={classEntries} items={itemActions.items}
             onMakeUp={planActions.makeUp}/>}

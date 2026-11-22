@@ -1,13 +1,21 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Eye, Plus, X } from 'lucide-react';
+import { AlertTriangle, Calendar1, CalendarRange, Eye, Plus, User, Users, X } from 'lucide-react';
 import { KINDS } from './planItemLogic';
 import { addDays, canWriteAnyGroup, canWriteGroup, classGroup, classOf, classTerms, describeTerm, editItems, existingFor, facultyOf,
-  laterTerms, newItems, SERIES_CHOICES, seriesOf, termError, termOfItem, termsLabel, writableGroups } from './planItemEditing';
+  laterTerms, newItems, SERIES_CHOICES, seriesOf, subjectDuration, subjectTerms, termError, termOfItem, termsLabel,
+  writableGroups } from './planItemEditing';
+import ChoiceSlider from '../schedule/components/ChoiceSlider';
+import { subjectTextColor } from '../schedule/logic/subjectColors';
+import { addMinutes, timeToMinutes } from '../../utils/time';
 
 const MAX_TERMS = 20;
 const groupLabel = group => (group == null ? 'Wszystkie grupy' : `Grupa ${group}`);
 // Reports and projects are handed in by a date; everything else happens at a time.
 const defaultTiming = kind => (kind === 'sprawozdanie' || kind === 'projekt' ? 'due' : 'slot');
+const SCOPE_INFO = 'Dla siebie: wpis widzisz tylko Ty. Dla grupy: zobaczą go wszyscy z wybranej grupy (albo ze wszystkich grup '
+  + 'przedmiotu). Dla grupy mogą dodawać tylko starości.';
+const COUNT_INFO = 'Jeden termin: dodajesz jedno wydarzenie. Kilka terminów: zaznaczasz kilka zajęć albo dat i zapisują się jako seria, '
+  + 'którą potem zmienisz lub usuniesz za jednym razem.';
 
 
 // Adds entries (from a class or a free slot in the grid) or edits one, optionally with the rest of its series.
@@ -20,6 +28,9 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   const faculty = editing?.faculty || (host ? facultyOf(host, scheduleId) : source.faculty);
   const onClass = source.type === 'class' || editing?.timing === 'class';
   const subjects = useMemo(() => actions.subjectsFor(faculty), [actions, faculty]);
+  // The whole plan of the faculty (every group) and one's own classes in it, for the next classes and their length.
+  const events = useMemo(() => actions.scheduleFor?.(faculty) || [], [actions, faculty]);
+  const own = useMemo(() => planEvents.filter(ev => facultyOf(ev, scheduleId) === faculty), [planEvents, scheduleId, faculty]);
 
   const [form, setForm] = useState(() => {
     if (editing) return { kind: editing.kind, scope: editing.scope, title: editing.title, details: editing.details || '',
@@ -29,19 +40,15 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   });
   const set = change => setForm(previous => ({ ...previous, ...change }));
 
-  // Suggestions: the group's next classes (from a class) or one and two weeks later (from a free slot).
-  const suggestions = useMemo(() => {
-    if (host) return classTerms(planEvents, host, { scheduleId, from: editing ? (editing.date < today ? editing.date : today) : source.date });
-    // The class is not in the loaded plan: the entry keeps its own class.
-    if (editing?.timing === 'class') return [termOfItem(editing)];
-    if (source.type === 'slot') return laterTerms(source.term);
-    return [];
-  }, [host, planEvents, scheduleId, editing, today, source]);
-  const [picked, setPicked] = useState(() => new Set(source.type === 'class' ? [suggestions[0]?.key].filter(Boolean)
+  const [picked, setPicked] = useState(() => new Set(source.type === 'class'
+    ? [classTerms(planEvents, host, { scheduleId, from: source.date })[0]?.key].filter(Boolean)
     : editing?.timing === 'class' ? [`class:${editing.event_id}`] : []));
   const [customs, setCustoms] = useState(() => source.type === 'slot' ? [{ ...source.term, key: 'custom-0' }]
     : editing && editing.timing !== 'class' ? [{ ...termOfItem(editing), key: 'custom-0' }] : []);
   const [which, setWhich] = useState('one');
+  // One event by default; several terms are saved as one series.
+  const [count, setCount] = useState('one');
+  const single = !editing && count === 'one';
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const alert = useRef(null);
   // A refusal from the server shows where the person is looking, not below the fold.
@@ -54,12 +61,42 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   }, [onClass, subjects, form.subject, roles, faculty]);
   const mayGroup = editing ? editing.scope === 'group' : host ? canWriteGroup(roles, faculty, classGroup(host)) : canWriteAnyGroup(roles, faculty);
   const group = form.scope === 'group' && !onClass && !groupOptions.includes(form.group) ? groupOptions[0] : form.group;
+  // A group entry can only be about a subject with a group one may write for.
+  const subjectChoices = form.scope === 'group' && !editing
+    ? subjects.filter(item => item.subject === form.subject || writableGroups(roles, faculty, item.groups).length) : subjects;
+
+  // Suggestions: the group's next classes (from a class), the next classes of the chosen subject and group (from a free
+  // slot), or one and two weeks later when the subject has no classes then.
+  const { suggestions, suggestionsLabel } = useMemo(() => {
+    if (host) return { suggestionsLabel: 'Najbliższe zajęcia grupy',
+      suggestions: classTerms(planEvents, host, { scheduleId, from: editing ? (editing.date < today ? editing.date : today) : source.date }) };
+    // The class is not in the loaded plan: the entry keeps its own class.
+    if (editing?.timing === 'class') return { suggestionsLabel: 'Zajęcia', suggestions: [termOfItem(editing)] };
+    if (source.type !== 'slot') return { suggestions: [] };
+    const from = source.term.date;
+    const classes = form.scope === 'group' ? subjectTerms(events, { subject: form.subject, group, from })
+      : subjectTerms(own, { subject: form.subject, anyGroup: true, from });
+    return classes.length ? { suggestionsLabel: 'Najbliższe zajęcia przedmiotu', suggestions: classes }
+      : { suggestionsLabel: 'Tydzień i dwa tygodnie później', suggestions: laterTerms(source.term) };
+  }, [host, planEvents, scheduleId, editing, today, source, form.scope, form.subject, group, events, own]);
+  // How long the subject's classes last, for the group if it has its own (lectures often take longer).
+  const duration = form.subject ? (form.scope === 'group' && !onClass
+    ? subjectDuration(events, form.subject, group) ?? subjectDuration(own, form.subject)
+    : subjectDuration(own, form.subject) ?? subjectDuration(events, form.subject)) : null;
+  // A new subject or group gives own hours the length of its classes, unless the end was set by hand.
+  useEffect(() => {
+    if (editing || !duration) return;
+    setCustoms(previous => previous.map(term => term.timing === 'slot' && !term.manualEnd && term.start
+      && timeToMinutes(term.end) - timeToMinutes(term.start) !== duration ? { ...term, end: addMinutes(term.start, duration) } : term));
+  }, [editing, duration]);
 
   // Terms that already have such an entry cannot be added again; a hidden one can be shown instead.
   const values = { ...form, group };
   const takenBy = term => existingFor(actions.items, term, values, editing?.id);
-  const terms = [...suggestions.filter(term => picked.has(term.key) && !takenBy(term)), ...customs];
-  const takenCustom = customs.map(takenBy).find(Boolean);
+  const chosen = suggestions.filter(term => picked.has(term.key) && !takenBy(term));
+  // One term: the suggestion picked, or else the own date.
+  const terms = single ? (chosen.length ? chosen.slice(0, 1) : customs.slice(0, 1)) : [...chosen, ...customs];
+  const takenCustom = customs.filter(term => terms.includes(term)).map(takenBy).find(Boolean);
   const members = editing ? seriesOf(actions.items, editing, which) : [];
   const seriesSize = editing?.series_id ? actions.items.filter(item => item.series_id === editing.series_id).length : 1;
   const problem = !terms.length ? 'Wybierz co najmniej jeden termin.'
@@ -72,6 +109,7 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
   // Editing keeps one term: picking a suggestion drops the own date and the other way round.
   const toggle = term => {
     if (editing) { setPicked(new Set([term.key])); setCustoms([]); return; }
+    if (single) { setPicked(new Set([term.key])); return; }
     setPicked(previous => { const next = new Set(previous); next.has(term.key) ? next.delete(term.key) : next.add(term.key); return next; });
   };
   const addCustom = () => {
@@ -84,10 +122,27 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     const base = last ? { ...last, date } : { date, start: '08:00', end: '09:30' };
     const timing = last?.timing === 'due' || (!last && defaultTiming(form.kind) === 'due') ? 'due' : 'slot';
     const term = { timing, date: base.date, start: base.start || '08:00', end: base.end || '09:30', due_time: base.due_time || '', key: `custom-${Date.now()}` };
-    if (editing) setPicked(new Set());
+    if (editing || single) setPicked(new Set());
     setCustoms(previous => editing ? [term] : [...previous, term]);
   };
-  const setCustom = (key, change) => setCustoms(previous => previous.map(term => term.key === key ? { ...term, ...change } : term));
+  // A new start keeps the class length of the subject (or the term's own length); an end set by hand stays.
+  const setCustom = (key, change) => setCustoms(previous => previous.map(term => {
+    if (term.key !== key) return term;
+    if (change.start && term.timing === 'slot') {
+      const length = duration || timeToMinutes(term.end) - timeToMinutes(term.start);
+      return { ...term, ...change, end: addMinutes(change.start, length > 0 ? length : 90), manualEnd: false };
+    }
+    return { ...term, ...change, ...(change.end ? { manualEnd: true } : {}) };
+  }));
+  // Back to one term: the first one chosen stays.
+  const chooseCount = value => {
+    setCount(value);
+    if (value !== 'one') return;
+    const first = suggestions.find(term => picked.has(term.key));
+    setPicked(new Set(first ? [first.key] : []));
+    setCustoms(previous => previous.slice(0, 1));
+  };
+  const color = name => subjectTextColor(actions.colorOf?.(name)) || undefined;
 
   const submit = async event => {
     event.preventDefault();
@@ -116,16 +171,15 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
       </label>)}
     </fieldset>
     {editing ? <p className="plan-item-scope-fixed">{form.scope === 'group' ? groupLabel(editing.group) : 'Tylko dla Ciebie'}</p>
-      : mayGroup && <fieldset className="plan-item-scope">
-        <legend>Dla kogo</legend>
-        <label><input type="radio" name={`${id}-scope`} checked={form.scope === 'group'} onChange={() => set({ scope: 'group' })}/>
-          {onClass ? groupLabel(classGroup(host)) : 'Dla grupy'}</label>
-        <label><input type="radio" name={`${id}-scope`} checked={form.scope === 'personal'} onChange={() => set({ scope: 'personal' })}/>Tylko dla mnie</label>
-      </fieldset>}
+      : mayGroup && <ChoiceSlider label="Dla kogo" info={SCOPE_INFO} value={form.scope} onChange={scope => set({ scope })} options={[
+        { value: 'personal', label: 'Dla siebie', icon: User },
+        { value: 'group', label: onClass ? (classGroup(host) == null ? 'Dla wszystkich grup' : `Dla grupy ${classGroup(host)}`) : 'Dla grupy', icon: Users },
+      ]}/>}
     {!onClass && <div className="plan-form-row plan-item-subject">
-      <label>Przedmiot<select value={form.subject} onChange={event => set({ subject: event.target.value })}>
-        <option value="">{form.scope === 'group' ? 'Wybierz przedmiot' : 'Bez przedmiotu'}</option>
-        {subjects.map(item => <option key={item.subject} value={item.subject}>{item.subject}</option>)}
+      {/* Each subject in the colour the person gave it in the plan. */}
+      <label>Przedmiot<select value={form.subject} style={{ color: color(form.subject) }} onChange={event => set({ subject: event.target.value })}>
+        <option value="" style={{ color: '#f5f5f5' }}>{form.scope === 'group' ? 'Wybierz przedmiot' : 'Bez przedmiotu'}</option>
+        {subjectChoices.map(item => <option key={item.subject} value={item.subject} style={{ color: color(item.subject) }}>{item.subject}</option>)}
       </select></label>
       {form.scope === 'group' && groupOptions.length > 0 && <label>Grupa<select value={group ?? ''}
         onChange={event => set({ group: event.target.value || null })}>
@@ -136,14 +190,16 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
     <label>Zakres materiału (opcjonalnie)<textarea value={form.details} maxLength={4000} rows={2}
       onChange={event => set({ details: event.target.value })}/></label>
 
+    {!editing && <ChoiceSlider label="Ile terminów" info={COUNT_INFO} value={count} onChange={chooseCount} options={[
+      { value: 'one', label: 'Jeden termin', icon: Calendar1 }, { value: 'many', label: 'Kilka terminów', icon: CalendarRange }]}/>}
     <fieldset className="plan-item-terms">
-      <legend>{editing ? 'Termin' : 'Terminy'}</legend>
-      {suggestions.length > 0 && <ul className="plan-item-suggestions" aria-label={host ? 'Najbliższe zajęcia grupy' : 'Tydzień i dwa tygodnie później'}>
+      <legend>{editing || single ? 'Termin' : 'Terminy'}</legend>
+      {suggestions.length > 0 && <ul className="plan-item-suggestions" aria-label={suggestionsLabel}>
         {suggestions.map(term => {
           const taken = takenBy(term);
           return <li key={term.key} data-taken={taken ? true : undefined}><label>
-            <input type={editing ? 'radio' : 'checkbox'} name={`${id}-term`} disabled={Boolean(taken)}
-              checked={!taken && picked.has(term.key)} onChange={() => toggle(term)}/>
+            <input type={editing || single ? 'radio' : 'checkbox'} name={`${id}-term`} disabled={Boolean(taken)}
+              checked={!taken && (single ? terms[0]?.key === term.key : picked.has(term.key))} onChange={() => toggle(term)}/>
             {describeTerm(term)}{taken && <span className="plan-item-taken">
               {taken.my_state?.hidden ? ' · już wpisane, ukryte u Ciebie' : ` · już wpisane: ${taken.title}`}</span>}</label>
             {taken?.my_state?.hidden && actions.show && <button type="button" className="plan-item-show"
@@ -151,7 +207,10 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
           </li>;
         })}
       </ul>}
-      {customs.map(term => <div key={term.key} className="plan-item-custom">
+      {(single ? customs.slice(0, 1) : customs).map(term => <div key={term.key} className="plan-item-custom"
+        data-single={single && suggestions.length > 0 ? true : undefined} onFocus={single ? () => setPicked(new Set()) : undefined}>
+        {single && suggestions.length > 0 && <input type="radio" name={`${id}-term`} aria-label="Własny termin" checked={terms[0]?.key === term.key}
+          onChange={() => setPicked(new Set())}/>}
         <select aria-label="Rodzaj terminu" value={term.timing} onChange={event => setCustom(term.key, { timing: event.target.value })}>
           <option value="slot">O godzinie</option><option value="due">Do oddania</option>
         </select>
@@ -161,11 +220,11 @@ export default function PlanItemForm({ source, actions, onDone, onCancel }) {
           <input type="time" aria-label="Koniec" step="300" value={term.end} onChange={event => setCustom(term.key, { end: event.target.value })}/>
         </> : <input type="time" aria-label="Godzina oddania (opcjonalnie)" step="300" value={term.due_time || ''}
           onChange={event => setCustom(term.key, { due_time: event.target.value })}/>}
-        {(!editing || suggestions.length > 0) && <button type="button" className="plan-item-custom-remove" aria-label={`Usuń termin ${describeTerm(term)}`}
+        {!single && (!editing || suggestions.length > 0) && <button type="button" className="plan-item-custom-remove" aria-label={`Usuń termin ${describeTerm(term)}`}
           onClick={() => setCustoms(previous => previous.filter(other => other.key !== term.key))}><X size={14}/></button>}
       </div>)}
-      {(!editing || !customs.length) && <button type="button" className="plan-action plan-item-add-term" onClick={addCustom}>
-        <Plus size={15}/>{editing ? 'Własna data' : suggestions.length || customs.length ? 'Kolejny termin' : 'Dodaj termin'}</button>}
+      {(editing || single ? !customs.length : true) && <button type="button" className="plan-action plan-item-add-term" onClick={addCustom}>
+        <Plus size={15}/>{editing || single ? 'Własna data' : suggestions.length || customs.length ? 'Kolejny termin' : 'Dodaj termin'}</button>}
     </fieldset>
 
     {editing && seriesSize > 1 && <fieldset className="plan-item-scope">

@@ -39,6 +39,8 @@ import FreeRoomsView from '../features/browse/FreeRoomsView';
 
 const WORKDAYS=[0,1,2,3,4],WHOLE_WEEK=[0,1,2,3,4,5,6];
 
+const SHOW_BRAND=false;
+
 export default function App() {
   const exportRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -262,6 +264,9 @@ export default function App() {
     roles:planItems.roles,items:planItems.items,scheduleId:schedule.currentSchedule,planEvents,today:todayIso,
     show:id=>planItems.setItemState(id,{hidden:false}),
     subjectsFor:faculty=>subjectsOf((tables[faculty]||(faculty===schedule.currentSchedule?effectiveTable:null))?.schedule),
+    // Every group's classes of a plan (next classes of a subject and how long they last) and the colour a subject has.
+    scheduleFor:faculty=>(tables[faculty]||(faculty===schedule.currentSchedule?effectiveTable:null))?.schedule||[],
+    colorOf:name=>Object.values(subjects).find(subject=>subject.name===name)?.color,
     create:async entries=>{
       const saved=await planItems.save(entries);
       setToast({message:`Dodano ${termsLabel(saved.length)}.`,undo:async()=>{await planItems.remove(saved.map(({id,revision})=>({id,revision})));}});
@@ -319,6 +324,8 @@ export default function App() {
       <FloatingMenu
         panelState={{ open, setOpen }}
         viewState={{...view,subjectNames:planSubjectNames,entriesOn:itemsOn,onRedeemInvite:user&&itemsOn?redeemInvite:undefined,
+          // "Mój plan" (one's private changes) opens from the settings.
+          myPlan:user&&personalEnabled&&personal.ready?{count:personal.items.length,proposals:proposals.length,onOpen:()=>setPlanOpen(true)}:undefined,
           entryReminders:planReminders.reminders?{reminders:planReminders.reminders,custom:planReminders.custom,onSave:planReminders.save}:undefined}}
         weekNavigation={navigation.weekNavigation}
         weekSelection={navigation.weekSelection}
@@ -384,7 +391,8 @@ export default function App() {
           },
         }}
       />
-      <div className="inline-flex gap-2">
+      {/* The logo and name are hidden for now; kept for later. */}
+      {SHOW_BRAND&&<div className="inline-flex gap-2">
         <img
           src="/PK_SYGNET_BIALY.png"
           alt="Logo firmy"
@@ -394,7 +402,7 @@ export default function App() {
           <p className="text-2xl font-black ">PK</p>
           <p>Schedule App</p>
         </div>
-      </div>
+      </div>}
       {/* Upcoming entries, the starosta panel and new entries are in the dock's second row. */}
       {itemsOn&&planItems.error&&<section className="mb-2 text-sm"><p role="alert">Kolokwia i terminy są chwilowo niedostępne. ({planItems.error}){' '}
         <button onClick={planItems.refresh} className="underline">Spróbuj ponownie</button></p></section>}
@@ -405,7 +413,8 @@ export default function App() {
           Twoje prywatne zmiany są chwilowo niedostępne — widzisz plan uczelni bez nich. ({personal.error}){' '}
           <button onClick={personal.refresh} className="underline">Spróbuj ponownie</button>
         </p>}
-        {personal.ready&&<button type="button" className="plan-panel-trigger" aria-haspopup="dialog" onClick={()=>setPlanOpen(true)}>
+        {/* "Mój plan" lives in the settings; here only while an agent's changes wait for approval. */}
+        {personal.ready&&proposals.length>0&&<button type="button" className="plan-panel-trigger" aria-haspopup="dialog" onClick={()=>setPlanOpen(true)}>
           Mój plan{personal.items.length>0&&<span className="plan-panel-count">{personal.items.length}</span>}
           {proposals.length>0&&<span className="plan-panel-count plan-panel-count-attention">{proposals.length} do zatwierdzenia</span>}
         </button>}

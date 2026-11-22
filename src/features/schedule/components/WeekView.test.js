@@ -42,7 +42,7 @@ test('moving keeps an earlier private room change and shows collisions', async (
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
   expect(screen.getByRole('dialog')).toHaveTextContent('Oryginalnie: pon 19.10 · 07:30–09:00 · B2');
   expect(screen.getByRole('button', {name: 'Przywróć plan uczelni'})).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', {name: 'Przenieś'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Zmień'}));
   expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
   fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-22'}});
   fireEvent.change(screen.getByLabelText('Początek'), {target: {value: '12:00'}});
@@ -57,16 +57,20 @@ test('a date outside the plan is refused before saving and a failed save keeps t
   const actions = planActions({apply:jest.fn().mockRejectedValue(new Error('Plan zmienił się lub podgląd wygasł.'))});
   render(<WeekView events={[event]} viewedWeekStart={monday} planActions={actions}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
-  fireEvent.click(screen.getByRole('button', {name: 'Przenieś'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Zmień'}));
   fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2026-10-24'}});
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Data'), {target: {value: '2027-03-01'}});
   expect(screen.getByRole('alert')).toHaveTextContent('poza zakresem');
   expect(screen.getByRole('button', {name: 'Zapisz'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button', {name: 'Anuluj'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Zmień salę'}));
+  // Cancelling forgets the edit; the room is changed in the same form.
+  fireEvent.click(screen.getByRole('button', {name: 'Zmień'}));
+  expect(screen.getByLabelText('Data')).toHaveValue('2026-10-19');
   fireEvent.change(screen.getByLabelText('Sala'), {target: {value: 'C3'}});
   fireEvent.click(screen.getByRole('button', {name: 'Zapisz'}));
+  await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id:'occurrence-a',operation:'upsert',action:'modify',
+    patch:{room:'C3'},reason:null}));
   expect(await screen.findByRole('alert')).toHaveTextContent('Plan zmienił się');
   expect(screen.getByRole('dialog')).toBeInTheDocument();
 });
@@ -74,7 +78,7 @@ test('a date outside the plan is refused before saving and a failed save keeps t
 test('changing week dismisses stale details and guests have no private edit action', () => {
   const {rerender} = render(<WeekView events={[event]} viewedWeekStart={monday}/>);
   fireEvent.click(screen.getByRole('button', {name: /Pokaż szczegóły/}));
-  expect(screen.queryByRole('button', {name: 'Przenieś'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Zmień'})).not.toBeInTheDocument();
   rerender(<WeekView events={[event]} viewedWeekStart={new Date(2026,9,26)}/>);
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(document.body.style.overflow).not.toBe('hidden');
@@ -115,7 +119,7 @@ test('a cancelled class stays visible faded and can be restored from its details
   expect(screen.getByRole('button', {name: /^Odwołane u mnie: Modelowanie/})).toHaveAttribute('data-ghost', 'cancelled');
   expect(screen.getByRole('button', {name: /^Przeniesione: .*→ czw 22\.10 12:00/})).toHaveAttribute('data-ghost', 'moved-from');
   fireEvent.click(screen.getByRole('button', {name: /^Odwołane u mnie/}));
-  expect(screen.queryByRole('button', {name: 'Przenieś'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Zmień'})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', {name: 'Przywróć zajęcia'}));
   await waitFor(() => expect(actions.apply).toHaveBeenCalledWith({event_id: 'occurrence-a', operation: 'delete'}));
 });
